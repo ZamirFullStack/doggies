@@ -1,0 +1,15 @@
+# Carpetas y archivos comunes que no se deben subir
+/vendor/
+node_modules/
+.env
+.DS_Store
+*.log
+*.zip
+*.rar
+.idea/
+*.sqlite
+composer.lock
+composer.phar
+*.bak
+*.tmp
+/.vscode/

@@ -1,0 +1,281 @@
+/* RESET Y FUENTES */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  background-image: url('../img/fondo.jpg');
+  background-size: cover;
+  background-position: center;
+  min-height: 100vh;
+  color: #fff;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+nav {
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 1em 2em;
+}
+
+.menu {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  list-style: none;
+}
+
+.menu li {
+  flex: 1;
+  text-align: center;
+}
+
+.menu a {
+  text-decoration: none;
+  color: #333;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.menu a i {
+  margin-right: 5px;
+}
+
+.logo-img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid #333;
+}
+
+/* Asegura que el logo quede centrado correctamente */
+.menu {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  list-style: none;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.menu li.logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
+/* HERO SECTION */
+.hero {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  flex: 1;
+  padding: 2em;
+  position: relative;
+  z-index: 1;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: -1;
+}
+
+.hero .content {
+  max-width: 900px;
+  margin: 0 auto;
+  z-index: 2;
+  animation: fadeIn 2s ease-in-out;
+}
+
+/* Animación para título y subtítulo */
+.main-title {
+  font-size: 4.5em;
+  font-family: 'Playfair Display', serif;
+  margin-bottom: 0.4em;
+  animation: bounceIn 1.2s ease-out forwards;
+}
+
+.sub-title {
+  font-size: 2em;
+  font-weight: 500;
+  line-height: 1.4;
+  opacity: 0;
+  animation: fadeInUp 1.8s ease-out 0.8s forwards;
+}
+
+/* PRODUCTOS */
+.productos {
+  padding: 2em;
+  background-color: #fff;
+}
+
+.titulo-seccion {
+  text-align: center;
+  margin-bottom: 1.5em;
+  font-size: 2em;
+  color: #333;
+}
+
+.productos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2em;
+}
+
+.producto {
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  padding: 1em;
+  text-align: center;
+  border-radius: 8px;
+  transition: box-shadow 0.3s ease;
+}
+
+.producto:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.producto img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Keyframes */
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* HUESITOS */
+.huesito {
+  position: absolute;
+  width: 40px;
+  opacity: 0.8;
+}
+
+.h1 { top: 10%; left: 5%; }
+.h2 { bottom: 10%; left: 10%; transform: rotate(45deg); }
+.h3 { top: 15%; right: 8%; transform: rotate(-30deg); }
+.h4 { bottom: 10%; right: 6%; transform: rotate(15deg); }
+
+/* FOOTER */
+footer {
+  background-color: rgba(51, 51, 51, 0.98);
+  padding: 1.5em 2em 1em 2em;
+  text-align: center;
+  color: #fff;
+  overflow: hidden;
+  position: relative;
+}
+
+.footer-content h3 {
+  font-size: 1.6em;
+  margin-bottom: 0.5em;
+}
+
+.social-links a {
+  color: #fff;
+  margin: 0 10px;
+  font-size: 24px;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.social-links a:hover {
+  color: #ffd700;
+}
+
+/* Derechos reservados */
+footer::after {
+  content: "© 2025 Doggies. Todos los derechos reservados.";
+  display: block;
+  margin-top: 1em;
+  font-size: 0.9em;
+  color: #ccc;
+}
+
+/* WHATSAPP FLOAT */
+.whatsapp-float {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #25d366;
+  color: white;
+  font-size: 18px;
+  padding: 10px 16px;
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  text-decoration: none;
+  z-index: 1000;
+  transition: background-color 0.3s ease;
+}
+
+.whatsapp-float i {
+  font-size: 22px;
+}
+
+.whatsapp-float span {
+  font-weight: bold;
+}
+
+.whatsapp-float:hover {
+  background-color: #1ebc57;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .main-title {
+    font-size: 2em;
+  }
+
+  .sub-title {
+    font-size: 1.2em;
+  }
+
+  .menu {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
