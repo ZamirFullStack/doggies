@@ -1,13 +1,18 @@
 <?php
-$host = getenv('MYSQLHOST') ?: '127.0.0.1';
-$db   = getenv('MYSQLDATABASE') ?: 'doggies';
-$user = getenv('MYSQLUSER') ?: 'root';
-$pass = getenv('MYSQLPASSWORD') ?: '';
-$port = getenv('MYSQLPORT') ?: 3306;
+$url = getenv('DATABASE_URL');
+if ($url) {
+    $dbparts = parse_url($url);
+    $host = $dbparts["host"];
+    $port = $dbparts["port"];
+    $user = $dbparts["user"];
+    $pass = $dbparts["pass"];
+    $db   = ltrim($dbparts["path"], '/');
+} else {
+    die("❌ No se encontró la variable DATABASE_URL");
+}
 
 try {
-    $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
-    $pdo = new PDO($dsn, $user, $pass);
+    $pdo = new PDO("mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4", $user, $pass);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
     die("❌ Error de conexión: " . $e->getMessage());
