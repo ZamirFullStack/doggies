@@ -1,15 +1,43 @@
-# Carpetas y archivos comunes que no se deben subir
-/vendor/
-node_modules/
+# ⛔ Ignorar dependencias PHP (Composer)
+vendor/
+
+# ⛔ Ignorar entorno sensible
 .env
+
+# ⛔ Archivos de sistema
 .DS_Store
+Thumbs.db
+
+# ⛔ Logs, cachés y errores
 *.log
-*.zip
-*.rar
-.idea/
-*.sqlite
-composer.lock
-composer.phar
-*.bak
+*.cache
 *.tmp
-/.vscode/
+
+# ⛔ Base de datos local (si usas SQLite)
+*.sqlite
+*.sqlite3
+
+# ⛔ Archivos temporales de editor
+*.swp
+*.swo
+
+# ⛔ Node.js (por si agregas tooling)
+node_modules/
+dist/
+build/
+
+# ⛔ Directorios de pruebas o dumps
+/tests/
+__MACOSX/
+
+# ⛔ Ignorar configuración de IDEs
+.vscode/
+.idea/
+
+# ⛔ Ignorar backups
+*.bak
+*.old
+*.orig
+
+# Railway CLI local config (si usas CLI avanzada)
+railway.json
