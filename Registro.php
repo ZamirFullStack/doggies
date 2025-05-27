@@ -74,7 +74,7 @@
         </div>
         <button class="auth-btn" type="submit">Crear Cuenta</button>
       </form>
-      <p>¿Ya tienes cuenta? <a href="login.php">Iniciar sesión</a></p>
+      <p>¿Ya tienes cuenta? <a href="Login.php">Iniciar sesión</a></p>
     </section>
   </main>
 

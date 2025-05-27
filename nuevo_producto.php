@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Añadir Producto</title>
-  <link rel="stylesheet" href="css/login.css">
+  <link rel="stylesheet" href="css/Login.css">
 </head>
 <body class="login-page">
   <header>
@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           </select>
         </div>
         <div class="input-group">
-          <input type="text" name="imagen" placeholder="Ruta de imagen (ej: img/productos/nuevo.jpg)" required>
+          <input type="text" name="imagen" placeholder="Ruta de imagen (ej: img/Productos/nuevo.jpg)" required>
         </div>
         <button type="submit" class="auth-btn">Guardar Producto</button>
       </form>

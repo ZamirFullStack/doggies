@@ -52,7 +52,7 @@
         <button class="auth-btn" type="submit">Ingresar</button>
         <p class="recover"><a href="recover.php">¿Olvidaste tu contraseña?</a></p>
       </form>
-      <p>¿No tienes cuenta? <a href="registro.php">Crear cuenta</a></p>
+      <p>¿No tienes cuenta? <a href="Registro.php">Crear cuenta</a></p>
     </section>
   </main>
 
