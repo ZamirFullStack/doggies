@@ -40,9 +40,9 @@ if (empty($items)) {
 $preferenceData = [
     "items" => $items,
     "back_urls" => [
-        "success" => "http://localhost/Doggies/pago_exitoso.php",
-        "failure" => "http://localhost/Doggies/pago_fallido.php",
-        "pending" => "http://localhost/Doggies/pago_pendiente.php"
+        "success" => "https://doggies-production.up.railway.app/pago_exitoso.php",
+        "failure" => "https://doggies-production.up.railway.app/pago_fallido.php",
+        "pending" => "https://doggies-production.up.railway.app/pago_pendiente.php"
     ],
     "auto_return" => "approved"
 ];
