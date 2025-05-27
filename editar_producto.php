@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
 
-        echo "<script>alert('Producto actualizado correctamente.'); window.location.href='productos.php';</script>";
+        echo "<script>alert('Producto actualizado correctamente.'); window.location.href='Productos.php';</script>";
         exit;
     } catch (PDOException $e) {
         echo "Error al actualizar el producto: " . $e->getMessage();
