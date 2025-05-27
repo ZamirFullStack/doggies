@@ -1,9 +1,27 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['usuario']) || empty($_SESSION['carrito'])) {
-    header("Location: carrito.php");
+if (!isset($_SESSION['usuario'])) {
+    header("Location: login.php");
     exit;
+}
+
+if (!isset($_SESSION['carrito'])) {
+    $_SESSION['carrito'] = [];
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $nombre = $_POST['nombre'] ?? '';
+    $precio = floatval($_POST['precio'] ?? 0);
+    $cantidad = intval($_POST['cantidad'] ?? 1);
+
+    if ($nombre && $precio > 0 && $cantidad > 0) {
+        $_SESSION['carrito'][] = [
+            'nombre' => $nombre,
+            'precio' => $precio,
+            'cantidad' => $cantidad
+        ];
+    }
 }
 
 require __DIR__ . '/vendor/autoload.php';
@@ -16,7 +34,6 @@ MercadoPagoConfig::setAccessToken("TEST-7533043630493954-052015-7926e661894c7b07
 $carrito = $_SESSION['carrito'];
 $items = [];
 
-// Validar datos y construir items
 foreach ($carrito as $producto) {
     $titulo = $producto['nombre'] ?? 'Producto sin nombre';
     $precio = floatval($producto['precio']);
