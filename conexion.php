@@ -1,5 +1,11 @@
 <?php
-$url = getenv('DATABASE_URL');
+require __DIR__ . '/vendor/autoload.php';
+
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
+$url = $_ENV['DATABASE_URL'] ?? null;
+
 if ($url) {
     $dbparts = parse_url($url);
     $host = $dbparts["host"];
@@ -17,4 +23,3 @@ try {
 } catch (PDOException $e) {
     die("❌ Error de conexión: " . $e->getMessage());
 }
-?>
