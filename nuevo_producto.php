@@ -14,9 +14,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $precio = (float)$_POST['precio'];
     $edad = $_POST['edad'];
     $imagen = $_POST['imagen']; // Aquí se puede mejorar para subir imagen real
+    $stock = (int)$_POST['stock'];
 
-    $stmt = $pdo->prepare("INSERT INTO producto (nombre, descripcion, precio, edad, imagen_URL) VALUES (?, ?, ?, ?, ?)");
-    $stmt->execute([$nombre, $descripcion, $precio, $edad, $imagen]);
+    $stmt = $pdo->prepare("INSERT INTO producto (nombre, descripcion, precio, edad, imagen_URL, stock) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$nombre, $descripcion, $precio, $edad, $imagen, $stock]);
 
     header("Location: admin.php");
     exit;
@@ -64,6 +65,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         <div class="input-group">
           <input type="text" name="imagen" placeholder="Ruta de imagen (ej: img/Productos/nuevo.jpg)" required>
+        </div>
+        <div class="input-group">
+          <input type="number" name="stock" placeholder="Stock disponible" min="0" required>
         </div>
         <button type="submit" class="auth-btn">Guardar Producto</button>
       </form>
