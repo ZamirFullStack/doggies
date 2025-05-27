@@ -96,7 +96,7 @@
     <div class="content">
       <h1 class="main-title">¡Bienvenido a Doggies! </h1>
       <p class="sub-title">El lugar donde el amor, cuidado y alegría para tus peludos es nuestra pasión.</p>
-      <a href="nosotros.php" class="nosotros-link"><i class="fas fa-paw"></i> Conócenos</a>
+      <a href="Nosotros.php" class="nosotros-link"><i class="fas fa-paw"></i> Conócenos</a>
     </div>
   </section>
 
