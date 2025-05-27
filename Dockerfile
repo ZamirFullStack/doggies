@@ -1,22 +1,19 @@
-# Imagen base con PHP y Apache
 FROM php:8.2-apache
 
-# Habilita mod_rewrite de Apache para URLs amigables
+# Habilita mod_rewrite para URLs amigables
 RUN a2enmod rewrite
 
-# Instala extensiones necesarias
-RUN docker-php-ext-install pdo pdo_mysql
-
-# Copia todos los archivos del proyecto al contenedor
+# Copia todo el proyecto al contenedor
 COPY . /var/www/html/
 
-# Establece permisos correctos para Apache
+# Establece permisos correctos
 RUN chown -R www-data:www-data /var/www/html && \
     find /var/www/html -type d -exec chmod 755 {} \; && \
     find /var/www/html -type f -exec chmod 644 {} \;
 
-# Establece el directorio de trabajo
-WORKDIR /var/www/html
+# Define explícitamente index.php como página de inicio
+RUN echo "DirectoryIndex index.php" > /etc/apache2/conf-available/doggies.conf && \
+    a2enconf doggies
 
-# Expone el puerto por el que Apache escucha
+# Exponer el puerto por defecto de Apache
 EXPOSE 80
