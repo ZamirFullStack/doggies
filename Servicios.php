@@ -12,7 +12,7 @@
   <header>
     <nav>
       <ul class="menu">
-        <li><a href="productos.php"><i class="fas fa-dog"></i> Productos</a></li>
+        <li><a href="Productos.php"><i class="fas fa-dog"></i> Productos</a></li>
         <li class="logo"><a href="index.php">Doggies</a></li>
         <li><a href="carrito.php"><i class="fas fa-cart-shopping"></i> Carrito</a></li>
       </ul>

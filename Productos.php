@@ -63,7 +63,7 @@
                 <input type='number' value='1' min='1' max='$stock' readonly />
                 <button onclick='cambiarCantidad(this, 1)'>+</button>
               </div>
-              <form method='POST' action='agregar_carrito.php'>
+              <form method='POST' action='carrito.php'>
                 <input type='hidden' name='nombre' value='$nombre' />
                 <input type='hidden' name='precio' value='$precio' />
                 <input type='hidden' name='cantidad' value='1' class='input-cantidad' />
