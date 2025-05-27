@@ -1,22 +1,13 @@
 <?php
-// Solo intentar cargar .env en desarrollo (cuando esté en local)
-if (file_exists(__DIR__ . '/.env')) {
-    require __DIR__ . '/vendor/autoload.php';
-    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-    $dotenv->load();
-}
+// Conexión directa a la base de datos usando la URL pública
+$url = 'mysql://root:AaynZNNKYegnXoInEgQefHggDxoRieEL@centerbeam.proxy.rlwy.net:58462/railway';
 
-$url = getenv('DATABASE_URL');
-if ($url) {
-    $dbparts = parse_url($url);
-    $host = $dbparts["host"];
-    $port = $dbparts["port"];
-    $user = $dbparts["user"];
-    $pass = $dbparts["pass"];
-    $db   = ltrim($dbparts["path"], '/');
-} else {
-    die("❌ No se encontró la variable DATABASE_URL");
-}
+$dbparts = parse_url($url);
+$host = $dbparts["host"];
+$port = $dbparts["port"];
+$user = $dbparts["user"];
+$pass = $dbparts["pass"];
+$db   = ltrim($dbparts["path"], '/');
 
 try {
     $pdo = new PDO("mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4", $user, $pass);
@@ -24,3 +15,4 @@ try {
 } catch (PDOException $e) {
     die("❌ Error de conexión: " . $e->getMessage());
 }
+?>
