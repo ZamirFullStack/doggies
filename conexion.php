@@ -1,16 +1,14 @@
 <?php
-$host = 'localhost';
-$db = 'doggiesdb';
+$host = 'mysql.railway.internal'; // Host para entornos internos en Railway
+$port = 3306;
+$db   = 'railway';
 $user = 'root';
-$pass = '';
-$charset = 'utf8mb4';
-
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
-$options = [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION];
+$pass = 'AaynZNNKYegnXoInEgQefHggDxoRieEL';
 
 try {
-  $pdo = new PDO($dsn, $user, $pass, $options);
-} catch (\PDOException $e) {
-  die("Error de conexión: " . $e->getMessage());
+    $pdo = new PDO("mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4", $user, $pass);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("Error de conexión: " . $e->getMessage());
 }
-?>    
+?>
