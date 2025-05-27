@@ -1,4 +1,18 @@
-<?php session_start(); ?>
+<?php
+session_start();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nombre'], $_POST['precio'], $_POST['cantidad'])) {
+  $producto = [
+    'nombre' => $_POST['nombre'],
+    'precio' => floatval($_POST['precio']),
+    'cantidad' => intval($_POST['cantidad'])
+  ];
+
+  $_SESSION['carrito'][] = $producto;
+  header("Location: carrito.php");
+  exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -63,7 +77,7 @@
                 <input type='number' value='1' min='1' max='$stock' readonly />
                 <button onclick='cambiarCantidad(this, 1)'>+</button>
               </div>
-              <form method='POST' action='carrito.php'>
+              <form method='POST' action='Productos.php'>
                 <input type='hidden' name='nombre' value='$nombre' />
                 <input type='hidden' name='precio' value='$precio' />
                 <input type='hidden' name='cantidad' value='1' class='input-cantidad' />

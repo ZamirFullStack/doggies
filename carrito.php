@@ -1,11 +1,13 @@
 <?php
 session_start();
 
+// Verificar si el usuario ha iniciado sesión
 if (!isset($_SESSION['usuario'])) {
     header("Location: login.php");
     exit;
 }
 
+// Inicializar el carrito si no existe
 if (!isset($_SESSION['carrito'])) {
     $_SESSION['carrito'] = [];
 }
