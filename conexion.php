@@ -1,11 +1,12 @@
 <?php
-require __DIR__ . '/vendor/autoload.php';
+// Solo intentar cargar .env en desarrollo (cuando esté en local)
+if (file_exists(__DIR__ . '/.env')) {
+    require __DIR__ . '/vendor/autoload.php';
+    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+    $dotenv->load();
+}
 
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-$dotenv->load();
-
-$url = $_ENV['DATABASE_URL'] ?? null;
-
+$url = getenv('DATABASE_URL');
 if ($url) {
     $dbparts = parse_url($url);
     $host = $dbparts["host"];
