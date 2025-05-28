@@ -2,11 +2,13 @@
 session_start();
 require 'conexion.php';
 
-$id_number = trim($_POST['id_number']);
+// Usar email en lugar de id_number
+$email = trim($_POST['email']);
 $password = $_POST['password'];
 
-$stmt = $pdo->prepare("SELECT * FROM usuario WHERE Documento = :doc");
-$stmt->execute(['doc' => $id_number]);
+// Consultar por correo electrónico
+$stmt = $pdo->prepare("SELECT * FROM usuario WHERE Correo = :correo");
+$stmt->execute(['correo' => $email]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if ($user && password_verify($password, $user['Contrasena'])) {
@@ -53,7 +55,7 @@ if ($user && password_verify($password, $user['Contrasena'])) {
     <body>
 
       <div class="error-container">
-        <h2>❌ Documento o contraseña incorrectos.</h2>
+        <h2>❌ Correo o contraseña incorrectos.</h2>
         <p>Verifica tus credenciales e intenta nuevamente.</p>
         <a href="login.php">Volver al inicio de sesión</a>
       </div>

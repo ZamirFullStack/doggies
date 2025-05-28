@@ -7,11 +7,37 @@
   <link rel="stylesheet" href="css/Login.css" />
   <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-        integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <?php
+  $url = 'mysql://root:AaynZNNKYegnXoInEgQefHggDxoRieEL@centerbeam.proxy.rlwy.net:58462/railway';
+  $dbparts = parse_url($url);
+  $host = $dbparts["host"];
+  $port = $dbparts["port"];
+  $user = $dbparts["user"];
+  $pass = $dbparts["pass"];
+  $db   = ltrim($dbparts["path"], '/');
+
+  try {
+    $pdo = new PDO("mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4", $user, $pass);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+  } catch (PDOException $e) {
+    die("Error de conexión: " . $e->getMessage());
+  }
+
+  function obtenerValoresEnum(PDO $pdo, string $tabla, string $columna): array {
+    $stmt = $pdo->query("SHOW COLUMNS FROM `$tabla` LIKE '$columna'");
+    $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($fila && preg_match("/^enum\((.*)\)\$/", $fila['Type'], $matches)) {
+        return str_getcsv($matches[1], ',', "'");
+    }
+    return [];
+  }
+
+  $tiposDocumento = obtenerValoresEnum($pdo, 'usuario', 'Tipo_Documento');
+  ?>
 </head>
 <body class="login-page">
 
-  <!-- HEADER -->
   <header>
     <nav>
       <ul class="menu">
@@ -22,52 +48,32 @@
     </nav>
   </header>
 
-  <!-- FORMULARIO REGISTRO -->
   <main>
     <section class="auth-container">
       <h2>Crear Cuenta</h2>
       <form action="register_action.php" method="POST">
         <div class="input-group">
           <i class="fas fa-user"></i>
-          <input
-            type="text"
-            id="reg-name"
-            name="name"
-            placeholder="Nombres"
-            required
-          />
-        </div>
-        <div class="input-group">
-          <i class="fas fa-id-card"></i>
-          <input
-            type="number"
-            id="reg-id"
-            name="id_number"
-            placeholder="No. Identificación"
-            required
-            inputmode="numeric"
-            pattern="\d*"
-            min="0"
-          />
+          <input type="text" id="reg-name" name="name" placeholder="Nombres" required />
         </div>
         <div class="input-group">
           <i class="fas fa-envelope"></i>
-          <input
-            type="email"
-            id="reg-email"
-            name="email"
-            placeholder="Correo Electrónico"
-            required
-          />
+          <input type="email" id="reg-email" name="email" placeholder="Correo Electrónico" required />
+        </div>
+          <div class="input-group">
+          <select name="tipo_documento" required>
+            <option value="">Tipo de Documento</option>
+            <?php foreach ($tiposDocumento as $tipo): ?>
+              <option value="<?= htmlspecialchars($tipo) ?>"><?= htmlspecialchars($tipo) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div class="input-group">
+          <i class="fas fa-id-card"></i>
+          <input type="number" id="reg-id" name="id_number" placeholder="No. Identificación" required min="0" />
         </div>
         <div class="input-group password-group">
-          <input
-            type="password"
-            id="reg-password"
-            name="password"
-            placeholder="Contraseña"
-            required
-          />
+          <input type="password" id="reg-password" name="password" placeholder="Contraseña" required />
           <span class="toggle-password" data-target="reg-password">
             <i class="fas fa-eye"></i>
           </span>
@@ -78,7 +84,6 @@
     </section>
   </main>
 
-  <!-- FOOTER -->
   <footer>
     <div class="footer-content">
       <h3>Síguenos</h3>

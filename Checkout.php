@@ -9,22 +9,31 @@ if (empty($_SESSION['carrito'])) {
 $carrito = $_SESSION['carrito'];
 $total = 0;
 
-require_once 'conexion.php';
+$url = 'mysql://root:AaynZNNKYegnXoInEgQefHggDxoRieEL@centerbeam.proxy.rlwy.net:58462/railway';
+$dbparts = parse_url($url);
+$host = $dbparts["host"];
+$port = $dbparts["port"];
+$user = $dbparts["user"];
+$pass = $dbparts["pass"];
+$db   = ltrim($dbparts["path"], '/');
 
-function obtenerValoresEnum($conexion, $tabla, $columna) {
-    $sql = "SHOW COLUMNS FROM `$tabla` LIKE '$columna'";
-    $resultado = mysqli_query($conexion, $sql);
-    if ($resultado) {
-        $fila = mysqli_fetch_assoc($resultado);
-        if (preg_match("/^enum\((.*)\)\$/", $fila['Type'], $matches)) {
-            $valores = str_getcsv($matches[1], ',', "'");
-            return $valores;
-        }
+try {
+    $pdo = new PDO("mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4", $user, $pass);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("❌ Error de conexión: " . $e->getMessage());
+}
+
+function obtenerValoresEnum(PDO $pdo, string $tabla, string $columna): array {
+    $stmt = $pdo->query("SHOW COLUMNS FROM `$tabla` LIKE '$columna'");
+    $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($fila && preg_match("/^enum\((.*)\)\$/", $fila['Type'], $matches)) {
+        return str_getcsv($matches[1], ',', "'");
     }
     return [];
 }
 
-$tiposDocumento = obtenerValoresEnum($conexion, 'usuario', 'Tipo_Documento');
+$tiposDocumento = obtenerValoresEnum($pdo, 'usuario', 'Tipo_Documento');
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -240,37 +249,30 @@ $tiposDocumento = obtenerValoresEnum($conexion, 'usuario', 'Tipo_Documento');
 
     <div class="summary-box">
       <h3>3. Resumen del pedido</h3>
-      <table>
+      <table id="resumen-pedido">
         <thead>
           <tr><th>Producto</th><th>Cantidad</th><th>Precio</th><th>Subtotal</th></tr>
         </thead>
         <tbody>
-          <?php foreach ($carrito as $producto): 
-            $img = !empty($producto['imagen']) ? htmlspecialchars($producto['imagen']) : 'img/Productos/default.jpg';
-            $subtotal = $producto['precio'] * $producto['cantidad'];
-            $total += $subtotal;
-          ?>
+          <?php foreach ($carrito as $index => $producto): 
+            $stmt = $pdo->prepare("SELECT Imagen_URL FROM producto WHERE Nombre = ?");
+            $stmt->execute([$producto['nombre']]);
+            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+            $imgRuta = $fila ? $fila['Imagen_URL'] : 'img/Productos/default.jpg';
+            ?>
           <tr>
             <td class="product-summary">
-              <img src="<?= $img ?>" alt="<?= htmlspecialchars($producto['nombre']) ?>">
+              <img src="<?= htmlspecialchars($imgRuta) ?>" alt="<?= htmlspecialchars($producto['nombre']) ?>">
               <span><?= htmlspecialchars($producto['nombre']) ?></span>
             </td>
-            <td><?= $producto['cantidad'] ?></td>
+            <td><input type="number" class="cantidad" value="<?= $producto['cantidad'] ?>" min="1" max="25" data-precio="<?= $producto['precio'] ?>"></td>
             <td>$<?= number_format($producto['precio'], 0, ',', '.') ?></td>
-            <td>$<?= number_format($subtotal, 0, ',', '.') ?></td>
+            <td class="subtotal">$<?= number_format($producto['precio'] * $producto['cantidad'], 0, ',', '.') ?></td>
           </tr>
           <?php endforeach; ?>
         </tbody>
-        <?php
-          $iva = $total * 0.05;
-          $envio = 10000;
-          $totalConTodo = $total + $iva + $envio;
-        ?>
-        <tfoot>
-          <tr><td colspan="3">Subtotal (sin IVA):</td><td>$<?= number_format($total, 0, ',', '.') ?></td></tr>
-          <tr><td colspan="3">IVA (5%):</td><td>$<?= number_format($iva, 0, ',', '.') ?></td></tr>
-          <tr><td colspan="3">Envío:</td><td>$<?= number_format($envio, 0, ',', '.') ?></td></tr>
-          <tr><td colspan="3"><strong>Total de tu compra:</strong></td><td><strong>$<?= number_format($totalConTodo, 0, ',', '.') ?></strong></td></tr>
+        <tfoot id="totales">
+          <!-- Totales se actualizarán por JavaScript -->
         </tfoot>
       </table>
     </div>
@@ -287,5 +289,36 @@ $tiposDocumento = obtenerValoresEnum($conexion, 'usuario', 'Tipo_Documento');
       </div>
     </div>
   </footer>
+  <script>
+    document.querySelectorAll('.cantidad').forEach(input => {
+      input.addEventListener('input', actualizarResumen);
+    });
+
+    function actualizarResumen() {
+      let total = 0;
+      const rows = document.querySelectorAll('#resumen-pedido tbody tr');
+      rows.forEach(row => {
+        const cantidadInput = row.querySelector('.cantidad');
+        const precio = parseFloat(cantidadInput.dataset.precio);
+        const cantidad = parseInt(cantidadInput.value);
+        const subtotal = precio * cantidad;
+        row.querySelector('.subtotal').textContent = '$' + subtotal.toLocaleString('es-CO');
+        total += subtotal;
+      });
+
+      const iva = total * 0.05;
+      const envio = 10000;
+      const totalConTodo = total + iva + envio;
+
+      document.getElementById('totales').innerHTML = `
+        <tr><td colspan="3">Subtotal (sin IVA):</td><td>$${total.toLocaleString('es-CO')}</td></tr>
+        <tr><td colspan="3">IVA (5%):</td><td>$${iva.toLocaleString('es-CO')}</td></tr>
+        <tr><td colspan="3">Envío:</td><td>$${envio.toLocaleString('es-CO')}</td></tr>
+        <tr><td colspan="3"><strong>Total de tu compra:</strong></td><td><strong>$${totalConTodo.toLocaleString('es-CO')}</strong></td></tr>
+      `;
+    }
+
+    actualizarResumen();
+  </script>
 </body>
 </html>

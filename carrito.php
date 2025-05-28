@@ -8,8 +8,22 @@ if (!isset($_SESSION['carrito'])) {
 
 $carrito = $_SESSION['carrito'];
 $total = 0;
-?>
 
+$url = 'mysql://root:AaynZNNKYegnXoInEgQefHggDxoRieEL@centerbeam.proxy.rlwy.net:58462/railway';
+$dbparts = parse_url($url);
+$host = $dbparts["host"];
+$port = $dbparts["port"];
+$user = $dbparts["user"];
+$pass = $dbparts["pass"];
+$db   = ltrim($dbparts["path"], '/');
+
+try {
+    $pdo = new PDO("mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4", $user, $pass);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("\u274c Error de conexi\u00f3n: " . $e->getMessage());
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -26,6 +40,16 @@ $total = 0;
     }
     main {
       flex: 1;
+    }
+    .carrito-img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      margin-right: 0.5rem;
+    }
+    .producto-detalle {
+      display: flex;
+      align-items: center;
     }
   </style>
 </head>
@@ -57,11 +81,21 @@ $total = 0;
         </thead>
         <tbody>
           <?php foreach ($carrito as $index => $producto): 
+            $stmt = $pdo->prepare("SELECT Imagen_URL FROM producto WHERE Nombre = ?");
+            $stmt->execute([$producto['nombre']]);
+            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+            $imgRuta = $fila ? $fila['Imagen_URL'] : 'img/Productos/default.jpg';
+
             $subtotal = $producto['precio'] * $producto['cantidad'];
             $total += $subtotal;
           ?>
             <tr>
-              <td><?= htmlspecialchars($producto['nombre']) ?></td>
+              <td>
+                <div class="producto-detalle">
+                  <img src="<?= htmlspecialchars($imgRuta) ?>" alt="<?= htmlspecialchars($producto['nombre']) ?>" class="carrito-img">
+                  <?= htmlspecialchars($producto['nombre']) ?>
+                </div>
+              </td>
               <td>$<?= number_format($producto['precio'], 0, ',', '.') ?></td>
               <td><?= $producto['cantidad'] ?></td>
               <td>$<?= number_format($subtotal, 0, ',', '.') ?></td>

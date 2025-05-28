@@ -5,11 +5,15 @@ if (!isset($_SESSION['carrito'])) {
   $_SESSION['carrito'] = [];
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nombre'], $_POST['precio'], $_POST['cantidad'])) {
+if (
+  $_SERVER['REQUEST_METHOD'] === 'POST' &&
+  isset($_POST['nombre'], $_POST['precio'], $_POST['cantidad'], $_POST['imagen'])
+) {
   $producto = [
     'nombre' => $_POST['nombre'],
     'precio' => floatval($_POST['precio']),
-    'cantidad' => intval($_POST['cantidad'])
+    'cantidad' => intval($_POST['cantidad']),
+    'imagen' => $_POST['imagen']
   ];
 
   $_SESSION['carrito'][] = $producto;
@@ -85,6 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nombre'], $_POST['pre
                 <input type='hidden' name='nombre' value='$nombre' />
                 <input type='hidden' name='precio' value='$precio' />
                 <input type='hidden' name='cantidad' value='1' class='input-cantidad' />
+                <input type='hidden' name='imagen' value='$imagen' />
                 <button type='submit' class='btn-comprar'>Comprar</button>
               </form>";
           } else {

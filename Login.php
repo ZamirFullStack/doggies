@@ -26,15 +26,12 @@
       <h2>Iniciar Sesión</h2>
       <form action="login_action.php" method="POST">
         <div class="input-group">
-          <i class="fas fa-id-card"></i>
+          <i class="fas fa-envelope"></i>
           <input
-            type="number"
-            name="id_number"
-            placeholder="No. Identificación"
+            type="email"
+            name="email"
+            placeholder="Correo Electrónico"
             required
-            inputmode="numeric"
-            pattern="\d*"
-            min="0"
           />
         </div>
         <div class="input-group password-group">

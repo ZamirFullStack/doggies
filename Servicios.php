@@ -7,6 +7,81 @@
   <link rel="stylesheet" href="css/Login.css" />
   <link rel="stylesheet" href="css/servicios.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    /* Estilos mejorados para el formulario */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background-color: #fefefe;
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 500px;
+      position: relative;
+    }
+
+    .close {
+      color: #aaa;
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .modal-form h2 {
+      margin-top: 0;
+    }
+
+    .modal-form label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    .modal-form input,
+    .modal-form select,
+    .modal-form textarea {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+
+    .modal-form textarea {
+      resize: vertical;
+    }
+
+    .auth-btn {
+      margin-top: 15px;
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .auth-btn:hover {
+      background-color: #45a049;
+    }
+  </style>
 </head>
 <body class="login-page">
   <header>
@@ -73,6 +148,7 @@
     </div>
   </footer>
 
+  <!-- Modal de Reserva -->
   <div id="modalReserva" class="modal">
     <div class="modal-content">
       <span class="close" onclick="cerrarModal()">&times;</span>
@@ -131,20 +207,6 @@
       const raza = document.getElementById('raza').value;
       const edad = document.getElementById('edad').value;
       const observaciones = document.getElementById('observaciones').value;
-      let mensaje = `Hola, quiero reservar el servicio de ${servicio}%0A` +
-                    `Nombre: ${nombre}%0ATeléfono: ${telefono}%0AMascota: ${mascota}%0ARaza: ${raza}%0AEdad: ${edad}`;
-      if (servicio === 'guarderia') {
-        mensaje += `%0AEntrada: ${document.getElementById('fecha_entrada').value}`;
-        mensaje += `%0ASalida: ${document.getElementById('fecha_salida').value}`;
-      } else if (servicio === 'peluqueria') {
-        mensaje += `%0ANudos: ${document.getElementById('tiene_nudos').value}`;
-        mensaje += `%0APelo largo: ${document.getElementById('pelo_largo').value}`;
-      } else if (servicio === 'paseo') {
-        mensaje += `%0ACantidad de perros: ${document.getElementById('cantidad_perros').value}`;
-      }
-      mensaje += `%0AObservaciones: ${observaciones}`;
-      window.open(`https://wa.me/573216734085?text=${mensaje}`, '_blank');
-    });
-  </script>
-</body>
-</html>
+      let
+::contentReference[oaicite:16]{index=16}
+ 
