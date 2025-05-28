@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
   <meta charset="UTF-8">
   <title>Editar Usuario</title>
-  <link rel="stylesheet" href="css/login.css" />
+  <link rel="stylesheet" href="css/Login.css" />
 </head>
 <body class="login-page">
   <header>
@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <div class="social-links">
         <a href="https://facebook.com/" target="_blank">Facebook</a>
         <a href="https://instagram.com/" target="_blank">Instagram</a>
-        <a href="mailto:doggies@example.com">Email</a>
+        <a href="mailto:doggiespasto@gmail.com">Email</a>
       </div>
     </div>
   </footer>

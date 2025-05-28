@@ -13,7 +13,7 @@ try {
     $stmt->bindParam(':id', $id, PDO::PARAM_INT);
     $stmt->execute();
 
-    echo "<script>alert('Producto eliminado correctamente.'); window.location.href='productos.php';</script>";
+    echo "<script>alert('Producto eliminado correctamente.'); window.location.href='Productos.php';</script>";
     exit;
 } catch (PDOException $e) {
     echo "Error al eliminar el producto: " . $e->getMessage();

@@ -1,6 +1,10 @@
 <?php
 session_start();
 
+if (!isset($_SESSION['carrito'])) {
+  $_SESSION['carrito'] = [];
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nombre'], $_POST['precio'], $_POST['cantidad'])) {
   $producto = [
     'nombre' => $_POST['nombre'],
@@ -77,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nombre'], $_POST['pre
                 <input type='number' value='1' min='1' max='$stock' readonly />
                 <button onclick='cambiarCantidad(this, 1)'>+</button>
               </div>
-              <form method='POST' action='Productos.php'>
+              <form method='POST'>
                 <input type='hidden' name='nombre' value='$nombre' />
                 <input type='hidden' name='precio' value='$precio' />
                 <input type='hidden' name='cantidad' value='1' class='input-cantidad' />
@@ -87,9 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nombre'], $_POST['pre
             echo "<p class='agotado'>Agotado</p>";
           }
 
-          echo "
-            </div>
-          </div>";
+          echo "</div></div>";
         }
         ?>
       </div>
