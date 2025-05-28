@@ -17,8 +17,100 @@ $total = 0;
   <title>Finalizar Compra - Doggies</title>
   <link rel="stylesheet" href="css/Login.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-  <style>
-    /* Estilos omitidos por brevedad */
+<style>
+    body {
+      background-color: #f5f5f5;
+      font-family: 'Roboto', sans-serif;
+    }
+    .checkout-container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 2rem;
+    }
+    .checkout-form, .summary-box {
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .input-group {
+      margin-bottom: 1rem;
+    }
+    .input-group label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: .3rem;
+    }
+    .input-group input, .input-group select, .input-group textarea {
+      width: 100%;
+      padding: .5rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .checkboxes label {
+      display: flex;
+      align-items: center;
+      margin-bottom: .5rem;
+    }
+    .checkboxes input {
+      margin-right: .5rem;
+    }
+    .summary-box table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .summary-box th, .summary-box td {
+      text-align: left;
+      padding: .5rem;
+    }
+    .product-summary {
+      display: flex;
+      align-items: center;
+    }
+    .product-summary img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      margin-right: 1rem;
+    }
+    .btn-primary {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 1rem;
+      width: 100%;
+      font-size: 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    footer {
+      background-color: rgba(51,51,51,0.95);
+      color: #fff;
+      text-align: center;
+      padding: 1.5em 2em;
+      width: 100%;
+      margin-top: auto;
+      position: relative;
+    }
+    .footer-content h3 {
+      font-size: 1.4em;
+      margin-bottom: 0.5em;
+    }
+    .social-links {
+      display: flex;
+      justify-content: center;
+      gap: 1em;
+    }
+    .social-links a {
+      color: #fff;
+      font-size: 1.5rem;
+      transition: color 0.3s ease;
+    }
+    .social-links a:hover {
+      color: #ffd700;
+    }
   </style>
   <script>
     let departamentosData = [];
