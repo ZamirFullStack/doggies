@@ -13,10 +13,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $descripcion = trim($_POST['descripcion']);
     $precio = (float)$_POST['precio'];
     $edad = $_POST['edad'];
-    $imagen = $_POST['imagen']; // Aquí se puede mejorar para subir imagen real
+    $imagen = $_POST['imagen'];
+    $stock = intval($_POST['stock']);
 
-    $stmt = $pdo->prepare("INSERT INTO producto (nombre, descripcion, precio, edad, imagen_URL) VALUES (?, ?, ?, ?, ?)");
-    $stmt->execute([$nombre, $descripcion, $precio, $edad, $imagen]);
+    $stmt = $pdo->prepare("INSERT INTO producto (nombre, descripcion, precio, edad, imagen_URL, stock) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$nombre, $descripcion, $precio, $edad, $imagen, $stock]);
 
     header("Location: admin.php");
     exit;
@@ -54,6 +55,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         <div class="input-group">
           <input type="number" name="precio" step="0.01" placeholder="Precio" required>
+        </div>
+        <div class="input-group">
+          <input type="number" name="stock" placeholder="Cantidad en stock" required>
         </div>
         <div class="input-group">
           <select name="edad" required>
