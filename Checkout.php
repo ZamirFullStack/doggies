@@ -35,11 +35,6 @@ $total = 0;
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
-    .checkout-form h3, .summary-box h3 {
-      margin-bottom: 1rem;
-      border-bottom: 1px solid #ccc;
-      padding-bottom: .5rem;
-    }
     .input-group {
       margin-bottom: 1rem;
     }
@@ -68,10 +63,17 @@ $total = 0;
     }
     .summary-box th, .summary-box td {
       text-align: left;
-      padding: .5rem 0;
+      padding: .5rem;
     }
-    .summary-box tfoot tr td {
-      font-weight: bold;
+    .product-summary {
+      display: flex;
+      align-items: center;
+    }
+    .product-summary img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      margin-right: 1rem;
     }
     .btn-primary {
       background: #28a745;
@@ -83,15 +85,41 @@ $total = 0;
       border-radius: 5px;
       cursor: pointer;
     }
-    .product-image {
-      width: 50px;
-      height: 50px;
-      object-fit: cover;
-    }
-    .quantity-input {
-      width: 60px;
-    }
   </style>
+  <script>
+    let departamentosData = {};
+
+    async function cargarDepartamentos() {
+      const response = await fetch('departamentos.json');
+      departamentosData = await response.json();
+      const departamentoSelect = document.getElementById('departamento');
+      for (const departamento in departamentosData) {
+        const option = document.createElement('option');
+        option.value = departamento;
+        option.textContent = departamento;
+        departamentoSelect.appendChild(option);
+      }
+    }
+
+    function actualizarCiudades() {
+      const departamento = document.getElementById('departamento').value;
+      const ciudadSelect = document.getElementById('ciudad');
+      ciudadSelect.innerHTML = '';
+      if (departamentosData[departamento]) {
+        departamentosData[departamento].forEach(ciudad => {
+          const option = document.createElement('option');
+          option.value = ciudad;
+          option.textContent = ciudad;
+          ciudadSelect.appendChild(option);
+        });
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      cargarDepartamentos();
+      document.getElementById('departamento').addEventListener('change', actualizarCiudades);
+    });
+  </script>
 </head>
 <body class="login-page">
   <header>
@@ -106,7 +134,59 @@ $total = 0;
 
   <div class="checkout-container">
     <form class="checkout-form" method="POST" action="pagar_carrito.php">
-      <!-- Datos del cliente omitidos para brevedad -->
+      <h3>1. Dirección de envío</h3>
+      <div class="input-group">
+        <label for="email">Correo electrónico</label>
+        <input type="email" name="email" required />
+      </div>
+      <div class="input-group">
+        <label for="departamento">Departamento</label>
+        <select name="departamento" id="departamento" required></select>
+      </div>
+      <div class="input-group">
+        <label for="ciudad">Ciudad</label>
+        <select name="ciudad" id="ciudad" required></select>
+      </div>
+      <div class="input-group">
+        <label for="direccion">Dirección exacta</label>
+        <input type="text" name="direccion" required />
+      </div>
+      <div class="input-group">
+        <label for="barrio">Barrio</label>
+        <input type="text" name="barrio" required />
+      </div>
+
+      <h3>2. Datos personales</h3>
+      <div class="input-group">
+        <label>Nombre</label>
+        <input type="text" name="nombre" required />
+      </div>
+      <div class="input-group">
+        <label>Apellidos</label>
+        <input type="text" name="apellidos" required />
+      </div>
+      <div class="input-group">
+        <label>Tipo de documento</label>
+        <select name="tipo_documento" required>
+          <option value="">Seleccione</option>
+          <option value="CC">C.C.</option>
+          <option value="TI">T.I.</option>
+          <option value="CE">C.E.</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Número de documento</label>
+        <input type="text" name="numero_documento" required />
+      </div>
+      <div class="input-group">
+        <label>Teléfono</label>
+        <input type="text" name="telefono" required />
+      </div>
+
+      <div class="checkboxes">
+        <label><input type="checkbox" name="info" /> Deseo recibir información relevante</label>
+        <label><input type="checkbox" name="terminos" required /> Acepto los términos y condiciones</label>
+      </div>
       <button type="submit" class="btn-primary">Realizar pedido</button>
     </form>
 
@@ -114,37 +194,35 @@ $total = 0;
       <h3>3. Resumen del pedido</h3>
       <table>
         <thead>
-          <tr>
-            <th>Producto</th>
-            <th>Imagen</th>
-            <th>Cantidad</th>
-            <th>Precio</th>
-            <th>Subtotal</th>
-          </tr>
+          <tr><th>Producto</th><th>Cantidad</th><th>Precio</th><th>Subtotal</th></tr>
         </thead>
         <tbody>
           <?php foreach ($carrito as $producto): 
-            $nombre = htmlspecialchars($producto['nombre'] ?? '');
-            $precio = floatval($producto['precio'] ?? 0);
-            $cantidad = intval($producto['cantidad'] ?? 1);
-            $imagen = htmlspecialchars($producto['imagen'] ?? 'img/default.jpg');
-            $subtotal = $precio * $cantidad;
+            $img = !empty($producto['imagen']) ? htmlspecialchars($producto['imagen']) : 'img/default.jpg';
+            $subtotal = $producto['precio'] * $producto['cantidad'];
             $total += $subtotal;
           ?>
-            <tr>
-              <td><?= $nombre ?></td>
-              <td><img src="<?= $imagen ?>" alt="<?= $nombre ?>" class="product-image" /></td>
-              <td><input type="number" name="cantidades[]" value="<?= $cantidad ?>" min="1" class="quantity-input" /></td>
-              <td>$<?= number_format($precio, 0, ',', '.') ?></td>
-              <td>$<?= number_format($subtotal, 0, ',', '.') ?></td>
-            </tr>
+          <tr>
+            <td class="product-summary">
+              <img src="<?= $img ?>" alt="<?= htmlspecialchars($producto['nombre']) ?>">
+              <?= htmlspecialchars($producto['nombre']) ?>
+            </td>
+            <td><?= $producto['cantidad'] ?></td>
+            <td>$<?= number_format($producto['precio'], 0, ',', '.') ?></td>
+            <td>$<?= number_format($subtotal, 0, ',', '.') ?></td>
+          </tr>
           <?php endforeach; ?>
         </tbody>
+        <?php
+          $iva = $total * 0.05;
+          $envio = 10000; // Puedes calcularlo en base a ciudad más adelante
+          $totalConTodo = $total + $iva + $envio;
+        ?>
         <tfoot>
-          <tr>
-            <td colspan="4" style="text-align:right;"><strong>Total:</strong></td>
-            <td><strong>$<?= number_format($total, 0, ',', '.') ?></strong></td>
-          </tr>
+          <tr><td colspan="3">Subtotal (sin IVA):</td><td>$<?= number_format($total, 0, ',', '.') ?></td></tr>
+          <tr><td colspan="3">IVA (5%):</td><td>$<?= number_format($iva, 0, ',', '.') ?></td></tr>
+          <tr><td colspan="3">Envío:</td><td>$<?= number_format($envio, 0, ',', '.') ?></td></tr>
+          <tr><td colspan="3"><strong>Total de tu compra:</strong></td><td><strong>$<?= number_format($totalConTodo, 0, ',', '.') ?></strong></td></tr>
         </tfoot>
       </table>
     </div>
