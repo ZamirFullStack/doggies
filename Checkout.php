@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once 'conexion.php'; // Asegúrate de que este archivo contiene la conexión a la base de datos
 
 if (empty($_SESSION['carrito'])) {
     echo "<h3>Tu carrito está vacío.</h3>";
@@ -8,8 +9,17 @@ if (empty($_SESSION['carrito'])) {
 
 $carrito = $_SESSION['carrito'];
 $total = 0;
-?>
 
+// Obtener los valores del ENUM Tipo_Documento desde la base de datos
+$enum_query = $conexion->query("SHOW COLUMNS FROM usuario WHERE Field = 'Tipo_Documento'");
+$enum_row = $enum_query->fetch_assoc();
+preg_match("/^enum\((.*)\)$/", $enum_row['Type'], $matches);
+$enum_values = [];
+foreach (explode(",", $matches[1]) as $value) {
+    $v = trim($value, "'");
+    $enum_values[] = $v;
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -19,114 +29,22 @@ $total = 0;
   <link rel="stylesheet" href="css/Login.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <style>
-    body {
-      background-color: #f5f5f5;
-      font-family: 'Roboto', sans-serif;
-    }
-    .checkout-container {
-      max-width: 1200px;
-      margin: 2rem auto;
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 2rem;
-    }
-    .checkout-form, .summary-box {
-      background: white;
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
-    .input-group {
-      margin-bottom: 1rem;
-    }
-    .input-group label {
-      font-weight: bold;
-      display: block;
-      margin-bottom: .3rem;
-    }
-    .input-group input, .input-group select, .input-group textarea {
-      width: 100%;
-      padding: .5rem;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    .checkboxes label {
-      display: flex;
-      align-items: center;
-      margin-bottom: .5rem;
-    }
-    .checkboxes input {
-      margin-right: .5rem;
-    }
-    .summary-box table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    .summary-box th, .summary-box td {
-      text-align: left;
-      padding: .5rem;
-    }
-    .product-summary {
-      display: flex;
-      align-items: center;
-    }
-    .product-summary img {
-      width: 60px;
-      height: 60px;
-      object-fit: cover;
-      margin-right: 1rem;
-    }
-    .btn-primary {
-      background: #28a745;
-      color: white;
-      border: none;
-      padding: 1rem;
-      width: 100%;
-      font-size: 1rem;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    footer {
-      background-color: rgba(51,51,51,0.95);
-      color: #fff;
-      text-align: center;
-      padding: 1.5em 2em;
-      width: 100%;
-      margin-top: auto;
-      position: relative;
-    }
-    .footer-content h3 {
-      font-size: 1.4em;
-      margin-bottom: 0.5em;
-    }
-    .social-links {
-      display: flex;
-      justify-content: center;
-      gap: 1em;
-    }
-    .social-links a {
-      color: #fff;
-      font-size: 1.5rem;
-      transition: color 0.3s ease;
-    }
-    .social-links a:hover {
-      color: #ffd700;
-    }
+    /* ... (mantén tus estilos CSS existentes aquí) ... */
   </style>
   <script>
-    let departamentosData = {};
+    let departamentosData = [];
 
     async function cargarDepartamentos() {
       try {
-        const response = await fetch('departamentos.json');
+        const response = await fetch('colombia.min.json');
         departamentosData = await response.json();
         const departamentoSelect = document.getElementById('departamento');
-        for (const departamento in departamentosData) {
+        departamentosData.forEach(depto => {
           const option = document.createElement('option');
-          option.value = departamento;
-          option.textContent = departamento;
+          option.value = depto.departamento;
+          option.textContent = depto.departamento;
           departamentoSelect.appendChild(option);
-        }
+        });
       } catch (err) {
         console.error('Error cargando departamentos:', err);
       }
@@ -136,8 +54,9 @@ $total = 0;
       const departamento = document.getElementById('departamento').value;
       const ciudadSelect = document.getElementById('ciudad');
       ciudadSelect.innerHTML = '';
-      if (departamentosData[departamento]) {
-        departamentosData[departamento].forEach(ciudad => {
+      const depto = departamentosData.find(d => d.departamento === departamento);
+      if (depto) {
+        depto.ciudades.forEach(ciudad => {
           const option = document.createElement('option');
           option.value = ciudad;
           option.textContent = ciudad;
@@ -200,9 +119,9 @@ $total = 0;
         <label>Tipo de documento</label>
         <select name="tipo_documento" required>
           <option value="">Seleccione</option>
-          <option value="CC">C.C.</option>
-          <option value="TI">T.I.</option>
-          <option value="CE">C.E.</option>
+          <?php foreach ($enum_values as $tipo): ?>
+            <option value="<?= htmlspecialchars($tipo) ?>"><?= htmlspecialchars($tipo) ?></option>
+          <?php endforeach; ?>
         </select>
       </div>
       <div class="input-group">
@@ -260,15 +179,6 @@ $total = 0;
   </div>
 
   <footer>
-    <div class="footer-content">
-      <h3>Síguenos</h3>
-      <div class="social-links">
-        <a href="https://www.facebook.com/profile.php?id=100069951193254" target="_blank"><i class="fab fa-facebook-f"></i></a>
-        <a href="https://www.instagram.com/doggiespaseadores/" target="_blank"><i class="fab fa-instagram"></i></a>
-        <a href="https://www.tiktok.com/@doggies_paseadores" target="_blank"><i class="fab fa-tiktok"></i></a>
-        <a href="mailto:doggiespasto@gmail.com"><i class="fas fa-envelope"></i></a>
-      </div>
-    </div>
-  </footer>
-</body>
-</html>
+    <div
+::contentReference[oaicite:17]{index=17}
+ 
