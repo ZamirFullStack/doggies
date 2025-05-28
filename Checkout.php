@@ -125,15 +125,9 @@ $total = 0;
       }
     }
 
-    function actualizarResumen() {
-      // Aquí puedes implementar la lógica para actualizar el resumen del pedido
-      // según las cantidades y calcular subtotal, IVA, envío y total.
-    }
-
     document.addEventListener('DOMContentLoaded', () => {
       cargarDepartamentos();
       document.getElementById('departamento').addEventListener('change', actualizarCiudades);
-      // Agrega event listeners para actualizar el resumen cuando cambien las cantidades
     });
   </script>
 </head>
@@ -226,9 +220,32 @@ $total = 0;
             $subtotal = $producto['precio'] * $producto['cantidad'];
             $total += $subtotal;
           ?>
-            <tr>
-              <td><?= htmlspecialchars($producto['nombre']) ?></td>
-              <td><img src="<?= htmlspecialchars($producto['imagen']) ?>" alt="<?= htmlspecialchars($producto['nombre']) ?>" class="product-image" /></td>
-              <td><input type="number" name="cantidades[<?= $producto['id'] ?>]" value="<?= $producto['cantidad'] ?>" min="
-::contentReference[oaicite:37]{index=37}
- 
+          <tr>
+            <td><?= htmlspecialchars($producto['nombre']) ?></td>
+            <td><img src="<?= htmlspecialchars($producto['imagen']) ?>" alt="<?= htmlspecialchars($producto['nombre']) ?>" class="product-image" /></td>
+            <td><input type="number" name="cantidades[<?= $producto['id'] ?>]" value="<?= $producto['cantidad'] ?>" min="1" class="quantity-input" /></td>
+            <td>$<?= number_format($producto['precio'], 0, ',', '.') ?></td>
+            <td>$<?= number_format($subtotal, 0, ',', '.') ?></td>
+          </tr>
+          <?php endforeach; ?>
+        </tbody>
+        <tfoot>
+          <tr><td colspan="4">Total:</td><td>$<?= number_format($total, 0, ',', '.') ?></td></tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-content">
+      <h3>Síguenos</h3>
+      <div class="social-links">
+        <a href="https://www.facebook.com/profile.php?id=100069951193254" target="_blank"><i class="fab fa-facebook-f"></i></a>
+        <a href="https://www.instagram.com/doggiespaseadores/" target="_blank"><i class="fab fa-instagram"></i></a>
+        <a href="https://www.tiktok.com/@doggies_paseadores" target="_blank"><i class="fab fa-tiktok"></i></a>
+        <a href="mailto:doggiespasto@gmail.com"><i class="fas fa-envelope"></i></a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
