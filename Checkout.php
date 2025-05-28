@@ -1,10 +1,22 @@
+<?php
+session_start();
+
+if (empty($_SESSION['carrito'])) {
+    echo "<h3>Tu carrito está vacío.</h3>";
+    exit;
+}
+
+$carrito = $_SESSION['carrito'];
+$total = 0;
+?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Finalizar Compra - Doggies</title>
-  <link rel="stylesheet" href="css/Login.css" />
+  <link rel="stylesheet" href="css/Login.css">
   <style>
     body {
       background-color: #f5f5f5;
@@ -71,36 +83,40 @@
       border-radius: 5px;
       cursor: pointer;
     }
+    .product-image {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+    }
+    .quantity-input {
+      width: 60px;
+    }
   </style>
   <script>
-    let departamentosCiudades = [];
+    let departamentosData = {};
 
     async function cargarDepartamentos() {
       try {
         const response = await fetch('departamentos.json');
-        departamentosCiudades = await response.json();
-
-        const depSelect = document.getElementById('departamento');
-        depSelect.innerHTML = '<option value="">Seleccione un departamento</option>';
-        departamentosCiudades.forEach(dep => {
+        departamentosData = await response.json();
+        const departamentoSelect = document.getElementById('departamento');
+        for (const departamento in departamentosData) {
           const option = document.createElement('option');
-          option.value = dep.departamento;
-          option.textContent = dep.departamento;
-          depSelect.appendChild(option);
-        });
+          option.value = departamento;
+          option.textContent = departamento;
+          departamentoSelect.appendChild(option);
+        }
       } catch (error) {
         console.error('Error al cargar departamentos:', error);
       }
     }
 
     function actualizarCiudades() {
-      const dep = document.getElementById('departamento').value;
+      const departamento = document.getElementById('departamento').value;
       const ciudadSelect = document.getElementById('ciudad');
-      ciudadSelect.innerHTML = '<option value="">Seleccione una ciudad</option>';
-
-      const departamento = departamentosCiudades.find(d => d.departamento === dep);
-      if (departamento) {
-        departamento.ciudades.forEach(ciudad => {
+      ciudadSelect.innerHTML = '';
+      if (departamentosData[departamento]) {
+        departamentosData[departamento].forEach(ciudad => {
           const option = document.createElement('option');
           option.value = ciudad;
           option.textContent = ciudad;
@@ -109,7 +125,16 @@
       }
     }
 
-    document.addEventListener('DOMContentLoaded', cargarDepartamentos);
+    function actualizarResumen() {
+      // Aquí puedes implementar la lógica para actualizar el resumen del pedido
+      // según las cantidades y calcular subtotal, IVA, envío y total.
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      cargarDepartamentos();
+      document.getElementById('departamento').addEventListener('change', actualizarCiudades);
+      // Agrega event listeners para actualizar el resumen cuando cambien las cantidades
+    });
   </script>
 </head>
 <body class="login-page">
@@ -132,7 +157,9 @@
       </div>
       <div class="input-group">
         <label for="departamento">Departamento</label>
-        <select name="departamento" id="departamento" onchange="actualizarCiudades()" required></select>
+        <select name="departamento" id="departamento" required>
+          <option value="">Seleccione un departamento</option>
+        </select>
       </div>
       <div class="input-group">
         <label for="ciudad">Ciudad</label>
@@ -149,8 +176,26 @@
 
       <h3>2. Datos personales</h3>
       <div class="input-group">
-        <label for="nombre">Nombre completo</label>
+        <label for="nombre">Nombre</label>
         <input type="text" name="nombre" id="nombre" required />
+      </div>
+      <div class="input-group">
+        <label for="apellidos">Apellidos</label>
+        <input type="text" name="apellidos" id="apellidos" required />
+      </div>
+      <div class="input-group">
+        <label for="tipo_documento">Tipo de documento</label>
+        <select name="tipo_documento" id="tipo_documento" required>
+          <option value="">Seleccione un tipo</option>
+          <option value="CC">Cédula de ciudadanía</option>
+          <option value="TI">Tarjeta de identidad</option>
+          <option value="CE">Cédula de extranjería</option>
+          <option value="NIT">NIT</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label for="numero_documento">Número de documento</label>
+        <input type="text" name="numero_documento" id="numero_documento" required />
       </div>
       <div class="input-group">
         <label for="telefono">Teléfono</label>
@@ -165,28 +210,25 @@
     </form>
 
     <div class="summary-box">
-      <h3>4. Resumen del pedido</h3>
+      <h3>3. Resumen del pedido</h3>
       <table>
-        <tr><td>Subtotal (sin IVA):</td><td>$323.577</td></tr>
-        <tr><td>IVA incluido:</td><td>$16.179</td></tr>
-        <tr><td>Valor del envío:</td><td>$10.000</td></tr>
-        <tfoot>
-          <tr><td>Total de tu compra:</td><td><strong>$349.756</strong></td></tr>
-        </tfoot>
-      </table>
-    </div>
-  </div>
-
-  <footer>
-    <div class="footer-content">
-      <h3>Síguenos</h3>
-      <div class="social-links">
-        <a href="https://www.facebook.com/profile.php?id=100069951193254" target="_blank"><i class="fab fa-facebook-f"></i></a>
-        <a href="https://www.instagram.com/doggiespaseadores/" target="_blank"><i class="fab fa-instagram"></i></a>
-        <a href="https://www.tiktok.com/@doggies_paseadores" target="_blank"><i class="fab fa-tiktok"></i></a>
-        <a href="mailto:doggiespasto@gmail.com"><i class="fas fa-envelope"></i></a>
-      </div>
-    </div>
-  </footer>
-</body>
-</html>
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Imagen</th>
+            <th>Cantidad</th>
+            <th>Precio</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach ($carrito as $producto): 
+            $subtotal = $producto['precio'] * $producto['cantidad'];
+            $total += $subtotal;
+          ?>
+            <tr>
+              <td><?= htmlspecialchars($producto['nombre']) ?></td>
+              <td><img src="<?= htmlspecialchars($producto['imagen']) ?>" alt="<?= htmlspecialchars($producto['nombre']) ?>" class="product-image" /></td>
+              <td><input type="number" name="cantidades[<?= $producto['id'] ?>]" value="<?= $producto['cantidad'] ?>" min="
+::contentReference[oaicite:37]{index=37}
+ 
