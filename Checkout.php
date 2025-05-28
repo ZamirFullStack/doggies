@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Finalizar Compra - Doggies</title>
-  <link rel="stylesheet" href="css/Login.css">
+  <link rel="stylesheet" href="css/Login.css" />
   <style>
     body {
       background-color: #f5f5f5;
@@ -73,27 +73,43 @@
     }
   </style>
   <script>
-    const ciudadesPorDepartamento = {
-      "Amazonas": ["Leticia"],
-      "Antioquia": ["Medellín", "Bello", "Envigado"],
-      "Cundinamarca": ["Bogotá", "Soacha", "Chía"],
-      "Nariño": ["Pasto", "Ipiales", "Tumaco"],
-      // Agrega todos los demás departamentos y ciudades...
-    };
+    let departamentosCiudades = [];
+
+    async function cargarDepartamentos() {
+      try {
+        const response = await fetch('departamentos.json');
+        departamentosCiudades = await response.json();
+
+        const depSelect = document.getElementById('departamento');
+        depSelect.innerHTML = '<option value="">Seleccione un departamento</option>';
+        departamentosCiudades.forEach(dep => {
+          const option = document.createElement('option');
+          option.value = dep.departamento;
+          option.textContent = dep.departamento;
+          depSelect.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Error al cargar departamentos:', error);
+      }
+    }
 
     function actualizarCiudades() {
-      const dep = document.getElementById("departamento").value;
-      const ciudadSelect = document.getElementById("ciudad");
-      ciudadSelect.innerHTML = '';
-      if (ciudadesPorDepartamento[dep]) {
-        ciudadesPorDepartamento[dep].forEach(ciudad => {
-          const opt = document.createElement("option");
-          opt.value = ciudad;
-          opt.textContent = ciudad;
-          ciudadSelect.appendChild(opt);
+      const dep = document.getElementById('departamento').value;
+      const ciudadSelect = document.getElementById('ciudad');
+      ciudadSelect.innerHTML = '<option value="">Seleccione una ciudad</option>';
+
+      const departamento = departamentosCiudades.find(d => d.departamento === dep);
+      if (departamento) {
+        departamento.ciudades.forEach(ciudad => {
+          const option = document.createElement('option');
+          option.value = ciudad;
+          option.textContent = ciudad;
+          ciudadSelect.appendChild(option);
         });
       }
     }
+
+    document.addEventListener('DOMContentLoaded', cargarDepartamentos);
   </script>
 </head>
 <body class="login-page">
@@ -111,41 +127,34 @@
     <form class="checkout-form" method="POST" action="pagar_carrito.php">
       <h3>1. Dirección de envío</h3>
       <div class="input-group">
-        <label>Correo electrónico</label>
-        <input type="email" name="email" required />
+        <label for="email">Correo electrónico</label>
+        <input type="email" name="email" id="email" required />
       </div>
       <div class="input-group">
-        <label>Departamento</label>
-        <select name="departamento" id="departamento" onchange="actualizarCiudades()" required>
-          <option value="">Seleccione un departamento</option>
-          <option value="Amazonas">Amazonas</option>
-          <option value="Antioquia">Antioquia</option>
-          <option value="Cundinamarca">Cundinamarca</option>
-          <option value="Nariño">Nariño</option>
-          <!-- Agrega más opciones -->
-        </select>
+        <label for="departamento">Departamento</label>
+        <select name="departamento" id="departamento" onchange="actualizarCiudades()" required></select>
       </div>
       <div class="input-group">
-        <label>Ciudad</label>
+        <label for="ciudad">Ciudad</label>
         <select name="ciudad" id="ciudad" required></select>
       </div>
       <div class="input-group">
-        <label>Dirección exacta</label>
-        <input type="text" name="direccion" required />
+        <label for="direccion">Dirección exacta</label>
+        <input type="text" name="direccion" id="direccion" required />
       </div>
       <div class="input-group">
-        <label>Barrio</label>
-        <input type="text" name="barrio" required />
+        <label for="barrio">Barrio</label>
+        <input type="text" name="barrio" id="barrio" required />
       </div>
 
       <h3>2. Datos personales</h3>
       <div class="input-group">
-        <label>Nombre completo</label>
-        <input type="text" name="nombre" required />
+        <label for="nombre">Nombre completo</label>
+        <input type="text" name="nombre" id="nombre" required />
       </div>
       <div class="input-group">
-        <label>Teléfono</label>
-        <input type="text" name="telefono" required />
+        <label for="telefono">Teléfono</label>
+        <input type="text" name="telefono" id="telefono" required />
       </div>
 
       <div class="checkboxes">
