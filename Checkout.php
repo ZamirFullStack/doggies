@@ -1,106 +1,97 @@
-<?php
-session_start();
-
-// Verificar si el usuario ha iniciado sesión
-$usuario = $_SESSION['usuario'] ?? null;
-
-// Verificar si hay productos en el carrito
-if (empty($_SESSION['carrito'])) {
-    echo "<h3>Tu carrito está vacío.</h3>";
-    exit;
-}
-
-$carrito = $_SESSION['carrito'];
-$total = 0;
-$iva_porcentaje = 0.19; // 19% de IVA
-$envio = 10000; // Valor fijo de envío en COP
-?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Checkout - Doggies</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finalizar Compra - Doggies</title>
   <link rel="stylesheet" href="css/Login.css">
-  <link rel="stylesheet" href="css/carrito.css">
   <style>
+    body {
+      background-color: #f5f5f5;
+      font-family: 'Roboto', sans-serif;
+    }
     .checkout-container {
-      max-width: 1000px;
-      margin: auto;
-      padding: 1rem;
+      max-width: 1200px;
+      margin: 2rem auto;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 2rem;
     }
-    .checkout-form, .order-summary {
-      background: #f9f9f9;
-      padding: 1rem;
+    .checkout-form, .summary-box {
+      background: white;
+      padding: 2rem;
       border-radius: 10px;
-      margin-bottom: 2rem;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
-    .checkout-form .input-group {
+    .checkout-form h3, .summary-box h3 {
+      margin-bottom: 1rem;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: .5rem;
+    }
+    .input-group {
       margin-bottom: 1rem;
     }
-    .checkout-form label {
+    .input-group label {
+      font-weight: bold;
       display: block;
-      margin-bottom: 0.5rem;
+      margin-bottom: .3rem;
     }
-    .checkout-form input, .checkout-form select, .checkout-form textarea {
+    .input-group input, .input-group select, .input-group textarea {
       width: 100%;
-      padding: 0.5rem;
+      padding: .5rem;
       border: 1px solid #ccc;
       border-radius: 5px;
     }
-    .order-summary table {
+    .checkboxes label {
+      display: flex;
+      align-items: center;
+      margin-bottom: .5rem;
+    }
+    .checkboxes input {
+      margin-right: .5rem;
+    }
+    .summary-box table {
       width: 100%;
       border-collapse: collapse;
     }
-    .order-summary th, .order-summary td {
-      border: 1px solid #ccc;
-      padding: 0.5rem;
+    .summary-box th, .summary-box td {
       text-align: left;
+      padding: .5rem 0;
     }
-    .order-summary th {
-      background-color: #f0f0f0;
+    .summary-box tfoot tr td {
+      font-weight: bold;
     }
-    .boton-comprar {
-      display: inline-block;
-      padding: 0.75rem 1.5rem;
-      background-color: #007bff;
-      color: #fff;
-      text-decoration: none;
-      border-radius: 5px;
-      text-align: center;
+    .btn-primary {
+      background: #28a745;
+      color: white;
       border: none;
+      padding: 1rem;
+      width: 100%;
+      font-size: 1rem;
+      border-radius: 5px;
       cursor: pointer;
-    }
-    .login-prompt {
-      text-align: center;
-      margin-bottom: 1rem;
     }
   </style>
   <script>
-    // Datos de departamentos y ciudades
     const departamentos = {
       "Nariño": ["Pasto", "Ipiales", "Tumaco"],
-      "Cundinamarca": ["Bogotá", "Soacha", "Chía"],
-      "Antioquia": ["Medellín", "Envigado", "Bello"]
-      // Agrega más departamentos y ciudades según sea necesario
+      "Cundinamarca": ["Bogotá", "Soacha"],
+      "Antioquia": ["Medellín", "Bello"]
     };
-
     function actualizarCiudades() {
-      const deptoSelect = document.getElementById("departamento");
+      const dep = document.getElementById("departamento").value;
       const ciudadSelect = document.getElementById("ciudad");
-      const ciudades = departamentos[deptoSelect.value] || [];
-      ciudadSelect.innerHTML = "";
-      ciudades.forEach(ciudad => {
-        const option = document.createElement("option");
-        option.value = ciudad;
-        option.textContent = ciudad;
-        ciudadSelect.appendChild(option);
-      });
+      ciudadSelect.innerHTML = '';
+      if (departamentos[dep]) {
+        departamentos[dep].forEach(ciudad => {
+          const opt = document.createElement("option");
+          opt.value = ciudad;
+          opt.textContent = ciudad;
+          ciudadSelect.appendChild(opt);
+        });
+      }
     }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("departamento").addEventListener("change", actualizarCiudades);
-      actualizarCiudades();
-    });
+    document.addEventListener("DOMContentLoaded", actualizarCiudades);
   </script>
 </head>
 <body class="login-page">
@@ -114,110 +105,64 @@ $envio = 10000; // Valor fijo de envío en COP
     </nav>
   </header>
 
-  <main class="checkout-container">
-    <h2>Finalizar Compra</h2>
-
-    <?php if (!$usuario): ?>
-      <div class="login-prompt">
-        <p>¿Ya tienes una cuenta? <a href="login.php">Inicia sesión aquí</a></p>
+  <div class="checkout-container">
+    <form class="checkout-form" method="POST" action="pagar_carrito.php">
+      <h3>1. Dirección de envío</h3>
+      <div class="input-group">
+        <label>Correo electrónico</label>
+        <input type="email" name="email" required />
       </div>
-    <?php endif; ?>
+      <div class="input-group">
+        <label>Departamento</label>
+        <select name="departamento" id="departamento" onchange="actualizarCiudades()" required>
+          <option value="">Seleccione un departamento</option>
+          <option value="Nariño">Nariño</option>
+          <option value="Cundinamarca">Cundinamarca</option>
+          <option value="Antioquia">Antioquia</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Ciudad</label>
+        <select name="ciudad" id="ciudad" required></select>
+      </div>
+      <div class="input-group">
+        <label>Dirección exacta</label>
+        <input type="text" name="direccion" required />
+      </div>
+      <div class="input-group">
+        <label>Barrio</label>
+        <input type="text" name="barrio" required />
+      </div>
+      <h3>2. Método de envío</h3>
+      <div class="input-group">
+        <label>Envío estándar (2-5 días hábiles)</label>
+        <input type="text" value="$10.000 COP" readonly />
+      </div>
 
-    <div class="order-summary">
-      <h3>Resumen del Pedido</h3>
+      <h3>3. Método de pago</h3>
+      <div class="input-group">
+        <label><input type="radio" name="pago" value="mercado_pago" checked /> Tarjeta / PSE / Efecty</label>
+      </div>
+
+      <div class="checkboxes">
+        <label><input type="checkbox" name="info" /> Deseo recibir información relevante</label>
+        <label><input type="checkbox" name="terminos" required /> Acepto los términos y condiciones</label>
+      </div>
+      <button type="submit" class="btn-primary">Realizar pedido</button>
+    </form>
+
+    <div class="summary-box">
+      <h3>4. Resumen del pedido</h3>
       <table>
-        <thead>
-          <tr>
-            <th>Producto</th>
-            <th>Imagen</th>
-            <th>Precio</th>
-            <th>Cantidad</th>
-            <th>Subtotal</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php foreach ($carrito as $producto): 
-            $subtotal = $producto['precio'] * $producto['cantidad'];
-            $total += $subtotal;
-          ?>
-            <tr>
-              <td><?= htmlspecialchars($producto['nombre']) ?></td>
-              <td><img src="<?= htmlspecialchars($producto['imagen']) ?>" alt="<?= htmlspecialchars($producto['nombre']) ?>" width="50"></td>
-              <td>$<?= number_format($producto['precio'], 0, ',', '.') ?></td>
-              <td><?= $producto['cantidad'] ?></td>
-              <td>$<?= number_format($subtotal, 0, ',', '.') ?></td>
-            </tr>
-          <?php endforeach; ?>
-        </tbody>
+        <tr><td>Subtotal (sin IVA):</td><td>$323.577</td></tr>
+        <tr><td>IVA incluido:</td><td>$16.179</td></tr>
+        <tr><td>Valor del envío:</td><td>$10.000</td></tr>
         <tfoot>
-          <?php
-            $subtotal_sin_iva = $total / (1 + $iva_porcentaje);
-            $iva = $total - $subtotal_sin_iva;
-            $total_con_envio = $total + $envio;
-          ?>
-          <tr>
-            <th colspan="4" style="text-align: right;">Subtotal (sin IVA):</th>
-            <td>$<?= number_format($subtotal_sin_iva, 0, ',', '.') ?></td>
-          </tr>
-          <tr>
-            <th colspan="4" style="text-align: right;">IVA (19%):</th>
-            <td>$<?= number_format($iva, 0, ',', '.') ?></td>
-          </tr>
-          <tr>
-            <th colspan="4" style="text-align: right;">Envío:</th>
-            <td>$<?= number_format($envio, 0, ',', '.') ?></td>
-          </tr>
-          <tr>
-            <th colspan="4" style="text-align: right;">Total:</th>
-            <td><strong>$<?= number_format($total_con_envio, 0, ',', '.') ?></strong></td>
-          </tr>
+          <tr><td>Total de tu compra:</td><td><strong>$349.756</strong></td></tr>
         </tfoot>
       </table>
     </div>
-
-    <form class="checkout-form" method="POST" action="pagar_carrito.php">
-      <h3>Datos del Comprador</h3>
-      <div class="input-group">
-        <label for="nombre">Nombre completo</label>
-        <input type="text" name="nombre" id="nombre" required>
-      </div>
-      <div class="input-group">
-        <label for="correo">Correo electrónico</label>
-        <input type="email" name="correo" id="correo" required>
-      </div>
-      <div class="input-group">
-        <label for="departamento">Departamento</label>
-        <select name="departamento" id="departamento" required>
-          <?php foreach (array_keys($departamentos) as $depto): ?>
-            <option value="<?= $depto ?>"><?= $depto ?></option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-      <div class="input-group">
-        <label for="ciudad">Ciudad</label>
-        <select name="ciudad" id="ciudad" required>
-          <!-- Las opciones se llenan dinámicamente con JavaScript -->
-        </select>
-      </div>
-      <div class="input-group">
-        <label for="barrio">Barrio</label>
-        <input type="text" name="barrio" id="barrio" required>
-      </div>
-      <div class="input-group">
-        <label for="direccion">Dirección exacta</label>
-        <textarea name="direccion" id="direccion" required></textarea>
-      </div>
-      <div class="input-group">
-        <input type="checkbox" name="informacion" id="informacion">
-        <label for="informacion">Deseo recibir información relevante</label>
-      </div>
-      <div class="input-group">
-        <input type="checkbox" name="terminos" id="terminos" required>
-        <label for="terminos">Acepto los términos y condiciones</label>
-      </div>
-      <button type="submit" class="boton-comprar">Proceder al pago</button>
-    </form>
-  </main>
+  </div>
 
   <footer>
     <div class="footer-content">
