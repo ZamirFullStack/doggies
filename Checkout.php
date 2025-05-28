@@ -73,17 +73,20 @@
     }
   </style>
   <script>
-    const departamentos = {
+    const ciudadesPorDepartamento = {
+      "Amazonas": ["Leticia"],
+      "Antioquia": ["Medellín", "Bello", "Envigado"],
+      "Cundinamarca": ["Bogotá", "Soacha", "Chía"],
       "Nariño": ["Pasto", "Ipiales", "Tumaco"],
-      "Cundinamarca": ["Bogotá", "Soacha"],
-      "Antioquia": ["Medellín", "Bello"]
+      // Agrega todos los demás departamentos y ciudades...
     };
+
     function actualizarCiudades() {
       const dep = document.getElementById("departamento").value;
       const ciudadSelect = document.getElementById("ciudad");
       ciudadSelect.innerHTML = '';
-      if (departamentos[dep]) {
-        departamentos[dep].forEach(ciudad => {
+      if (ciudadesPorDepartamento[dep]) {
+        ciudadesPorDepartamento[dep].forEach(ciudad => {
           const opt = document.createElement("option");
           opt.value = ciudad;
           opt.textContent = ciudad;
@@ -91,10 +94,6 @@
         });
       }
     }
-    document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("departamento").addEventListener("change", actualizarCiudades);
-      actualizarCiudades();
-    });
   </script>
 </head>
 <body class="login-page">
@@ -117,11 +116,13 @@
       </div>
       <div class="input-group">
         <label>Departamento</label>
-        <select name="departamento" id="departamento" required>
+        <select name="departamento" id="departamento" onchange="actualizarCiudades()" required>
           <option value="">Seleccione un departamento</option>
-          <option value="Nariño">Nariño</option>
-          <option value="Cundinamarca">Cundinamarca</option>
+          <option value="Amazonas">Amazonas</option>
           <option value="Antioquia">Antioquia</option>
+          <option value="Cundinamarca">Cundinamarca</option>
+          <option value="Nariño">Nariño</option>
+          <!-- Agrega más opciones -->
         </select>
       </div>
       <div class="input-group">
@@ -135,6 +136,16 @@
       <div class="input-group">
         <label>Barrio</label>
         <input type="text" name="barrio" required />
+      </div>
+
+      <h3>2. Datos personales</h3>
+      <div class="input-group">
+        <label>Nombre completo</label>
+        <input type="text" name="nombre" required />
+      </div>
+      <div class="input-group">
+        <label>Teléfono</label>
+        <input type="text" name="telefono" required />
       </div>
 
       <div class="checkboxes">
