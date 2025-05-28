@@ -91,7 +91,10 @@
         });
       }
     }
-    document.addEventListener("DOMContentLoaded", actualizarCiudades);
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("departamento").addEventListener("change", actualizarCiudades);
+      actualizarCiudades();
+    });
   </script>
 </head>
 <body class="login-page">
@@ -114,7 +117,7 @@
       </div>
       <div class="input-group">
         <label>Departamento</label>
-        <select name="departamento" id="departamento" onchange="actualizarCiudades()" required>
+        <select name="departamento" id="departamento" required>
           <option value="">Seleccione un departamento</option>
           <option value="Nariño">Nariño</option>
           <option value="Cundinamarca">Cundinamarca</option>
@@ -132,16 +135,6 @@
       <div class="input-group">
         <label>Barrio</label>
         <input type="text" name="barrio" required />
-      </div>
-      <h3>2. Método de envío</h3>
-      <div class="input-group">
-        <label>Envío estándar (2-5 días hábiles)</label>
-        <input type="text" value="$10.000 COP" readonly />
-      </div>
-
-      <h3>3. Método de pago</h3>
-      <div class="input-group">
-        <label><input type="radio" name="pago" value="mercado_pago" checked /> Tarjeta / PSE / Efecty</label>
       </div>
 
       <div class="checkboxes">

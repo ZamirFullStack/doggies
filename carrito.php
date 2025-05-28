@@ -82,7 +82,7 @@ $total = 0;
         </tfoot>
       </table>
       <div class="resumen-footer">
-        <a href="checkout.php" class="boton-comprar">Finalizar compra</a>
+        <a href="Checkout.php" class="boton-comprar">Finalizar compra</a>
       </div>
     <?php endif; ?>
   </main>
