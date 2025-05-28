@@ -1,6 +1,5 @@
 <?php
 session_start();
-require_once 'conexion.php'; // Asegúrate de que este archivo contiene la conexión a la base de datos
 
 if (empty($_SESSION['carrito'])) {
     echo "<h3>Tu carrito está vacío.</h3>";
@@ -9,34 +8,24 @@ if (empty($_SESSION['carrito'])) {
 
 $carrito = $_SESSION['carrito'];
 $total = 0;
-
-// Obtener los valores del ENUM Tipo_Documento desde la base de datos
-$enum_query = $conexion->query("SHOW COLUMNS FROM usuario WHERE Field = 'Tipo_Documento'");
-$enum_row = $enum_query->fetch_assoc();
-preg_match("/^enum\((.*)\)$/", $enum_row['Type'], $matches);
-$enum_values = [];
-foreach (explode(",", $matches[1]) as $value) {
-    $v = trim($value, "'");
-    $enum_values[] = $v;
-}
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Finalizar Compra - Doggies</title>
-  <link rel="stylesheet" href="css/Login.css">
+  <link rel="stylesheet" href="css/Login.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <style>
-    /* ... (mantén tus estilos CSS existentes aquí) ... */
+    /* Estilos omitidos por brevedad */
   </style>
   <script>
     let departamentosData = [];
 
     async function cargarDepartamentos() {
       try {
-        const response = await fetch('colombia.min.json');
+        const response = await fetch('departamentos.json');
         departamentosData = await response.json();
         const departamentoSelect = document.getElementById('departamento');
         departamentosData.forEach(depto => {
@@ -119,9 +108,9 @@ foreach (explode(",", $matches[1]) as $value) {
         <label>Tipo de documento</label>
         <select name="tipo_documento" required>
           <option value="">Seleccione</option>
-          <?php foreach ($enum_values as $tipo): ?>
-            <option value="<?= htmlspecialchars($tipo) ?>"><?= htmlspecialchars($tipo) ?></option>
-          <?php endforeach; ?>
+          <option value="CC">C.C.</option>
+          <option value="TI">T.I.</option>
+          <option value="CE">C.E.</option>
         </select>
       </div>
       <div class="input-group">
@@ -179,6 +168,15 @@ foreach (explode(",", $matches[1]) as $value) {
   </div>
 
   <footer>
-    <div
-::contentReference[oaicite:17]{index=17}
- 
+    <div class="footer-content">
+      <h3>Síguenos</h3>
+      <div class="social-links">
+        <a href="https://www.facebook.com/profile.php?id=100069951193254" target="_blank"><i class="fab fa-facebook-f"></i></a>
+        <a href="https://www.instagram.com/doggiespaseadores/" target="_blank"><i class="fab fa-instagram"></i></a>
+        <a href="https://www.tiktok.com/@doggies_paseadores" target="_blank"><i class="fab fa-tiktok"></i></a>
+        <a href="mailto:doggiespasto@gmail.com"><i class="fas fa-envelope"></i></a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
