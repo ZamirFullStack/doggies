@@ -8,6 +8,23 @@ if (empty($_SESSION['carrito'])) {
 
 $carrito = $_SESSION['carrito'];
 $total = 0;
+
+require_once 'conexion.php';
+
+function obtenerValoresEnum($conexion, $tabla, $columna) {
+    $sql = "SHOW COLUMNS FROM `$tabla` LIKE '$columna'";
+    $resultado = mysqli_query($conexion, $sql);
+    if ($resultado) {
+        $fila = mysqli_fetch_assoc($resultado);
+        if (preg_match("/^enum\((.*)\)\$/", $fila['Type'], $matches)) {
+            $valores = str_getcsv($matches[1], ',', "'");
+            return $valores;
+        }
+    }
+    return [];
+}
+
+$tiposDocumento = obtenerValoresEnum($conexion, 'usuario', 'Tipo_Documento');
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -17,7 +34,7 @@ $total = 0;
   <title>Finalizar Compra - Doggies</title>
   <link rel="stylesheet" href="css/Login.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-<style>
+  <style>
     body {
       background-color: #f5f5f5;
       font-family: 'Roboto', sans-serif;
@@ -197,12 +214,12 @@ $total = 0;
         <input type="text" name="apellidos" required />
       </div>
       <div class="input-group">
-        <label>Tipo de documento</label>
-        <select name="tipo_documento" required>
+        <label for="tipo_documento">Tipo de documento</label>
+        <select name="tipo_documento" id="tipo_documento" required>
           <option value="">Seleccione</option>
-          <option value="CC">C.C.</option>
-          <option value="TI">T.I.</option>
-          <option value="CE">C.E.</option>
+          <?php foreach ($tiposDocumento as $tipo): ?>
+            <option value="<?= htmlspecialchars($tipo) ?>"><?= htmlspecialchars($tipo) ?></option>
+          <?php endforeach; ?>
         </select>
       </div>
       <div class="input-group">
