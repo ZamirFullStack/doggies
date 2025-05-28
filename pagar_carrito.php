@@ -1,7 +1,15 @@
 <?php
 session_start();
 
-// Verificar si hay productos en el carrito
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $_SESSION['cliente'] = [
+        'nombre' => trim($_POST['nombre']),
+        'email' => trim($_POST['email']),
+        'direccion' => trim($_POST['direccion']),
+        'telefono' => trim($_POST['telefono'])
+    ];
+}
+
 if (empty($_SESSION['carrito'])) {
     echo "❌ Tu carrito está vacío.";
     exit;
@@ -12,13 +20,12 @@ require __DIR__ . '/vendor/autoload.php';
 use MercadoPago\MercadoPagoConfig;
 use MercadoPago\Client\Preference\PreferenceClient;
 
-// Configura tu token de acceso de MercadoPago
 MercadoPagoConfig::setAccessToken("TEST-7533043630493954-052015-7926e661894c7b075e8d779a3c67e94d-822556558");
 
 $carrito = $_SESSION['carrito'];
+$cliente = $_SESSION['cliente'] ?? [];
 $items = [];
 
-// Construir el array de productos
 foreach ($carrito as $producto) {
     $nombre = $producto['nombre'] ?? 'Producto sin nombre';
     $precio = floatval($producto['precio']);
@@ -34,15 +41,17 @@ foreach ($carrito as $producto) {
     }
 }
 
-// Validar que haya ítems válidos
 if (empty($items)) {
     echo "❌ No hay productos válidos para procesar el pago.";
     exit;
 }
 
-// Crear preferencia de pago
 $preferenceData = [
     "items" => $items,
+    "payer" => [
+        "name" => $cliente['nombre'] ?? 'Cliente',
+        "email" => $cliente['email'] ?? 'cliente@test.com'
+    ],
     "back_urls" => [
         "success" => "https://doggies-production.up.railway.app/pago_exitoso.php",
         "failure" => "https://doggies-production.up.railway.app/pago_fallido.php",
