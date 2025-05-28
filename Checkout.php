@@ -17,6 +17,7 @@ $total = 0;
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Finalizar Compra - Doggies</title>
   <link rel="stylesheet" href="css/Login.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <style>
     body {
       background-color: #f5f5f5;
@@ -85,19 +86,49 @@ $total = 0;
       border-radius: 5px;
       cursor: pointer;
     }
+    footer {
+      background-color: rgba(51,51,51,0.95);
+      color: #fff;
+      text-align: center;
+      padding: 1.5em 2em;
+      width: 100%;
+      margin-top: auto;
+      position: relative;
+    }
+    .footer-content h3 {
+      font-size: 1.4em;
+      margin-bottom: 0.5em;
+    }
+    .social-links {
+      display: flex;
+      justify-content: center;
+      gap: 1em;
+    }
+    .social-links a {
+      color: #fff;
+      font-size: 1.5rem;
+      transition: color 0.3s ease;
+    }
+    .social-links a:hover {
+      color: #ffd700;
+    }
   </style>
   <script>
     let departamentosData = {};
 
     async function cargarDepartamentos() {
-      const response = await fetch('departamentos.json');
-      departamentosData = await response.json();
-      const departamentoSelect = document.getElementById('departamento');
-      for (const departamento in departamentosData) {
-        const option = document.createElement('option');
-        option.value = departamento;
-        option.textContent = departamento;
-        departamentoSelect.appendChild(option);
+      try {
+        const response = await fetch('departamentos.json');
+        departamentosData = await response.json();
+        const departamentoSelect = document.getElementById('departamento');
+        for (const departamento in departamentosData) {
+          const option = document.createElement('option');
+          option.value = departamento;
+          option.textContent = departamento;
+          departamentoSelect.appendChild(option);
+        }
+      } catch (err) {
+        console.error('Error cargando departamentos:', err);
       }
     }
 
@@ -198,14 +229,14 @@ $total = 0;
         </thead>
         <tbody>
           <?php foreach ($carrito as $producto): 
-            $img = !empty($producto['imagen']) ? htmlspecialchars($producto['imagen']) : 'img/default.jpg';
+            $img = !empty($producto['imagen']) ? htmlspecialchars($producto['imagen']) : 'img/Productos/default.jpg';
             $subtotal = $producto['precio'] * $producto['cantidad'];
             $total += $subtotal;
           ?>
           <tr>
             <td class="product-summary">
               <img src="<?= $img ?>" alt="<?= htmlspecialchars($producto['nombre']) ?>">
-              <?= htmlspecialchars($producto['nombre']) ?>
+              <span><?= htmlspecialchars($producto['nombre']) ?></span>
             </td>
             <td><?= $producto['cantidad'] ?></td>
             <td>$<?= number_format($producto['precio'], 0, ',', '.') ?></td>
@@ -215,7 +246,7 @@ $total = 0;
         </tbody>
         <?php
           $iva = $total * 0.05;
-          $envio = 10000; // Puedes calcularlo en base a ciudad más adelante
+          $envio = 10000;
           $totalConTodo = $total + $iva + $envio;
         ?>
         <tfoot>
