@@ -6,6 +6,7 @@
   <title>Iniciar Sesión – Doggies</title>
   <link rel="stylesheet" href="css/Login.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="icon" type="image/jpeg" href="img/fondo.jpg" />
 </head>
 <body class="login-page">
 

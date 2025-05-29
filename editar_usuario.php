@@ -36,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta charset="UTF-8">
   <title>Editar Usuario</title>
   <link rel="stylesheet" href="css/Login.css" />
+  <link rel="icon" type="image/jpeg" href="img/fondo.jpg" />
 </head>
 <body class="login-page">
   <header>

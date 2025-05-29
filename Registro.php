@@ -6,6 +6,7 @@
   <title>Crear Cuenta – Doggies</title>
   <link rel="stylesheet" href="css/Login.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="icon" type="image/jpeg" href="img/fondo.jpg" />
   <?php
   $url = 'mysql://root:AaynZNNKYegnXoInEgQefHggDxoRieEL@centerbeam.proxy.rlwy.net:58462/railway';
   $dbparts = parse_url($url);

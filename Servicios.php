@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="css/Login.css" />
   <link rel="stylesheet" href="css/servicios.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="icon" type="image/jpeg" href="img/fondo.jpg" />
 <style>
 /* Estilos más compactos para el modal y su contenido */
 

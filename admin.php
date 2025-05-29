@@ -23,6 +23,7 @@ $pedidos = $pdo->query("SELECT p.*, u.Nombre AS Nombre_Usuario FROM pedido p LEF
   <title>Panel Admin - Doggies</title>
   <link rel="stylesheet" href="css/Login.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="icon" type="image/jpeg" href="img/fondo.jpg" />
   <style>
     .admin-container {
       max-width: 1100px;

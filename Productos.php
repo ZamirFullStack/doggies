@@ -30,6 +30,7 @@ if (
   <link rel="stylesheet" href="css/Productos.css" />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="icon" type="image/jpeg" href="img/fondo.jpg" />
 </head>
 <body>
   <header>
