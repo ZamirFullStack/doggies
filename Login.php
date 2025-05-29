@@ -41,6 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Iniciar Sesión - Doggies</title>
     <link rel="stylesheet" href="css/Login.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="icon" type="image/jpeg" href="img/fondo.jpg" />
 </head>
 <body class="login-page">
     <header>
@@ -65,7 +66,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="email" name="email" placeholder="Correo Electrónico" required>
                 </div>
                 <div class="input-group password-group">
-                    <i class="fas fa-lock"></i>
                     <input type="password" id="password" name="password" placeholder="Contraseña" required>
                     <span class="toggle-password" onclick="togglePassword()">
                         <i class="fas fa-eye" id="toggleIcon"></i>
