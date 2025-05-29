@@ -153,11 +153,11 @@ function formatearFecha($fecha) {
         </div>
         <div class="input-group">
           <i class="fas fa-phone"></i>
-          <input type="text" name="telefono" value="<?= htmlspecialchars($datos['Telefono']) ?>" placeholder="Teléfono">
+          <input type="text" name="telefono" value="<?= htmlspecialchars($datos['Telefono'] ?? '') ?>" placeholder="Teléfono">
         </div>
         <div class="input-group">
           <i class="fas fa-map-marker-alt"></i>
-          <input type="text" name="direccion" value="<?= htmlspecialchars($datos['Direccion']) ?>" placeholder="Dirección">
+          <input type="text" name="direccion" value="<?= htmlspecialchars($datos['Direccion'] ?? '') ?>" placeholder="Dirección">
         </div>
         <div class="input-group password-wrapper">
           <input type="password" name="nueva_contrasena" id="nueva_contrasena" placeholder="Nueva contraseña (opcional)">
