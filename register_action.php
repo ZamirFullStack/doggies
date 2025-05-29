@@ -29,4 +29,22 @@ if ($stmt->rowCount() > 0) {
     }
     exit;
 }
+
+
+$token = bin2hex(random_bytes(32)); // genera token seguro
+
+$stmt = $pdo->prepare("INSERT INTO usuario (Nombre, Correo, Tipo_Documento, Documento, Contrasena, ID_Rol, Confirmado, Token_Confirmacion)
+VALUES (?, ?, ?, ?, ?, 1, 0, ?)");
+$stmt->execute([$name, $email, $tipo_doc, $id_number, password_hash($password, PASSWORD_DEFAULT), $token]);
+
+// Enviar correo de verificación
+$destinatario = $email;
+$asunto = "Confirma tu cuenta en Doggies";
+$mensaje = "Hola $name,\n\nHaz clic en el siguiente enlace para confirmar tu cuenta:\n\n";
+$mensaje .= "https://doggies-production.up.railway.app/verificar.php?token=$token";
+
+mail($destinatario, $asunto, $mensaje);
+
+
 ?>
+

@@ -66,6 +66,17 @@
       </div>
     </div>
   </footer>
+  
+<script>
+  $stmt = $pdo->prepare("SELECT * FROM usuario WHERE Correo = ?");
+  $stmt->execute([$correo]);
+  $user = $stmt->fetch();
+
+  if (!$user['Confirmado']) {
+      echo "⚠️ Debes confirmar tu correo antes de iniciar sesión.";
+      exit;
+  }
+</script>
 
   <script>
     document.querySelectorAll('.toggle-password').forEach(btn => {
@@ -81,6 +92,7 @@
         }
       });
     });
+    
   </script>
 
 </body>
