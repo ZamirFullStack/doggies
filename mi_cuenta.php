@@ -29,15 +29,18 @@ $pedidos = $stmt_pedidos->fetchAll(PDO::FETCH_ASSOC);
 
 $carrito = isset($_SESSION['carrito']) ? $_SESSION['carrito'] : [];
 function formatearFecha($fecha) {
-  $formatter = new IntlDateFormatter(
-    'es_CO',
-    IntlDateFormatter::LONG,
-    IntlDateFormatter::NONE,
-    'America/Bogota',
-    IntlDateFormatter::GREGORIAN,
-    'd \'de\' MMMM \'de\' yyyy'
-  );
-  return $formatter->format(new DateTime($fecha));
+    $meses = [
+        '01' => 'enero', '02' => 'febrero', '03' => 'marzo', '04' => 'abril',
+        '05' => 'mayo', '06' => 'junio', '07' => 'julio', '08' => 'agosto',
+        '09' => 'septiembre', '10' => 'octubre', '11' => 'noviembre', '12' => 'diciembre'
+    ];
+
+    $fechaObj = new DateTime($fecha);
+    $dia = $fechaObj->format('d');
+    $mes = $meses[$fechaObj->format('m')];
+    $anio = $fechaObj->format('Y');
+
+    return "$dia de $mes de $anio";
 }
 
 ?>
