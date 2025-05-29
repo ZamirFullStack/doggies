@@ -198,19 +198,18 @@ footer {
   font-size: 0.95rem;
 }
 
-.modal-form button.auth-btn {
-  background-color: #28a745;
-  color: white;
-  font-weight: bold;
-  border: none;
-  border-radius: 6px;
-  padding: 0.9rem;
-  font-size: 1rem;
-  cursor: pointer;
-  width: 100%;
-  box-sizing: border-box;
-  transition: background-color 0.3s ease;
-}
+  .modal-form button.auth-btn {
+    position: sticky;
+    bottom: 0;
+    background: #28a745;
+    color: white;
+    border: none;
+    width: 100%;
+    border-radius: 0 0 8px 8px;
+    font-weight: bold;
+    padding: 1rem;
+    z-index: 100;
+  }
 
 .modal-form button.auth-btn:hover {
   background-color: #218838;
@@ -253,20 +252,12 @@ footer {
 
 @media (max-width: 480px) {
   .modal-content {
-    max-width: 98%;
-    padding: 0.8rem;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding-bottom: 1rem;
   }
 
-  .modal-form input,
-  .modal-form select,
-  .modal-form textarea {
-    font-size: 0.9rem;
-    padding: 0.45rem;
-  }
 
-  .modal-form label {
-    font-size: 0.85rem;
-  }
 }
 
 
