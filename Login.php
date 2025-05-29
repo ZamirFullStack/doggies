@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($usuario && isset($usuario['Contrasena']) && password_verify($password, $usuario['Contrasena'])) {
             if (!$usuario['Confirmado']) {
-                $error = 'Por favor, verifica tu correo electrónico antes de iniciar sesión.';
+                echo "<script>alert('\uD83D\uDCE9 Tu cuenta a\u00fan no ha sido verificada. Por favor revisa tu bandeja de entrada o la carpeta SPAM para confirmar tu correo.');</script>";
             } else {
                 $_SESSION['usuario'] = [
                     'ID_Usuario' => $usuario['ID_Usuario'],
@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
             }
         } else {
-            $error = 'Correo o contraseña incorrectos.';
+            echo "<script>alert('Correo o contrase\u00f1a incorrectos.');</script>";
         }
     }
 }
@@ -57,9 +57,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <main>
         <section class="auth-container">
             <h2>Iniciar Sesión</h2>
-            <?php if ($error): ?>
-                <p style="color:red;"><?= htmlspecialchars($error) ?></p>
-            <?php endif; ?>
             <form method="POST">
                 <div class="input-group">
                     <i class="fas fa-envelope"></i>
@@ -73,6 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <button class="auth-btn" type="submit">Iniciar Sesión</button>
             </form>
+            <p><a href="recover.php">¿Olvidaste tu contraseña?</a></p>
             <p>¿No tienes cuenta? <a href="Registro.php">Regístrate</a></p>
         </section>
     </main>

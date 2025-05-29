@@ -2,6 +2,7 @@
 session_start();
 require_once 'conexion.php';
 require 'vendor/autoload.php';
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
@@ -31,21 +32,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $mail->isSMTP();
         $mail->Host = 'smtp.gmail.com';
         $mail->SMTPAuth = true;
-        $mail->Username = 'doggiespasto22@gmail.com'; // Cambiar
-        $mail->Password = 'nfav ibzv txxd wvwl';           // App Password
+        $mail->Username = 'doggiespasto22@gmail.com';
+        $mail->Password = 'nfav ibzv txxd wvwl'; // App Password
         $mail->SMTPSecure = 'tls';
         $mail->Port = 587;
 
-        $mail->setFrom('zamirhuertas18@gmail.com', 'Doggies');
+        $mail->setFrom('doggiespasto22@gmail.com', 'Doggies');
         $mail->addAddress($correo);
         $mail->Subject = $asunto;
         $mail->Body = $mensaje;
 
         $mail->send();
-        header('Location: verificar_codigo.php');
+        $exito = '📩 Código enviado. Revisa tu bandeja de entrada o SPAM. Serás redirigido...';
+        echo "<script>
+          alert('✅ Código enviado. Revisa tu correo, incluyendo la carpeta de SPAM.');
+          setTimeout(() => {
+            window.location.href = 'verificar_codigo.php';
+          }, 2000);
+        </script>";
         exit;
       } catch (Exception $e) {
-        $error = 'Error al enviar correo: ' . $mail->ErrorInfo;
+        $error = 'Error al enviar el correo: ' . $mail->ErrorInfo;
       }
     } else {
       $error = 'No encontramos una cuenta asociada a ese correo.';
@@ -53,6 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="es">

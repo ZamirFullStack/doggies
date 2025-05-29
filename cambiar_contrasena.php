@@ -14,8 +14,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $nueva = trim($_POST['nueva']);
   $confirmar = trim($_POST['confirmar']);
 
-  if (strlen($nueva) < 6) {
-    $error = 'La contraseña debe tener al menos 6 caracteres.';
+  if (strlen($nueva) < 8) {
+    $error = 'La contraseña debe tener al menos 8 caracteres.';
   } elseif ($nueva !== $confirmar) {
     $error = 'Las contraseñas no coinciden.';
   } else {
@@ -120,20 +120,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       position: relative;
       margin-bottom: 1.2em;
     }
-    .input-group i {
-      position: absolute;
-      top: 50%;
-      left: 12px;
-      transform: translateY(-50%);
-      color: #888;
-      font-size: 1.2em;
-    }
     .input-group input {
       width: 100%;
-      padding: 0.8em 0.8em 0.8em 2.8em;
+      padding: 0.8em 2.8em 0.8em 0.8em;
       border: 1px solid #ccc;
       border-radius: 4px;
       background-color: #f9f9f9;
+    }
+    .input-group .toggle-password {
+      position: absolute;
+      top: 50%;
+      right: 12px;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #888;
+      font-size: 1.2em;
     }
     .auth-btn {
       width: 100%;
@@ -198,12 +199,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <h2>Restablecer Contraseña</h2>
       <form method="POST">
         <div class="input-group">
-          <i class="fas fa-lock"></i>
-          <input type="password" name="nueva" placeholder="Nueva contraseña" required>
+          <input type="password" id="nueva" name="nueva" placeholder="Nueva contraseña" required>
+          <span class="toggle-password" onclick="togglePasswords()"><i id="toggleIcon" class="fas fa-eye"></i></span>
         </div>
         <div class="input-group">
-          <i class="fas fa-lock"></i>
-          <input type="password" name="confirmar" placeholder="Confirmar contraseña" required>
+          <input type="password" id="confirmar" name="confirmar" placeholder="Confirmar contraseña" required>
         </div>
         <button type="submit" class="auth-btn">Actualizar</button>
         <?php if ($error): ?><p style="color: red; text-align: center; margin-top: 1em;">⚠️ <?= $error ?></p><?php endif; ?>
@@ -223,5 +223,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </div>
     </div>
   </footer>
+
+  <script>
+    function togglePasswords() {
+      const nueva = document.getElementById("nueva");
+      const confirmar = document.getElementById("confirmar");
+      const icon = document.getElementById("toggleIcon");
+
+      const type = nueva.type === "password" ? "text" : "password";
+      nueva.type = confirmar.type = type;
+
+      icon.classList.toggle("fa-eye");
+      icon.classList.toggle("fa-eye-slash");
+    }
+  </script>
 </body>
 </html>
