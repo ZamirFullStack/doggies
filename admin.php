@@ -78,23 +78,24 @@ $pedidos = $pdo->query("SELECT p.*, u.Nombre AS Nombre_Usuario FROM pedido p LEF
             <th>Acciones</th>
           </tr>
         </thead>
-        <tbody>
-          <?php foreach ($usuarios as $u): ?>
-          <tr>
-            <td><?= htmlspecialchars($u['Nombre']) ?></td>
-            <td><?= htmlspecialchars($u['Tipo_Documento'] ?? 'N/A') ?></td>
-            <td><?= htmlspecialchars($u['Documento']) ?></td>
-            <td><?= htmlspecialchars($u['Correo']) ?></td>
-            <td><?= htmlspecialchars($u['Telefono']) ?></td>
-            <td><?= htmlspecialchars($u['Direccion']) ?></td>
-            <td><?= $u['Nombre_Rol'] ?></td>
-            <td class="acciones">
-              <a href="editar_usuario.php?id=<?= $u['ID_Usuario'] ?>" class="btn btn-edit">Editar</a>
-              <a href="eliminar_usuario.php?id=<?= $u['ID_Usuario'] ?>" class="btn btn-delete" onclick="return confirm('¿Estás seguro de eliminar este usuario?')">Eliminar</a>
-            </td>
-          </tr>
-          <?php endforeach; ?>
-        </tbody>
+<tbody>
+  <?php foreach ($usuarios as $u): ?>
+  <tr>
+    <td><?= htmlspecialchars($u['Nombre'] ?? '') ?></td>
+    <td><?= htmlspecialchars($u['Tipo_Documento'] ?? '') ?></td>
+    <td><?= htmlspecialchars($u['Documento'] ?? '') ?></td>
+    <td><?= htmlspecialchars($u['Correo'] ?? '') ?></td>
+    <td><?= htmlspecialchars($u['Telefono'] ?? '') ?></td>
+    <td><?= htmlspecialchars($u['Direccion'] ?? '') ?></td>
+    <td><?= htmlspecialchars($u['Nombre_Rol'] ?? '') ?></td>
+    <td class="acciones">
+      <a href="editar_usuario.php?id=<?= $u['ID_Usuario'] ?>" class="btn btn-edit">Editar</a>
+      <a href="eliminar_usuario.php?id=<?= $u['ID_Usuario'] ?>" class="btn btn-delete" onclick="return confirm('¿Estás seguro de eliminar este usuario?')">Eliminar</a>
+    </td>
+  </tr>
+  <?php endforeach; ?>
+</tbody>
+
       </table>
 
       <h3>Gestión de Productos</h3>
