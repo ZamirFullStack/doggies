@@ -418,7 +418,7 @@ $tiposDocumento = obtenerValoresEnum($pdo, 'usuario', 'Tipo_Documento');
     });
 
     const iva = total * 0.05;
-    const envio = 10000;
+    const envio = 15000;
     const totalConTodo = total + iva + envio;
 
     document.getElementById('totales').innerHTML = `
