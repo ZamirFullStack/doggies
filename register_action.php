@@ -47,13 +47,13 @@ if ($success) {
         $mail->isSMTP();
         $mail->Host = 'smtp.tu-servidor.com'; // Reemplaza con tu servidor SMTP
         $mail->SMTPAuth = true;
-        $mail->Username = 'tu-correo@tu-dominio.com'; // Reemplaza con tu correo
-        $mail->Password = 'tu-contraseña'; // Reemplaza con tu contraseña
+        $mail->Username = 'doggiespasto22@gmail.com'; // Reemplaza con tu correo
+        $mail->Password = 'nfav ibzv txxd wvwl'; // Reemplaza con tu contraseña
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port = 587;
 
         // Remitente y destinatario
-        $mail->setFrom('tu-correo@tu-dominio.com', 'Doggies');
+        $mail->setFrom('doggiespasto22@gmail.com', 'Doggies');
         $mail->addAddress($email, $name);
 
         // Contenido del correo
