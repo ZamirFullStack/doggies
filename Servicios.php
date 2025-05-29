@@ -146,7 +146,7 @@
     <div class="modal-content">
       <span class="close" onclick="cerrarModal()">&times;</span>
       <div class="modal-form">
-        <h2 id="tituloServicio">Reserva</h2>
+        <h2 id="tituloServicio">Reserva</h2> <br/>
         <form id="formReserva">
           <input type="hidden" id="tipoServicio">
           <label>Nombre del Cliente:</label>
