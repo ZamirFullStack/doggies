@@ -1,5 +1,26 @@
 <?php
-// pago_pendiente.php
+session_start();
+
+$url = 'mysql://root:AaynZNNKYegnXoInEgQefHggDxoRieEL@centerbeam.proxy.rlwy.net:58462/railway';
+$dbparts = parse_url($url);
+$host = $dbparts["host"];
+$port = $dbparts["port"];
+$user = $dbparts["user"];
+$pass = $dbparts["pass"];
+$db   = ltrim($dbparts["path"], '/');
+
+try {
+    $pdo = new PDO("mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4", $user, $pass);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("❌ Error de conexión: " . $e->getMessage());
+}
+
+if (isset($_SESSION['pedido_id'])) {
+    $stmt = $pdo->prepare("UPDATE pedido SET Estado = 'pendiente' WHERE ID_Pedido = ?");
+    $stmt->execute([$_SESSION['pedido_id']]);
+    unset($_SESSION['pedido_id']);
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">

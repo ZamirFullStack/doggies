@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Crear Cuenta – Doggies</title>
   <link rel="stylesheet" href="css/Login.css" />
-  <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <?php
   $url = 'mysql://root:AaynZNNKYegnXoInEgQefHggDxoRieEL@centerbeam.proxy.rlwy.net:58462/railway';
   $dbparts = parse_url($url);
@@ -51,7 +49,7 @@
   <main>
     <section class="auth-container">
       <h2>Crear Cuenta</h2>
-      <form action="register_action.php" method="POST">
+      <form action="register_action.php" method="POST" onsubmit="return validarContrasenas()">
         <div class="input-group">
           <i class="fas fa-user"></i>
           <input type="text" id="reg-name" name="name" placeholder="Nombres" required />
@@ -60,7 +58,7 @@
           <i class="fas fa-envelope"></i>
           <input type="email" id="reg-email" name="email" placeholder="Correo Electrónico" required />
         </div>
-          <div class="input-group">
+        <div class="input-group">
           <select name="tipo_documento" required>
             <option value="">Tipo de Documento</option>
             <?php foreach ($tiposDocumento as $tipo): ?>
@@ -73,8 +71,14 @@
           <input type="number" id="reg-id" name="id_number" placeholder="No. Identificación" required min="0" />
         </div>
         <div class="input-group password-group">
-          <input type="password" id="reg-password" name="password" placeholder="Contraseña" required />
+          <input type="password" id="reg-password" name="password" placeholder="Contraseña" required minlength="8" />
           <span class="toggle-password" data-target="reg-password">
+            <i class="fas fa-eye"></i>
+          </span>
+        </div>
+        <div class="input-group password-group">
+          <input type="password" id="reg-password2" placeholder="Repetir Contraseña" required />
+          <span class="toggle-password" data-target="reg-password2">
             <i class="fas fa-eye"></i>
           </span>
         </div>
@@ -99,17 +103,38 @@
   <script>
     document.querySelectorAll('.toggle-password').forEach(btn => {
       btn.addEventListener('click', () => {
-        const input = document.getElementById(btn.dataset.target);
-        const icon = btn.querySelector('i');
-        if (input.type === 'password') {
-          input.type = 'text';
-          icon.classList.replace('fa-eye', 'fa-eye-slash');
+        const pass1 = document.getElementById('reg-password');
+        const pass2 = document.getElementById('reg-password2');
+        const icon1 = document.querySelector('[data-target="reg-password"] i');
+        const icon2 = document.querySelector('[data-target="reg-password2"] i');
+
+        if (pass1.type === 'password' || pass2.type === 'password') {
+          pass1.type = 'text';
+          pass2.type = 'text';
+          icon1.classList.replace('fa-eye', 'fa-eye-slash');
+          icon2.classList.replace('fa-eye', 'fa-eye-slash');
         } else {
-          input.type = 'password';
-          icon.classList.replace('fa-eye-slash', 'fa-eye');
+          pass1.type = 'password';
+          pass2.type = 'password';
+          icon1.classList.replace('fa-eye-slash', 'fa-eye');
+          icon2.classList.replace('fa-eye-slash', 'fa-eye');
         }
       });
     });
+
+    function validarContrasenas() {
+      const pass1 = document.getElementById('reg-password').value;
+      const pass2 = document.getElementById('reg-password2').value;
+      if (pass1.length < 8) {
+        alert('La contraseña debe tener al menos 8 caracteres.');
+        return false;
+      }
+      if (pass1 !== pass2) {
+        alert('Las contraseñas no coinciden.');
+        return false;
+      }
+      return true;
+    }
   </script>
 
 </body>

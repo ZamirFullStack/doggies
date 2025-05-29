@@ -11,7 +11,8 @@ $stmt = $pdo->prepare("SELECT * FROM usuario WHERE Correo = :email OR Documento 
 $stmt->execute(['email' => $email, 'doc' => $id_number]);
 
 if ($stmt->rowCount() > 0) {
-    echo "⚠️ Ya existe un usuario con ese correo o documento.";
+    echo "<script>alert('⚠️ Ya existe un usuario con ese correo o documento.'); window.history.back();</script>";
+    exit;
 } else {
     $insert = $pdo->prepare("INSERT INTO usuario (Nombre, Documento, Correo, Contrasena, ID_Rol) VALUES (:name, :doc, :email, :pass, 2)");
     $success = $insert->execute([
@@ -22,9 +23,10 @@ if ($stmt->rowCount() > 0) {
     ]);
 
     if ($success) {
-        echo "✅ Registro exitoso. <a href='Login.php'>Iniciar sesión</a>";
+        echo "<script>alert('✅ Registro exitoso.'); window.location.href='Login.php';</script>";
     } else {
-        echo "❌ Error al registrar.";
+        echo "<script>alert('❌ Error al registrar.'); window.history.back();</script>";
     }
+    exit;
 }
 ?>

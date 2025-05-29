@@ -52,10 +52,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="auth-container" style="max-width:600px;">
       <h2>Editar Usuario</h2>
       <form method="POST">
-        <div class="input-group"><input type="text" name="nombre" value="<?= htmlspecialchars($usuario['Nombre']) ?>" required></div>
-        <div class="input-group"><input type="email" name="correo" value="<?= htmlspecialchars($usuario['Correo']) ?>" required></div>
-        <div class="input-group"><input type="text" name="telefono" value="<?= htmlspecialchars($usuario['Telefono']) ?>"></div>
-        <div class="input-group"><input type="text" name="direccion" value="<?= htmlspecialchars($usuario['Direccion']) ?>"></div>
+        <div class="input-group">
+          <input type="text" name="nombre" value="<?= htmlspecialchars($usuario['Nombre']) ?>" placeholder="Nombre" required>
+        </div>
+        <div class="input-group">
+          <input type="email" name="correo" value="<?= htmlspecialchars($usuario['Correo']) ?>" placeholder="Correo" required>
+        </div>
+        <div class="input-group">
+          <input type="text" name="telefono" value="<?= htmlspecialchars($usuario['Telefono']) ?>" placeholder="Teléfono">
+        </div>
+        <div class="input-group">
+          <input type="text" name="direccion" value="<?= htmlspecialchars($usuario['Direccion']) ?>" placeholder="Dirección">
+        </div>
         <div class="input-group">
           <select name="rol" required>
             <option value="1" <?= $usuario['ID_Rol'] == 1 ? 'selected' : '' ?>>Cliente</option>

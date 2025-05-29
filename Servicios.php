@@ -7,81 +7,75 @@
   <link rel="stylesheet" href="css/Login.css" />
   <link rel="stylesheet" href="css/servicios.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <style>
-    /* Estilos mejorados para el formulario */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      overflow: auto;
-      background-color: rgba(0,0,0,0.5);
-      justify-content: center;
-      align-items: center;
-    }
+<style>
+/* Estilos más compactos para el modal y su contenido */
 
-    .modal-content {
-      background-color: #fefefe;
-      padding: 20px;
-      border-radius: 10px;
-      width: 90%;
-      max-width: 500px;
-      position: relative;
-    }
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; /* más alto que el header */
+  padding: 1rem;
+}
 
-    .close {
-      color: #aaa;
-      position: absolute;
-      top: 10px;
-      right: 20px;
-      font-size: 28px;
-      font-weight: bold;
-      cursor: pointer;
-    }
 
-    .modal-form h2 {
-      margin-top: 0;
-    }
+.modal-content {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 450px; /* <- Reduce el ancho del modal */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
 
-    .modal-form label {
-      display: block;
-      margin-top: 10px;
-      font-weight: bold;
-    }
+.modal-content h2 {
+  margin-top: 0;
+  text-align: center;
+}
 
-    .modal-form input,
-    .modal-form select,
-    .modal-form textarea {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      box-sizing: border-box;
-    }
+.modal-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
 
-    .modal-form textarea {
-      resize: vertical;
-    }
+.modal-form input,
+.modal-form select,
+.modal-form textarea {
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
 
-    .auth-btn {
-      margin-top: 15px;
-      background-color: #4CAF50;
-      color: white;
-      padding: 10px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      width: 100%;
-    }
+.modal-form label {
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
 
-    .auth-btn:hover {
-      background-color: #45a049;
-    }
-  </style>
+.modal-form button.auth-btn {
+  background-color: #28a745;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  padding: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.modal-form button.auth-btn:hover {
+  background-color: #218838;
+}
+
+</style>
 </head>
 <body class="login-page">
   <header>
@@ -148,7 +142,6 @@
     </div>
   </footer>
 
-  <!-- Modal de Reserva -->
   <div id="modalReserva" class="modal">
     <div class="modal-content">
       <span class="close" onclick="cerrarModal()">&times;</span>
@@ -207,6 +200,20 @@
       const raza = document.getElementById('raza').value;
       const edad = document.getElementById('edad').value;
       const observaciones = document.getElementById('observaciones').value;
-      let
-::contentReference[oaicite:16]{index=16}
- 
+      let mensaje = `Hola, quiero reservar el servicio de ${servicio}%0A` +
+                    `Nombre: ${nombre}%0ATeléfono: ${telefono}%0AMascota: ${mascota}%0ARaza: ${raza}%0AEdad: ${edad}`;
+      if (servicio === 'guarderia') {
+        mensaje += `%0AEntrada: ${document.getElementById('fecha_entrada').value}`;
+        mensaje += `%0ASalida: ${document.getElementById('fecha_salida').value}`;
+      } else if (servicio === 'peluqueria') {
+        mensaje += `%0ANudos: ${document.getElementById('tiene_nudos').value}`;
+        mensaje += `%0APelo largo: ${document.getElementById('pelo_largo').value}`;
+      } else if (servicio === 'paseo') {
+        mensaje += `%0ACantidad de perros: ${document.getElementById('cantidad_perros').value}`;
+      }
+      mensaje += `%0AObservaciones: ${observaciones}`;
+      window.open(`https://wa.me/573216734085?text=${mensaje}`, '_blank');
+    });
+  </script>
+</body>
+</html>

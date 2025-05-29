@@ -9,10 +9,13 @@ if (!isset($_SESSION['usuario']) || $_SESSION['usuario']['ID_Rol'] != 2) {
 
 $nombreAdmin = $_SESSION['usuario']['Nombre'];
 
+$estadoFiltro = $_GET['estado'] ?? '';
+$whereEstado = $estadoFiltro ? "WHERE p.Estado = " . $pdo->quote($estadoFiltro) : "";
+
 $usuarios = $pdo->query("SELECT u.*, r.Nombre_Rol FROM usuario u JOIN rol r ON u.ID_Rol = r.ID_Rol")->fetchAll(PDO::FETCH_ASSOC);
 $productos = $pdo->query("SELECT * FROM producto")->fetchAll(PDO::FETCH_ASSOC);
+$pedidos = $pdo->query("SELECT p.*, u.Nombre AS Nombre_Usuario FROM pedido p LEFT JOIN usuario u ON p.ID_Usuario = u.ID_Usuario $whereEstado ORDER BY p.Fecha_Pedido DESC")->fetchAll(PDO::FETCH_ASSOC);
 ?>
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -29,48 +32,18 @@ $productos = $pdo->query("SELECT * FROM producto")->fetchAll(PDO::FETCH_ASSOC);
       border-radius: 10px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
-
-    .admin-container h2 {
-      text-align: center;
-      margin-bottom: 1em;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 2em;
-    }
-
-    th, td {
-      padding: 10px;
-      border-bottom: 1px solid #ddd;
-      text-align: center;
-    }
-
-    th {
-      background-color: #f3f3f3;
-      font-weight: bold;
-    }
-
-    .btn {
-      padding: 5px 10px;
-      border-radius: 5px;
-      border: none;
-      cursor: pointer;
-      text-decoration: none;
-    }
-
+    .admin-container h2 { text-align: center; margin-bottom: 1em; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 2em; }
+    th, td { padding: 10px; border-bottom: 1px solid #ddd; text-align: center; }
+    th { background-color: #f3f3f3; font-weight: bold; }
+    .btn { padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; text-decoration: none; margin: 2px 0; display: inline-block; }
     .btn-edit { background-color: #4caf50; color: #fff; }
     .btn-delete { background-color: #e53935; color: #fff; }
-    .btn-add { background-color: #2196f3; color: #fff; float: right; margin-bottom: 10px; }
-
-    .acciones a { margin: 0 5px; }
-
-    form input, form select {
-      padding: 0.5em;
-      width: 100%;
-      margin-bottom: 0.5em;
-    }
+    .btn-add { background-color: #2196f3; color: #fff; margin: 10px 0; display: inline-block; }
+    .acciones { display: flex; flex-direction: column; gap: 4px; }
+    .acciones a { margin: 0 auto; }
+    form input, form select { padding: 0.5em; width: 100%; margin-bottom: 0.5em; }
+    .filtro-form { margin-bottom: 1em; }
   </style>
 </head>
 <body class="login-page">
@@ -89,10 +62,12 @@ $productos = $pdo->query("SELECT * FROM producto")->fetchAll(PDO::FETCH_ASSOC);
       <h2>Bienvenido, <?= htmlspecialchars($nombreAdmin) ?></h2>
 
       <h3>Usuarios Registrados</h3>
+      <a href="nuevo_usuario.php" class="btn btn-add">➕ Añadir Usuario</a>
       <table>
         <thead>
           <tr>
             <th>Nombre</th>
+            <th>Tipo de Documento</th>
             <th>Documento</th>
             <th>Correo</th>
             <th>Teléfono</th>
@@ -105,6 +80,7 @@ $productos = $pdo->query("SELECT * FROM producto")->fetchAll(PDO::FETCH_ASSOC);
           <?php foreach ($usuarios as $u): ?>
           <tr>
             <td><?= htmlspecialchars($u['Nombre']) ?></td>
+            <td><?= htmlspecialchars($u['Tipo_Documento'] ?? 'N/A') ?></td>
             <td><?= htmlspecialchars($u['Documento']) ?></td>
             <td><?= htmlspecialchars($u['Correo']) ?></td>
             <td><?= htmlspecialchars($u['Telefono']) ?></td>
@@ -142,6 +118,45 @@ $productos = $pdo->query("SELECT * FROM producto")->fetchAll(PDO::FETCH_ASSOC);
               <a href="editar_producto.php?id=<?= $p['ID_Producto'] ?>" class="btn btn-edit">Editar</a>
               <a href="eliminar_producto.php?id=<?= $p['ID_Producto'] ?>" class="btn btn-delete" onclick="return confirm('¿Eliminar este producto?')">Eliminar</a>
             </td>
+          </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+
+      <h3>Pedidos Recientes</h3>
+      <form method="GET" class="filtro-form">
+        <label for="estado">Filtrar por estado:</label>
+        <select name="estado" id="estado" onchange="this.form.submit()">
+          <option value="">Todos</option>
+          <option value="pagado" <?= $estadoFiltro === 'pagado' ? 'selected' : '' ?>>Pagado</option>
+          <option value="pendiente" <?= $estadoFiltro === 'pendiente' ? 'selected' : '' ?>>Pendiente</option>
+          <option value="fallido" <?= $estadoFiltro === 'fallido' ? 'selected' : '' ?>>Fallido</option>
+        </select>
+      </form>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Cliente</th>
+            <th>Fecha</th>
+            <th>Dirección</th>
+            <th>Pago</th>
+            <th>Estado</th>
+            <th>Total</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach ($pedidos as $p): ?>
+          <tr>
+            <td><?= $p['ID_Pedido'] ?></td>
+            <td><?= htmlspecialchars($p['Nombre_Usuario'] ?? 'Invitado') ?></td>
+            <td><?= $p['Fecha_Pedido'] ?></td>
+            <td><?= htmlspecialchars($p['Direccion_Entrega']) ?></td>
+            <td><?= htmlspecialchars($p['Metodo_Pago']) ?></td>
+            <td><?= htmlspecialchars($p['Estado']) ?></td>
+            <td>$<?= number_format($p['Total'], 0, ',', '.') ?></td>
+            <td><a href="detalle_pedido.php?id=<?= $p['ID_Pedido'] ?>" class="btn btn-edit">Ver</a></td>
           </tr>
           <?php endforeach; ?>
         </tbody>

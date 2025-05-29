@@ -48,6 +48,95 @@ $tiposDocumento = obtenerValoresEnum($pdo, 'usuario', 'Tipo_Documento');
       background-color: #f5f5f5;
       font-family: 'Roboto', sans-serif;
     }
+
+    /* Resumen del pedido */
+    .summary-box {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.08);
+      max-width: 480px;
+      min-width: 450px;
+      overflow-x: hidden;
+      font-family: 'Roboto', sans-serif;
+    }
+
+    .summary-box h3 {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      color: #333;
+    }
+
+    .summary-box table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    .summary-box th,
+    .summary-box td {
+      padding: 0.6rem 0.4rem;
+      font-size: 0.95rem;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    .summary-box th {
+      color: #555;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .product-summary {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      overflow: hidden;
+    }
+
+    .product-summary img {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      flex-shrink: 0;
+      border-radius: 6px;
+    }
+
+    .product-summary span {
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 140px;
+      font-weight: 500;
+    }
+
+    input.cantidad {
+      width: 55px;
+      padding: 4px;
+      text-align: center;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-weight: bold;
+      background: #f9f9f9;
+    }
+
+    /* Estilo para el resumen de totales */
+    #totales td {
+      padding: 0.4rem 0;
+      font-size: 0.95rem;
+    }
+
+    #totales tr:last-child td {
+      font-weight: bold;
+      font-size: 1rem;
+      color: #222;
+    }
+
+    #totales td:last-child {
+      text-align: right;
+    }
+
+
     .checkout-container {
       max-width: 1200px;
       margin: 2rem auto;
@@ -289,36 +378,59 @@ $tiposDocumento = obtenerValoresEnum($pdo, 'usuario', 'Tipo_Documento');
       </div>
     </div>
   </footer>
-  <script>
-    document.querySelectorAll('.cantidad').forEach(input => {
-      input.addEventListener('input', actualizarResumen);
+<script>
+  document.querySelectorAll('.cantidad').forEach(input => {
+    input.addEventListener('input', () => {
+      let valor = parseInt(input.value);
+      
+      if (isNaN(valor) || valor < 1) {
+        alert("La cantidad mínima permitida es 1.");
+        input.value = 1;
+      } else if (valor > 25) {
+        alert("La cantidad máxima permitida es 25.");
+        input.value = 25;
+      }
+
+      actualizarResumen();
+    });
+  });
+
+  function actualizarResumen() {
+    let total = 0;
+    const rows = document.querySelectorAll('#resumen-pedido tbody tr');
+    rows.forEach(row => {
+      const cantidadInput = row.querySelector('.cantidad');
+      const precio = parseFloat(cantidadInput.dataset.precio);
+      let cantidad = parseInt(cantidadInput.value);
+
+      if (isNaN(cantidad) || cantidad < 1) {
+        cantidad = 1;
+        cantidadInput.value = 1;
+      } else if (cantidad > 25) {
+        cantidad = 25;
+        cantidadInput.value = 25;
+      }
+
+      const subtotal = precio * cantidad;
+      row.querySelector('.subtotal').textContent = '$' + subtotal.toLocaleString('es-CO');
+      total += subtotal;
     });
 
-    function actualizarResumen() {
-      let total = 0;
-      const rows = document.querySelectorAll('#resumen-pedido tbody tr');
-      rows.forEach(row => {
-        const cantidadInput = row.querySelector('.cantidad');
-        const precio = parseFloat(cantidadInput.dataset.precio);
-        const cantidad = parseInt(cantidadInput.value);
-        const subtotal = precio * cantidad;
-        row.querySelector('.subtotal').textContent = '$' + subtotal.toLocaleString('es-CO');
-        total += subtotal;
-      });
+    const iva = total * 0.05;
+    const envio = 10000;
+    const totalConTodo = total + iva + envio;
 
-      const iva = total * 0.05;
-      const envio = 10000;
-      const totalConTodo = total + iva + envio;
+    document.getElementById('totales').innerHTML = `
+      <tr><td colspan="3">Subtotal (sin IVA):</td><td>$${total.toLocaleString('es-CO')}</td></tr>
+      <tr><td colspan="3">IVA (5%):</td><td>$${iva.toLocaleString('es-CO')}</td></tr>
+      <tr><td colspan="3">Envío:</td><td>$${envio.toLocaleString('es-CO')}</td></tr>
+      <tr><td colspan="3"><strong>Total de tu compra:</strong></td><td><strong>$${totalConTodo.toLocaleString('es-CO')}</strong></td></tr>
+    `;
+  }
 
-      document.getElementById('totales').innerHTML = `
-        <tr><td colspan="3">Subtotal (sin IVA):</td><td>$${total.toLocaleString('es-CO')}</td></tr>
-        <tr><td colspan="3">IVA (5%):</td><td>$${iva.toLocaleString('es-CO')}</td></tr>
-        <tr><td colspan="3">Envío:</td><td>$${envio.toLocaleString('es-CO')}</td></tr>
-        <tr><td colspan="3"><strong>Total de tu compra:</strong></td><td><strong>$${totalConTodo.toLocaleString('es-CO')}</strong></td></tr>
-      `;
-    }
+  actualizarResumen();
+</script>
 
-    actualizarResumen();
-  </script>
+
 </body>
 </html>
