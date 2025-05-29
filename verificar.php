@@ -2,7 +2,9 @@
 require 'conexion.php';
 
 $token = $_GET['token'] ?? '';
-if (!$token) die("Token inválido");
+if (!$token) {
+    die("Token inválido.");
+}
 
 $stmt = $pdo->prepare("UPDATE usuario SET Confirmado = 1, Token_Confirmacion = NULL WHERE Token_Confirmacion = ?");
 $stmt->execute([$token]);
