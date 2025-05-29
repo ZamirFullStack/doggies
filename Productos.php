@@ -70,13 +70,15 @@ if (
           $stock = $p['Stock'];
           $edad = $p['edad'] ?? 'adulto';
 
-          echo "
-          <div class='producto-card' data-edad='$edad' data-precio='$precio'>
-            <img src='$imagen' alt='$nombre'>
-            <div class='producto-info'>
-              <h3>$nombre</h3>
-              <p>$descripcion</p>
-              <span>$$precio</span>";
+$precioFormateado = number_format($precio, 0, ',', '.');
+
+echo "
+<div class='producto-card' data-edad='$edad' data-precio='$precio'>
+  <img src='$imagen' alt='$nombre'>
+  <div class='producto-info'>
+    <h3>$nombre</h3>
+    <p>$descripcion</p>
+    <span>\$$precioFormateado</span>";
 
           if ($stock > 0) {
             echo "

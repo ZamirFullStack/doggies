@@ -46,7 +46,36 @@ try {
       height: 60px;
       object-fit: cover;
       margin-right: 0.5rem;
+  }
+    .carrito-wrapper {
+      max-height: 420px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin-bottom: 1rem;
     }
+
+    .carrito-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+    }
+
+    .carrito-table th, .carrito-table td {
+      padding: 12px;
+      text-align: center;
+      border-bottom: 1px solid #eee;
+      background-color: #fff;
+    }
+
+    .carrito-table thead th {
+      background-color: #f8f8f8;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
     .producto-detalle {
       display: flex;
       align-items: center;
@@ -69,6 +98,7 @@ try {
     <?php if (empty($carrito)): ?>
       <p>Tu carrito está vacío.</p>
     <?php else: ?>
+      <div class="carrito-wrapper">
       <table class="carrito-table">
         <thead>
           <tr>
@@ -115,6 +145,7 @@ try {
           </tr>
         </tfoot>
       </table>
+      </div>
       <div class="resumen-footer">
         <a href="Checkout.php" class="boton-comprar">Finalizar compra</a>
       </div>
