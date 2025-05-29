@@ -15,8 +15,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$email]);
         $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($usuario && password_verify($password, $usuario['Password'])) {
-            if (!$usuario['verificado']) {
+        if ($usuario && isset($usuario['Contrasena']) && password_verify($password, $usuario['Contrasena'])) {
+            if (!$usuario['Confirmado']) {
                 $error = 'Por favor, verifica tu correo electrónico antes de iniciar sesión.';
             } else {
                 $_SESSION['usuario'] = [
@@ -33,6 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="es">
