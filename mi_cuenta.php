@@ -29,9 +29,17 @@ $pedidos = $stmt_pedidos->fetchAll(PDO::FETCH_ASSOC);
 
 $carrito = isset($_SESSION['carrito']) ? $_SESSION['carrito'] : [];
 function formatearFecha($fecha) {
-  setlocale(LC_TIME, 'es_ES.UTF-8');
-  return iconv('ISO-8859-1', 'UTF-8', strftime("%e de %B de %Y", strtotime($fecha)));
+  $formatter = new IntlDateFormatter(
+    'es_CO',
+    IntlDateFormatter::LONG,
+    IntlDateFormatter::NONE,
+    'America/Bogota',
+    IntlDateFormatter::GREGORIAN,
+    'd \'de\' MMMM \'de\' yyyy'
+  );
+  return $formatter->format(new DateTime($fecha));
 }
+
 ?>
 
 <!DOCTYPE html>
