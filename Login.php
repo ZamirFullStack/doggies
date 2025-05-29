@@ -34,13 +34,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Iniciar Sesión - Doggies</title>
     <link rel="stylesheet" href="css/Login.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body class="login-page">
     <header>
@@ -64,9 +64,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <i class="fas fa-envelope"></i>
                     <input type="email" name="email" placeholder="Correo Electrónico" required>
                 </div>
-                <div class="input-group">
+                <div class="input-group password-group">
                     <i class="fas fa-lock"></i>
-                    <input type="password" name="password" placeholder="Contraseña" required>
+                    <input type="password" id="password" name="password" placeholder="Contraseña" required>
+                    <span class="toggle-password" onclick="togglePassword()">
+                        <i class="fas fa-eye" id="toggleIcon"></i>
+                    </span>
                 </div>
                 <button class="auth-btn" type="submit">Iniciar Sesión</button>
             </form>
@@ -85,5 +88,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
     </footer>
+
+    <script>
+    function togglePassword() {
+        const passwordField = document.getElementById("password");
+        const icon = document.getElementById("toggleIcon");
+        if (passwordField.type === "password") {
+            passwordField.type = "text";
+            icon.classList.replace("fa-eye", "fa-eye-slash");
+        } else {
+            passwordField.type = "password";
+            icon.classList.replace("fa-eye-slash", "fa-eye");
+        }
+    }
+    </script>
 </body>
 </html>
