@@ -45,7 +45,7 @@ if ($success) {
     try {
         // Configuración del servidor SMTP
         $mail->isSMTP();
-        $mail->Host = 'smtp.tu-servidor.com'; // Reemplaza con tu servidor SMTP
+        $mail->Host = 'smtp.gmail.com'; // Reemplaza con tu servidor SMTP
         $mail->SMTPAuth = true;
         $mail->Username = 'doggiespasto22@gmail.com'; // Reemplaza con tu correo
         $mail->Password = 'nfav ibzv txxd wvwl'; // Reemplaza con tu contraseña
