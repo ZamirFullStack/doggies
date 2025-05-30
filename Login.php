@@ -1,3 +1,35 @@
+<?php
+session_start();
+require 'conexion.php'; // Asegúrate de tener este archivo y la variable $pdo configurada
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = $_POST['email'] ?? '';
+    $password = $_POST['password'] ?? '';
+
+    if (!empty($email) && !empty($password)) {
+        // Busca el usuario por email
+        $stmt = $pdo->prepare("SELECT * FROM usuario WHERE Correo = ?");
+        $stmt->execute([$email]);
+        $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($usuario && isset($usuario['Contrasena']) && password_verify($password, $usuario['Contrasena'])) {
+            if (!$usuario['Confirmado']) {
+                echo "<script>alert('Tu cuenta aún no ha sido verificada. Revisa tu correo.');</script>";
+            } else {
+                $_SESSION['usuario'] = [
+                    'ID_Usuario' => $usuario['ID_Usuario'],
+                    'Nombre' => $usuario['Nombre'],
+                    'ID_Rol' => $usuario['ID_Rol']
+                ];
+                header('Location: index.php');
+                exit;
+            }
+        } else {
+            echo "<script>alert('Correo o contraseña incorrectos.');</script>";
+        }
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
