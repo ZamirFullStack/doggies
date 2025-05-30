@@ -72,9 +72,13 @@ if (empty($items)) {
 try {
     $pdo->beginTransaction();
 
-    $stmt = $pdo->prepare("INSERT INTO pedido (ID_Usuario, Direccion_Entrega, Departamento, Ciudad, Metodo_Pago, Estado, Total) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt = $pdo->prepare("INSERT INTO pedido 
+    (ID_Usuario, Email, Nombre, Direccion_Entrega, Departamento, Ciudad, Metodo_Pago, Estado, Total)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
     $stmt->execute([
-        $usuarioId,
+        null,
+        $cliente['email'] ?? '',
+        $cliente['nombre'] ?? '',
         $cliente['direccion'] ?? 'Sin dirección',
         $cliente['departamento'] ?? '',
         $cliente['ciudad'] ?? '',
@@ -82,6 +86,7 @@ try {
         'pendiente',
         $total
     ]);
+
 
     $pedidoId = $pdo->lastInsertId();
     $_SESSION['pedido_id'] = $pedidoId;
