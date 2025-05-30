@@ -48,8 +48,38 @@ $tiposDocumento = obtenerValoresEnum($pdo, 'usuario', 'Tipo_Documento');
     body {
       background-color: #f5f5f5;
       font-family: 'Roboto', sans-serif;
+      min-height: 100vh;
     }
-
+    /* Ajuste importante: deja espacio para el header fijo */
+    .checkout-container {
+      max-width: 1200px;
+      margin: 0 auto 2rem auto;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 2rem;
+      padding-top: 100px; /* <-- deja espacio para el header fijo */
+      box-sizing: border-box;
+    }
+    @media (max-width: 900px) {
+      .checkout-container {
+        grid-template-columns: 1fr;
+        padding-top: 90px;
+        gap: 2rem;
+      }
+      .summary-box {
+        min-width: unset;
+        max-width: 100%;
+        margin-top: 2rem;
+      }
+    }
+    @media (max-width: 600px) {
+      .checkout-container {
+        padding: 90px 0.5rem 2rem 0.5rem;
+      }
+      .summary-box, .checkout-form {
+        padding: 1rem;
+      }
+    }
     /* Resumen del pedido */
     .summary-box {
       background: white;
@@ -57,23 +87,20 @@ $tiposDocumento = obtenerValoresEnum($pdo, 'usuario', 'Tipo_Documento');
       border-radius: 12px;
       box-shadow: 0 0 12px rgba(0, 0, 0, 0.08);
       max-width: 480px;
-      min-width: 450px;
+      min-width: 350px;
       overflow-x: hidden;
       font-family: 'Roboto', sans-serif;
     }
-
     .summary-box h3 {
       font-size: 1.25rem;
       margin-bottom: 1rem;
       color: #333;
     }
-
     .summary-box table {
       width: 100%;
       border-collapse: collapse;
       table-layout: fixed;
     }
-
     .summary-box th,
     .summary-box td {
       padding: 0.6rem 0.4rem;
@@ -81,19 +108,16 @@ $tiposDocumento = obtenerValoresEnum($pdo, 'usuario', 'Tipo_Documento');
       text-align: left;
       vertical-align: middle;
     }
-
     .summary-box th {
       color: #555;
       border-bottom: 1px solid #ddd;
     }
-
     .product-summary {
       display: flex;
       align-items: center;
       gap: 0.5rem;
       overflow: hidden;
     }
-
     .product-summary img {
       width: 50px;
       height: 50px;
@@ -101,7 +125,6 @@ $tiposDocumento = obtenerValoresEnum($pdo, 'usuario', 'Tipo_Documento');
       flex-shrink: 0;
       border-radius: 6px;
     }
-
     .product-summary span {
       display: block;
       white-space: nowrap;
@@ -110,7 +133,6 @@ $tiposDocumento = obtenerValoresEnum($pdo, 'usuario', 'Tipo_Documento');
       max-width: 140px;
       font-weight: 500;
     }
-
     input.cantidad {
       width: 55px;
       padding: 4px;
@@ -120,30 +142,18 @@ $tiposDocumento = obtenerValoresEnum($pdo, 'usuario', 'Tipo_Documento');
       font-weight: bold;
       background: #f9f9f9;
     }
-
     /* Estilo para el resumen de totales */
     #totales td {
       padding: 0.4rem 0;
       font-size: 0.95rem;
     }
-
     #totales tr:last-child td {
       font-weight: bold;
       font-size: 1rem;
       color: #222;
     }
-
     #totales td:last-child {
       text-align: right;
-    }
-
-
-    .checkout-container {
-      max-width: 1200px;
-      margin: 2rem auto;
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 2rem;
     }
     .checkout-form, .summary-box {
       background: white;
@@ -279,6 +289,7 @@ $tiposDocumento = obtenerValoresEnum($pdo, 'usuario', 'Tipo_Documento');
     </nav>
   </header>
 
+  <!-- Aquí va el padding para separar el header fijo del contenido -->
   <div class="checkout-container">
     <form class="checkout-form" method="POST" action="pagar_carrito.php">
       <h3>1. Dirección de envío</h3>
@@ -431,7 +442,5 @@ $tiposDocumento = obtenerValoresEnum($pdo, 'usuario', 'Tipo_Documento');
 
   actualizarResumen();
 </script>
-
-
 </body>
 </html>
