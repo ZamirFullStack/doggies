@@ -123,7 +123,8 @@ try {
             "pending" => "https://doggies-production.up.railway.app/pago_pendiente.php"
         ],
         "auto_return" => "approved",
-        "external_reference" => $pedidoId
+        "external_reference" => $pedidoId,
+        "installments" => 1 // <--- SOLO PERMITIR 1 CUOTA
     ]);
 
     echo json_encode(["preference_id" => $preference->id]);
