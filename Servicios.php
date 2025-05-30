@@ -8,77 +8,87 @@
   <link rel="stylesheet" href="css/servicios.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="icon" type="image/jpeg" href="img/fondo.jpg" />
-<style>
-/* Estilos más compactos para el modal y su contenido */
+  <style>
+    /* Header fijo */
+    header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 70px;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .menu {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 1200px;
+      padding: 0 20px;
+      list-style: none;
+    }
+    .menu li {
+      flex: 1;
+      text-align: center;
+    }
+    .menu li.logo {
+      flex: 0 0 auto;
+    }
 
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: none;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999; /* más alto que el header */
-  padding: 1rem;
-}
+    .menu li.logo a {
+      display: block;
+      width: 120px;   /* <-- Ajusta el ancho aquí */
+      height: 45px;   /* <-- Ajusta la altura aquí */
+      background-image: url('img/fondo.jpg');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      text-indent: -9999px;
+      margin: 0 auto;
+    }
 
+    .menu a {
+      text-decoration: none;
+      color: #333;
+      font-weight: bold;
+      font-size: 1rem;
+      padding: 0.5em;
+      display: inline-block;
+    }
+    .menu a:hover { color: #4caf50; }
 
-.modal-content {
-  background-color: #fff;
-  border-radius: 10px;
-  padding: 1.5rem;
-  width: 100%;
-  max-width: 450px; /* <- Reduce el ancho del modal */
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  position: relative;
-}
-
-.modal-content h2 {
-  margin-top: 0;
-  text-align: center;
-}
-
-.modal-form form {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.modal-form input,
-.modal-form select,
-.modal-form textarea {
-  padding: 0.5rem;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
-
-.modal-form label {
-  font-weight: 600;
-  margin-bottom: 0.2rem;
-}
-
-.modal-form button.auth-btn {
-  background-color: #28a745;
-  color: white;
-  font-weight: bold;
-  border: none;
-  border-radius: 6px;
-  padding: 0.8rem;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.modal-form button.auth-btn:hover {
-  background-color: #218838;
-}
-
-
-
-</style>
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem 2rem 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      /* Quita el padding-top de 2rem aquí */
+    }
+    /* --- Título debajo del header, centrado y estático --- */
+    .titulo-servicios {
+      text-align: center;
+      font-size: 2rem;
+      font-weight: bold;
+      margin: 0 auto 2rem auto;
+      padding-top: 90px; /* justo debajo del header fijo */
+      width: 100%;
+      color: #222;
+      background: transparent;
+      z-index: 2;
+      /* NO STICKY, NO FIXED */
+    }
+    /* Responsive: ajusta espacio si el header es más pequeño */
+    @media (max-width: 600px) {
+      header { height: 55px; }
+      .titulo-servicios { padding-top: 65px; font-size: 1.15rem; }
+      main { padding-left: 2vw; padding-right: 2vw; }
+    }
+  </style>
 </head>
 <body class="login-page">
   <header>
@@ -145,6 +155,7 @@
     </div>
   </footer>
 
+  <!-- MODAL SCRIPTS AQUÍ (igual que tu código original) -->
   <div id="modalReserva" class="modal">
     <div class="modal-content">
       <span class="close" onclick="cerrarModal()">&times;</span>

@@ -116,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       display: block;
       width: 150px;
       height: 60px;
-      background-image: url('img/fondo.jpg');
+      background-image: url('/img/fondo.jpg');
       background-size: contain;
       background-repeat: no-repeat;
       background-position: center;

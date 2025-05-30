@@ -43,7 +43,7 @@
       display: block;
       width: 150px;
       height: 60px;
-      background-image: url('img/fondo.jpg');
+      background-image: url('/img/fondo.jpg');
       background-size: contain;
       background-repeat: no-repeat;
       background-position: center;
@@ -111,20 +111,20 @@
       background-color: #43a047;
     }
 
-.recover,
-.auth-container p {
-  text-align: center;
-  margin-top: 1em;
-}
-.recover a,
-.auth-container p a {
-  color: #4caf50;
-  text-decoration: none;
-}
-.recover a:hover,
-.auth-container p a:hover {
-  text-decoration: underline;
-}
+    .recover,
+    .auth-container p {
+      text-align: center;
+      margin-top: 1em;
+    }
+    .recover a,
+    .auth-container p a {
+      color: #4caf50;
+      text-decoration: none;
+    }
+    .recover a:hover,
+    .auth-container p a:hover {
+      text-decoration: underline;
+    }
 
     footer {
       background-color: rgba(51, 51, 51, 0.95);

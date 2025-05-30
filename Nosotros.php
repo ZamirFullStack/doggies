@@ -29,6 +29,7 @@
       list-style: none;
       margin: 0;
     }
+    
     .menu li {
       flex: 1;
       text-align: center;
