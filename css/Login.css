@@ -1,5 +1,9 @@
 /* RESET Y LAYOUT BASE */
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 body.login-page {
   font-family: 'Roboto', sans-serif;
   background-color: #f4f7fc;
@@ -13,7 +17,9 @@ body.login-page {
 /* HEADER */
 header {
   position: fixed;
-  top: 0; left: 0; right: 0;
+  top: 0;
+  left: 0;
+  right: 0;
   height: 70px;
   background-color: rgba(255,255,255,0.95);
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -29,28 +35,31 @@ header {
   width: 100%;
   max-width: 1200px;
   padding: 0 20px;
-  flex-wrap: wrap;
-}
-.menu li {
   list-style: none;
 }
-.menu li a {
+.menu li {
+  flex: 1;
+  text-align: center;
+}
+.menu li.logo {
+  flex: 0 0 auto;
+}
+.menu a {
   text-decoration: none;
   color: #333;
   font-weight: bold;
   font-size: 1rem;
-  padding: 0.5em 1em;
-  display: block;
-}
-.menu li.logo {
-  flex: 0 1 100%;
-  text-align: center;
-  margin: 0.5em 0;
-}
-.menu li.logo a {
+  padding: 0.5em;
   display: inline-block;
-  height: 50px;
-  width: auto;
+}
+.menu a:hover {
+  color: #4caf50;
+}
+/* Logo centrado como imagen de fondo */
+.menu li.logo a {
+  display: block;
+  width: 652px;
+  height: 70px;
   background-image: url('../img/fondo.jpg');
   background-size: contain;
   background-repeat: no-repeat;
@@ -64,7 +73,6 @@ main {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 1em;
 }
 
 /* FORMULARIO */
@@ -107,15 +115,6 @@ main {
   box-shadow: 0 0 5px rgba(76,175,80,0.2);
   outline: none;
 }
-.password-group .toggle-password {
-  position: absolute;
-  top: 50%;
-  right: 12px;
-  transform: translateY(-50%);
-  cursor: pointer;
-  color: #888;
-}
-
 .auth-btn {
   width: 100%;
   padding: 0.8em;
@@ -131,16 +130,18 @@ main {
 .auth-btn:hover {
   background-color: #43a047;
 }
-.auth-container p,
-.recover {
+.recover,
+.auth-container p {
   text-align: center;
   margin-top: 1em;
 }
-.auth-container a {
+.recover a,
+.auth-container p a {
   color: #4caf50;
   text-decoration: none;
 }
-.auth-container a:hover {
+.recover a:hover,
+.auth-container p a:hover {
   text-decoration: underline;
 }
 
@@ -152,6 +153,11 @@ footer {
   padding: 1.5em 2em;
   width: 100%;
   margin-top: auto;
+  position: relative;
+}
+.footer-content h3 {
+  font-size: 1.4em;
+  margin-bottom: 0.5em;
 }
 .social-links {
   display: flex;
@@ -166,6 +172,8 @@ footer {
 .social-links a:hover {
   color: #ffd700;
 }
+
+/* Derechos reservados */
 footer::after {
   content: "© 2025 Doggies. Todos los derechos reservados.";
   display: block;
@@ -175,17 +183,19 @@ footer::after {
 }
 
 /* RESPONSIVE */
-@media (max-width: 768px) {
-  .menu { flex-direction: column; padding: 0; }
-  .menu li { width: 100%; }
-  .menu li.logo a { height: 40px; }
-  .auth-container { max-width: 90%; padding: 1.5em; }
-  .auth-container h2 { font-size: 1.8rem; }
-}
 @media (max-width: 480px) {
-  header { padding: 0 0.5em; }
-  .menu a { font-size: 0.9rem; padding: 0.4em; }
-  .auth-container { margin: 0 0.5em; padding: 1em; }
-  .auth-container h2 { font-size: 1.6rem; }
-  .social-links a { font-size: 1.2rem; }
+  .auth-container {
+    margin: 1em;
+    padding: 1.5em;
+  }
+  .auth-container h2 {
+    font-size: 1.6rem;
+  }
+  .menu a {
+    font-size: 0.9rem;
+  }
+  .social-links a {
+    font-size: 1.2rem;
+  }
 }
+
