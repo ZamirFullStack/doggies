@@ -41,7 +41,7 @@
     .menu li.logo a {
       display: block;
       width: 120px;   /* <-- Ajusta el ancho aquí */
-      height: 45px;   /* <-- Ajusta la altura aquí */
+      height: 50px;   /* <-- Ajusta la altura aquí */
       background-image: url('img/fondo.jpg');
       background-size: contain;
       background-repeat: no-repeat;
