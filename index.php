@@ -30,6 +30,7 @@
       color: #333;
       text-decoration: none;
       display: block;
+      padding-left: 222px;
     }
     .nosotros-link {
       display: inline-block;

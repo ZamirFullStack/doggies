@@ -264,7 +264,7 @@ footer::after {
 }
 
 /* RESPONSIVE */
-@media (max-width: 0px) {
+@media (max-width: 756px) {
   .main-title {
     font-size: 2em;
   }
@@ -274,8 +274,29 @@ footer::after {
   }
 
   .menu {
-    flex-direction: column;
+    flex-grow: column;
+    flex
     gap: 10px;
   }
+  
+  .logo {
+    width: 0px;
+    padding-right: 10px;
+    padding-right: 15px
+  }
+  .menu li a{
+    position: relative;
+    right: 25px;
+    padding: 0px;
+    padding-left: 27px;
+  }
+
+.menu a[href="Login.php"],
+.menu a[href="Registro.php"] {
+left:10px
+}
+
+
+
 }
 
