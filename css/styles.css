@@ -264,7 +264,7 @@ footer::after {
 }
 
 /* RESPONSIVE */
-@media (max-width: 0px) {
+@media (max-width: 768px) {
   .main-title {
     font-size: 2em;
   }
