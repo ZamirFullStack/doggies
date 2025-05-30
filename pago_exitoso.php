@@ -16,14 +16,26 @@ try {
     die("❌ Error de conexión: " . $e->getMessage());
 }
 
-if (isset($_SESSION['pedido_id'])) {
-    $stmt = $pdo->prepare("UPDATE pedido SET Estado = 'pagado' WHERE ID_Pedido = ?");
-    $stmt->execute([$_SESSION['pedido_id']]);
+$resumenPedido = null;
+$resumenDireccion = null;
+$total = 0;
+$cliente_nombre = '';
 
-    // Limpiar carrito y pedido
-    unset($_SESSION['carrito']);
-    unset($_SESSION['pedido_id']);
+if (!empty($_SESSION['carrito'])) {
+    $resumenPedido = $_SESSION['carrito'];
 }
+
+if (!empty($_SESSION['cliente'])) {
+    $cli = $_SESSION['cliente'];
+    $resumenDireccion = "{$cli['direccion']}, {$cli['barrio']}, {$cli['ciudad']}, {$cli['departamento']}";
+    $cliente_nombre = $cli['nombre'] ?? '';
+} else {
+    $resumenDireccion = '';
+    $cliente_nombre = '';
+}
+
+// Limpiar sesión después de mostrar resumen
+$limpiarSesion = true;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -38,13 +50,76 @@ if (isset($_SESSION['pedido_id'])) {
     h1 { color: #2e7d32; }
     p { margin-top: 1em; color: #444; }
     a { display: inline-block; margin-top: 2em; color: #fff; background-color: #4caf50; padding: 0.8em 1.5em; border-radius: 8px; text-decoration: none; }
+    .resumen-box { margin: 2em auto 1em auto; background: #fafafa; border-radius: 8px; box-shadow: 0 1px 5px #e0e0e0; padding: 1em; max-width: 540px; }
+    .resumen-box h3 { color: #27ae60; margin-bottom: .5em; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: .5em; }
+    th, td { padding: 8px; border: 1px solid #ddd; }
+    th { background: #e0f2f1; }
+    tfoot td { font-weight: bold; }
+    .direccion { margin-top: 1em; color: #388e3c; }
+    .prod-img { width: 38px; height: 38px; object-fit: cover; border-radius: 6px; margin-right: 8px; vertical-align: middle;}
+    .prod-cell { display: flex; align-items: center; gap: 8px; }
   </style>
 </head>
 <body>
   <div class="box">
-    <h1>✅ ¡Gracias por tu compra!</h1>
+    <h1>✅ ¡Gracias por tu compra<?= $cliente_nombre ? ", $cliente_nombre" : "" ?>!</h1>
     <p>Tu pago fue procesado exitosamente.</p>
+
+    <?php if ($resumenPedido): ?>
+    <div class="resumen-box">
+      <h3>Resumen de tu pedido</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($resumenPedido as $producto): 
+            // Buscar imagen
+            $stmt = $pdo->prepare("SELECT Imagen_URL FROM producto WHERE Nombre = ?");
+            $stmt->execute([$producto['nombre']]);
+            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+            $imgRuta = ($fila && !empty($fila['Imagen_URL'])) ? $fila['Imagen_URL'] : 'img/Productos/default.jpg';
+
+            $subtotal = $producto['precio'] * $producto['cantidad'];
+            $total += $subtotal;
+        ?>
+          <tr>
+            <td class="prod-cell">
+                <img src="<?= htmlspecialchars($imgRuta) ?>" alt="<?= htmlspecialchars($producto['nombre']) ?>" class="prod-img">
+                <?= htmlspecialchars($producto['nombre']) ?>
+            </td>
+            <td style="text-align:center;"><?= $producto['cantidad'] ?></td>
+            <td>$ <?= number_format($subtotal, 0, ',', '.') ?></td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2" style="text-align:right;">Total:</td>
+            <td><b>$ <?= number_format($total, 0, ',', '.') ?></b></td>
+          </tr>
+        </tfoot>
+      </table>
+      <?php if ($resumenDireccion): ?>
+        <div class="direccion"><b>Enviado a:</b> <?= htmlspecialchars($resumenDireccion) ?></div>
+      <?php endif; ?>
+    </div>
+    <?php endif; ?>
+
     <a href="index.php">Volver al inicio</a>
   </div>
 </body>
 </html>
+<?php
+// Limpia la sesión DESPUÉS de mostrar el resumen
+if ($limpiarSesion) {
+    unset($_SESSION['carrito']);
+    unset($_SESSION['cliente']);
+    unset($_SESSION['pedido_id']);
+}
+?>

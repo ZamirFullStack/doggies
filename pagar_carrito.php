@@ -37,11 +37,10 @@ try {
 }
 
 require __DIR__ . '/vendor/autoload.php';
-
 use MercadoPago\MercadoPagoConfig;
 use MercadoPago\Client\Preference\PreferenceClient;
 
-MercadoPagoConfig::setAccessToken("APP_USR-7533043630493954-052015-54d6e694f724d08327f9bcf85aa2a2e9-822556558");
+MercadoPagoConfig::setAccessToken("TEST-7533043630493954-052015-7926e661894c7b075e8d779a3c67e94d-822556558");
 
 $carrito = $_SESSION['carrito'];
 $cliente = $_SESSION['cliente'] ?? [];
@@ -106,8 +105,10 @@ try {
     exit;
 }
 
+// -- SOLO GENERA LA PREFERENCIA --
 $preferenceData = [
     "items" => $items,
+    "external_reference" => $pedidoId, // <--- ASÍ EL WEBHOOK SABE QUÉ PEDIDO ES
     "payer" => [
         "name" => $cliente['nombre'] ?? 'Cliente',
         "email" => $cliente['email'] ?? 'cliente@test.com'
