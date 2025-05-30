@@ -169,5 +169,10 @@ try {
       </script>
     </div>
   </div>
+  <script>
+    setTimeout(function() {
+      window.location.href = "<?= htmlspecialchars($preference->init_point) ?>";
+    }, 2000); // Redirige en 2 segundos
+  </script>
 </body>
 </html>
