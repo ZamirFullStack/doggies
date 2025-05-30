@@ -1,49 +1,15 @@
-<?php
-session_start();
-require 'conexion.php';
-
-$error = '';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = $_POST['email'] ?? '';
-    $password = $_POST['password'] ?? '';
-
-    if (empty($email) || empty($password)) {
-        $error = 'Por favor, completa todos los campos.';
-    } else {
-        $stmt = $pdo->prepare("SELECT * FROM usuario WHERE Correo = ?");
-        $stmt->execute([$email]);
-        $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($usuario && isset($usuario['Contrasena']) && password_verify($password, $usuario['Contrasena'])) {
-            if (!$usuario['Confirmado']) {
-                echo "<script>alert('\uD83D\uDCE9 Tu cuenta a\u00fan no ha sido verificada. Por favor revisa tu bandeja de entrada o la carpeta SPAM para confirmar tu correo.');</script>";
-            } else {
-                $_SESSION['usuario'] = [
-                    'ID_Usuario' => $usuario['ID_Usuario'],
-                    'Nombre' => $usuario['Nombre'],
-                    'ID_Rol' => $usuario['ID_Rol']
-                ];
-                header('Location: index.php');
-                exit;
-            }
-        } else {
-            echo "<script>alert('Correo o contrase\u00f1a incorrectos.');</script>";
-        }
-    }
-}
-?>
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Iniciar Sesión - Doggies</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <link rel="stylesheet" href="css/Login.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="icon" type="image/jpeg" href="img/fondo.jpg" />
 </head>
 <body class="login-page">
+
     <header>
         <nav>
             <ul class="menu">

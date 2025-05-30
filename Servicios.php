@@ -9,85 +9,170 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="icon" type="image/jpeg" href="img/fondo.jpg" />
   <style>
-    /* Header fijo */
-    header {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      height: 70px;
-      background: #fff;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .menu {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      max-width: 1200px;
-      padding: 0 20px;
-      list-style: none;
-    }
-    .menu li {
-      flex: 1;
-      text-align: center;
-    }
-    .menu li.logo {
-      flex: 0 0 auto;
-    }
+/* HEADER FIJO Y RESPONSIVE */
+header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  z-index: 100;
+  height: 75px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-    .menu li.logo a {
-      display: block;
-      width: 120px;   /* <-- Ajusta el ancho aquí */
-      height: 50px;   /* <-- Ajusta la altura aquí */
-      background-image: url('img/fondo.jpg');
-      background-size: contain;
-      background-repeat: no-repeat;
-      background-position: center;
-      text-indent: -9999px;
-      margin: 0 auto;
-    }
+.menu {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1200px;
+  padding: 0 20px;
+  list-style: none;
+}
 
-    .menu a {
-      text-decoration: none;
-      color: #333;
-      font-weight: bold;
-      font-size: 1rem;
-      padding: 0.5em;
-      display: inline-block;
-    }
-    .menu a:hover { color: #4caf50; }
+.menu li {
+  flex: 1;
+  text-align: center;
+}
+.menu li.logo {
+  flex: 0 0 auto;
+}
 
-    main {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 1rem 2rem 1rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      /* Quita el padding-top de 2rem aquí */
-    }
-    /* --- Título debajo del header, centrado y estático --- */
-    .titulo-servicios {
-      text-align: center;
-      font-size: 2rem;
-      font-weight: bold;
-      margin: 0 auto 2rem auto;
-      padding-top: 90px; /* justo debajo del header fijo */
-      width: 100%;
-      color: #222;
-      background: transparent;
-      z-index: 2;
-      /* NO STICKY, NO FIXED */
-    }
-    /* Responsive: ajusta espacio si el header es más pequeño */
-    @media (max-width: 600px) {
-      header { height: 55px; }
-      .titulo-servicios { padding-top: 65px; font-size: 1.15rem; }
-      main { padding-left: 2vw; padding-right: 2vw; }
-    }
+.menu li.logo a {
+  display: block;
+  width: 110px;    /* Ajusta el ancho */
+  height: 55px;    /* Ajusta la altura */
+  background-image: url('img/fondo.jpg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  text-indent: -9999px;
+  margin: 0 auto;
+}
+
+/* TÍTULO RESPONSIVE, SIEMPRE VISIBLE DEBAJO DEL HEADER */
+.titulo-servicios {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: bold;
+  width: 100%;
+  color: #222;
+  background: transparent;
+  margin: 0 auto 2rem auto;
+  padding-top: 95px; /* ← igual o mayor que header! */
+}
+
+/* --- MOBILE: HEADER Y LOGO MÁS PEQUEÑO --- */
+@media (max-width: 600px) {
+  header {
+    height: 58px;
+    min-height: 58px;
+    padding: 0;
+  }
+  .menu li.logo a {
+    width: 78px;
+    height: 38px;
+  }
+  .titulo-servicios {
+    padding-top: 70px; /* ← igual o mayor que header! */
+    font-size: 1.25rem;
+  }
+  main {
+    padding-left: 2vw;
+    padding-right: 2vw;
+  }
+}
+.productos-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  width: 100%;
+}
+
+.producto-card {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.10);
+  overflow: hidden;
+  transition: transform 0.3s ease;
+  min-height: 410px;        /* <-- altura mínima para igualar */
+  height: 100%;             /* Fuerza a llenar la celda del grid */
+  justify-content: flex-start;
+}
+
+.producto-card img {
+  width: 100%;
+  height: 180px;            /* <-- altura fija para TODAS las imágenes */
+  object-fit: cover;
+  display: block;
+}
+
+.producto-info {
+  flex: 1;                  /* Hace que todo ocupe el mismo espacio */
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.producto-info h3 {
+  margin-bottom: 0.7rem;
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.producto-info p {
+  margin-bottom: 0.7rem;
+  color: #666;
+  font-size: 1.12rem;
+  text-align: center;
+}
+
+.producto-info span {
+  display: block;
+  margin-bottom: 1.2rem;
+  font-weight: bold;
+  color: #18963e;
+  font-size: 1.18rem;
+  text-align: center;
+}
+
+.producto-info button {
+  padding: 0.7rem 1.8rem;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1.1rem;
+  transition: background 0.2s;
+  margin-top: auto;     /* Deja el botón siempre pegado abajo */
+}
+
+.producto-info button:hover {
+  background: #218838;
+}
+
+@media (max-width: 900px) {
+  .productos-grid {
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+  }
+  .producto-card {
+    min-height: 370px;
+  }
+  .producto-card img {
+    height: 160px;
+  }
+}
+
   </style>
 </head>
 <body class="login-page">

@@ -1,24 +1,22 @@
 <?php
 session_start();
 
-// Inicializar el carrito si no existe
 if (!isset($_SESSION['carrito'])) {
     $_SESSION['carrito'] = [];
 }
 
-// Procesar eliminación de un producto
+// Eliminar producto
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_index'])) {
     $idx = intval($_POST['delete_index']);
     if (isset($_SESSION['carrito'][$idx])) {
         unset($_SESSION['carrito'][$idx]);
-        // Reindexar el arreglo para no dejar huecos
         $_SESSION['carrito'] = array_values($_SESSION['carrito']);
     }
     header('Location: carrito.php');
     exit;
 }
 
-// Procesar actualización de cantidad de un producto específico
+// Actualizar cantidad
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_index'], $_POST['cantidad'])) {
     $idx = intval($_POST['update_index']);
     $qty = max(1, min(25, intval($_POST['cantidad'])));
@@ -32,7 +30,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_index'], $_POS
 $carrito = $_SESSION['carrito'];
 $total = 0;
 
-// Conexión a la base de datos
 $url = 'mysql://root:AaynZNNKYegnXoInEgQefHggDxoRieEL@centerbeam.proxy.rlwy.net:58462/railway';
 $dbparts = parse_url($url);
 $host = $dbparts['host'];
@@ -54,23 +51,201 @@ try {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mi Carrito - Doggies</title>
-  <link rel="stylesheet" href="css/carrito.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="icon" type="image/jpeg" href="img/fondo.jpg" />
   <style>
-    html, body { height:100%; margin:0; display:flex; flex-direction:column; }
-    main { flex:1; padding:1rem; max-width:1000px; margin:0 auto; }
-    .carrito-wrapper { max-height:420px; overflow-y:auto; border:1px solid #ccc; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); margin-bottom:1rem; }
-    .carrito-img { width:60px; height:60px; object-fit:cover; margin-right:0.5rem; }
-    .carrito-table { width:100%; border-collapse:collapse; min-width:600px; }
-    .carrito-table th, .carrito-table td { padding:12px; text-align:center; border-bottom:1px solid #eee; background:#fff; }
-    .carrito-table thead th { background:#f8f8f8; position:sticky; top:0; z-index:1; }
-    .producto-detalle { display:flex; align-items:center; }
-    .cantidad-form, .delete-form { display:inline-block; margin:0; }
-    .cantidad-input { width:60px; text-align:center; }
-    .resumen-footer { text-align:right; margin-top:1rem; }
-    .boton-comprar { display:inline-block; padding:10px 20px; background:#4caf50; color:#fff; text-decoration:none; border-radius:6px; }
-    .boton-comprar:hover { background:#45a049; }
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f9f9f9;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      margin: 0;
+    }
+    header {
+      background-color: #fff;
+      padding: 20px 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .menu {
+      display: flex;
+      justify-content: space-evenly;
+      align-items: center;
+      list-style: none;
+      margin: 0;
+      padding: 0 10px;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .menu li.logo a {
+      display: block;
+      width: 120px;
+      height: 48px;
+      background-image: url('img/fondo.jpg');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      text-indent: -9999px;
+      margin: 0 auto;
+    }
+    .menu li a {
+      color: #333;
+      font-weight: bold;
+      font-size: 1rem;
+      text-decoration: none;
+      padding: 0.5em;
+    }
+    .menu li a:hover {
+      color: #4caf50;
+    }
+
+    main {
+      flex: 1;
+      padding: 1rem;
+      max-width: 1000px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    h2 {
+      text-align: center;
+      font-size: 2rem;
+      margin: 1.5rem 0 1rem 0;
+      color: #333;
+    }
+
+    .carrito-wrapper {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      padding: 1rem;
+      margin-bottom: 1rem;
+      overflow-x: auto;
+    }
+
+    .carrito-table {
+      width: 100%;
+      min-width: 600px;
+      border-collapse: collapse;
+      margin-bottom: 0;
+    }
+
+    .carrito-table th, .carrito-table td {
+      padding: 12px;
+      text-align: center;
+      border-bottom: 1px solid #eee;
+      background: #fff;
+      font-size: 1rem;
+    }
+
+    .carrito-table th {
+      background: #f8f8f8;
+      color: #333;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .producto-detalle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      justify-content: center;
+      min-width: 120px;
+    }
+    .carrito-img {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    .cantidad-form, .delete-form {
+      display: inline-block;
+      margin: 0;
+    }
+    .cantidad-input {
+      width: 50px;
+      text-align: center;
+      font-size: 1rem;
+      border-radius: 4px;
+      border: 1px solid #bbb;
+      background: #fafafa;
+      padding: 3px;
+    }
+    .resumen-footer {
+      text-align: right;
+      margin-top: 1.5rem;
+    }
+    .boton-comprar {
+      background-color: #4caf50;
+      color: white;
+      padding: 10px 24px;
+      border: none;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 1.1rem;
+      margin-top: 1em;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .boton-comprar:hover {
+      background-color: #388e3c;
+    }
+
+    footer {
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+      padding: 20px 10px;
+      margin-top: auto;
+    }
+    .footer-content h3 {
+      margin-bottom: 10px;
+      font-size: 1.2rem;
+    }
+    .social-links a {
+      color: #fff;
+      margin: 0 10px;
+      font-size: 1.5rem;
+      text-decoration: none;
+    }
+    .social-links a:hover {
+      color: #ffd700;
+    }
+    footer::after {
+      content: "© 2025 Doggies. Todos los derechos reservados.";
+      display: block;
+      margin-top: 1em;
+      font-size: 0.9rem;
+      color: #ccc;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 900px) {
+      main { max-width: 99vw; padding: 0.6rem; }
+      .carrito-table { min-width: 420px; font-size: 0.98rem;}
+      .menu { flex-wrap: wrap; }
+    }
+    @media (max-width: 600px) {
+      main { padding: 0.2rem; }
+      .carrito-table, .carrito-wrapper { min-width: unset; width: 100%; }
+      .carrito-wrapper { padding: 3vw 1vw; }
+      .carrito-table th, .carrito-table td { padding: 7px 2px; font-size: 0.92rem; }
+      .producto-detalle { flex-direction: column; gap: 2px; min-width: 60px; }
+      .carrito-img { width: 38px; height: 38px; }
+      .boton-comprar { width: 100%; margin-top: 10px;}
+    }
+    @media (max-width: 480px) {
+      main { max-width: 100vw; }
+      .carrito-wrapper { padding: 3vw 0.5vw; border-radius: 0; box-shadow: none;}
+      .carrito-table th, .carrito-table td { padding: 4px 1px; font-size: 0.86rem; }
+      .carrito-table th { font-size: 0.95rem;}
+      .boton-comprar { font-size: 1rem;}
+      .menu { flex-direction: column; gap: 5px;}
+      .menu li.logo a { width: 90px; height: 38px;}
+    }
   </style>
 </head>
 <body>
@@ -85,10 +260,10 @@ try {
   </header>
 
   <main>
-    <h2 style="text-align: center;">Mi Carrito</h2>
+    <h2>Mi Carrito</h2>
 
     <?php if (empty($carrito)): ?>
-      <p>Tu carrito está vacío.</p>
+      <p style="text-align:center; margin-top:2em;">Tu carrito está vacío.</p>
     <?php else: ?>
       <div class="carrito-wrapper">
         <table class="carrito-table">
