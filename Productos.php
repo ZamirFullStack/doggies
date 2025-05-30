@@ -45,18 +45,91 @@ if (
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     .modal { display:none; position:fixed; z-index:1000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); }
-    .modal-contenido { background:#fff; margin:5% auto; padding:30px; width:90%; max-width:800px; border-radius:12px; box-shadow:0 0 20px rgba(0,0,0,0.2); }
-    .modal-contenido h2 { text-align:center; margin-bottom:20px; }
-    .modal-contenido table { width:100%; border-collapse:collapse; margin-bottom:20px; }
-    .modal-contenido th, .modal-contenido td { padding:12px; text-align:center; border:1px solid #ccc; }
-    .modal-contenido thead th { background:#f4f4f4; }
-    .modal-contenido img { width:60px; height:60px; object-fit:cover; margin-right:10px; vertical-align:middle; }
-    .producto-descripcion { display:flex; align-items:center; gap:10px; }
-    .cantidad-input { width:60px; text-align:center; }
-    .modal-contenido button { margin:5px; padding:10px 20px; border:none; border-radius:6px; background:#4caf50; color:#fff; cursor:pointer; }
-    .modal-contenido button:hover { background:#45a049; }
-    .carrito-animado { position:fixed; z-index:2000; transition:transform .8s ease-in-out, opacity .8s; width:60px; height:60px; object-fit:cover; }
+    .modal-contenido { background:#fff; margin:5% auto; padding:30px; width:90%; max-width:800px; border-radius:18px; box-shadow:0 0 20px rgba(0,0,0,0.18);}
+    .modal-contenido h2 {
+      text-align:center; margin-bottom:20px; color: #28a745; font-size:1.55em; font-weight:700; letter-spacing: 0.01em;
+    }
+    /* --- TABLA RESPONSIVE --- */
+    .modal-contenido table {
+      width:100%; border-collapse:collapse; margin-bottom:18px;
+      display: block; overflow-x: auto; white-space: nowrap;
+    }
+    .modal-contenido thead, .modal-contenido tbody, .modal-contenido tr {
+      display: table; width: 100%; table-layout: fixed;
+    }
+    .modal-contenido th, .modal-contenido td {
+      padding:15px 7px; text-align:center; border:1px solid #ccc;
+      font-size: 1rem;
+      background: #fff;
+      word-break: break-word;
+    }
+    .modal-contenido thead th {
+      background:#f4f4f4; color: #333; font-weight: 600; font-size: 1.09em;
+    }
+    .modal-contenido img {
+      width:56px; height:56px; object-fit:cover; margin-right:8px; vertical-align:middle; border-radius: 7px;
+    }
+    .producto-descripcion {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-align: left;
+      min-width: 120px;
+      max-width: 220px;    /* Limita el ancho en escritorio */
+      overflow: hidden;
+    }
+    .producto-descripcion span {
+      display: block;
+      font-weight: 500;
+      color: #222;
+      white-space: normal;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      max-width: 150px;    /* Ajusta según tamaño de tu celda */
+      font-size: 1rem;
+    }
+    .cantidad-input {
+      width:54px; text-align:center; padding:7px 3px; font-size:1em; border-radius: 7px; border:1px solid #bbb;
+    }
+    .modal-contenido button, .modal-contenido form button {
+      margin:7px 8px; padding:14px 25px; border:none; border-radius:9px;
+      background:#28a745; color:#fff; cursor:pointer; font-size:1.13em; font-weight: 600; min-width: 150px;
+      transition: background 0.18s;
+      display: inline-block;
+    }
+    .modal-contenido button:hover, .modal-contenido form button:hover { background:#218838; }
+    .modal-contenido form { display:inline-block; }
+    .carrito-animado { position:fixed; z-index:2000; transition:transform .8s, opacity .8s; width:60px; height:60px; object-fit:cover; }
     .agotado { color:red; font-weight:bold; margin-top:10px; }
+
+    /* Responsive */
+    @media (max-width: 650px) {
+      .modal-contenido { padding: 8px 1px; min-width: 0; width: 99%; border-radius:12px;}
+      .modal-contenido h2 { font-size: 1.1em; }
+      .modal-contenido table { font-size: 0.96em; }
+      .modal-contenido th, .modal-contenido td { padding: 8px 2px; font-size: 0.93em; }
+      .producto-descripcion {
+        flex-direction: column;
+        align-items: flex-start;
+        min-width:80px;
+        max-width: 88px;
+      }
+      .producto-descripcion img { margin-bottom: 2px; margin-right:0; }
+      .producto-descripcion span {
+        max-width: 78px;
+        font-size: 0.98em;
+      }
+      .cantidad-input { width:38px; font-size:0.97em; padding:5px 2px;}
+      .modal-contenido button, .modal-contenido form button {
+        width: 98%; max-width: 330px; margin: 7px auto; display: block; font-size:1.09em;
+      }
+      .modal-contenido form { display:block; }
+    }
+    @media (max-width:400px) {
+      .modal-contenido { padding:2px 0;}
+      .modal-contenido th, .modal-contenido td { padding:3px 1px; font-size:0.90em;}
+      .cantidad-input { width:32px;}
+    }
   </style>
 </head>
 <body>
@@ -137,7 +210,7 @@ if (
       </table>
       <button id="continuar-comprando">Continuar comprando</button>
       <button id="editar-carrito">Editar carrito</button>
-      <form action="Checkout.php" method="get" style="display:inline-block">
+      <form action="Checkout.php" method="get">
         <button type="submit">Finalizar compra</button>
       </form>
     </div>

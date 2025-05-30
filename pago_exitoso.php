@@ -43,22 +43,141 @@ $limpiarSesion = true;
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pago Exitoso</title>
-  <link rel="stylesheet" href="css/login.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"/>
   <style>
-    body { text-align: center; padding: 2em; background-color: #e8f5e9; font-family: 'Roboto', sans-serif; }
-    .box { background: #fff; padding: 2em; border-radius: 10px; max-width: 600px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-    h1 { color: #2e7d32; }
-    p { margin-top: 1em; color: #444; }
-    a { display: inline-block; margin-top: 2em; color: #fff; background-color: #4caf50; padding: 0.8em 1.5em; border-radius: 8px; text-decoration: none; }
-    .resumen-box { margin: 2em auto 1em auto; background: #fafafa; border-radius: 8px; box-shadow: 0 1px 5px #e0e0e0; padding: 1em; max-width: 540px; }
-    .resumen-box h3 { color: #27ae60; margin-bottom: .5em; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: .5em; }
-    th, td { padding: 8px; border: 1px solid #ddd; }
-    th { background: #e0f2f1; }
-    tfoot td { font-weight: bold; }
-    .direccion { margin-top: 1em; color: #388e3c; }
-    .prod-img { width: 38px; height: 38px; object-fit: cover; border-radius: 6px; margin-right: 8px; vertical-align: middle;}
-    .prod-cell { display: flex; align-items: center; gap: 8px; }
+    body {
+      text-align: center;
+      padding: 2em 0.5em;
+      background-color: #e8f5e9;
+      font-family: 'Roboto', sans-serif;
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .box {
+      background: #fff;
+      padding: 2em;
+      border-radius: 10px;
+      max-width: 600px;
+      margin: 2em auto 0 auto;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+    h1 {
+      color: #2e7d32;
+      font-size: 2rem;
+      margin-top: 0;
+    }
+    p {
+      margin-top: 1em;
+      color: #444;
+    }
+    a {
+      display: inline-block;
+      margin-top: 2em;
+      color: #fff;
+      background-color: #28a745;
+      padding: 0.8em 1.5em;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 1.12rem;
+      transition: background 0.19s;
+    }
+    a:hover {
+      background: #23923c;
+    }
+    .resumen-box {
+      margin: 2em auto 1em auto;
+      background: #fafafa;
+      border-radius: 8px;
+      box-shadow: 0 1px 5px #e0e0e0;
+      padding: 1.2em 1em;
+      max-width: 540px;
+      overflow-x: auto;
+    }
+    .resumen-box h3 {
+      color: #27ae60;
+      margin-bottom: .5em;
+      font-size: 1.15rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: .7em;
+      font-size: 1rem;
+    }
+    th, td {
+      padding: 10px 7px;
+      border: 1px solid #ddd;
+      text-align: left;
+      vertical-align: middle;
+    }
+    th {
+      background: #e0f2f1;
+      text-align: center;
+      font-size: 1.01rem;
+      font-weight: 700;
+    }
+    tfoot td {
+      font-weight: bold;
+      background: #f3f3f3;
+    }
+    .direccion {
+      margin-top: 1em;
+      color: #388e3c;
+      font-size: 1.04rem;
+      word-break: break-word;
+    }
+    .prod-img {
+      width: 38px;
+      height: 38px;
+      object-fit: cover;
+      border-radius: 6px;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    .prod-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Responsive Styles */
+    @media (max-width: 600px) {
+      .box {
+        max-width: 99vw;
+        padding: 1em 0.4em;
+        margin: 1em auto 0 auto;
+      }
+      .resumen-box {
+        padding: 0.7em 0.3em;
+        max-width: 98vw;
+      }
+      table, th, td {
+        font-size: 0.95rem;
+      }
+      th, td {
+        padding: 7px 2px;
+      }
+      h1 {
+        font-size: 1.25rem;
+      }
+      a {
+        font-size: 1rem;
+        width: 95vw;
+        box-sizing: border-box;
+      }
+      .prod-img { width: 30px; height: 30px; }
+      .direccion { font-size: .97rem; }
+    }
+
+    @media (max-width: 400px) {
+      .box { padding: 0.8em 0.1em; }
+      .resumen-box { padding: 0.5em 0.1em; }
+      th, td { font-size: 0.90rem; }
+    }
   </style>
 </head>
 <body>

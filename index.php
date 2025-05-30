@@ -30,7 +30,7 @@
       color: #333;
       text-decoration: none;
       display: block;
-      padding-left: 222px;
+      padding-left: 8px 12px;
     }
     .nosotros-link {
       display: inline-block;
@@ -72,7 +72,7 @@
         </li>
         <?php if (isset($_SESSION['usuario'])): ?>
           <li class="submenu">
-            <a href="#"><i class="fas fa-user"></i> Mi cuenta</a>
+            <a href="cuenta"><i class="fas fa-user"></i> Mi cuenta</a>
             <ul class="submenu-opciones">
               <li><a href="mi_cuenta.php">Mi perfil</a></li>
               <?php if ($_SESSION['usuario']['ID_Rol'] == 2): ?>
