@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['enviar_email'])) {
     $empresa = trim($_POST['empresa']);
     $link_rastreo = trim($_POST['link_rastreo']);
 
-    // Actualiza el pedido a "despachado" y guarda datos de logística (opcional)
+    // Actualiza el pedido a "despachado" y guarda datos de logística
     $stmt = $pdo->prepare("UPDATE pedido SET Estado=?, Guia=?, Empresa_Guia=?, Link_Rastreo=? WHERE ID_Pedido=?");
     $stmt->execute([$nuevo_estado, $guia, $empresa, $link_rastreo, $id_pedido]);
 
@@ -48,43 +48,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['enviar_email'])) {
     $pedidoInfo = $stmtC->fetch(PDO::FETCH_ASSOC);
 
     // Obtener los productos del pedido
-    $stmtD = $pdo->prepare("SELECT dp.Cantidad, dp.Subtotal, pr.Nombre, pr.Imagen_URL
-                            FROM detalle_pedido dp 
-                            JOIN producto pr ON dp.ID_Producto = pr.ID_Producto 
-                            WHERE dp.ID_Pedido = ?");
+    $stmtD = $pdo->prepare("SELECT pp.Cantidad, (pp.Cantidad * pp.Precio_Unitario) AS Subtotal, pp.Nombre_Producto AS Nombre, pr.Imagen_URL
+                            FROM pedido_productos pp
+                            LEFT JOIN producto pr ON pp.ID_Producto = pr.ID_Producto
+                            WHERE pp.ID_Pedido = ?");
     $stmtD->execute([$id_pedido]);
     $productosPedido = $stmtD->fetchAll(PDO::FETCH_ASSOC);
 
-    // Construir tabla de productos en HTML
+    // FECHA DE DESPACHO EN HORA COLOMBIA
+    $dtBogota = new DateTime($pedidoInfo['Fecha_Pedido'], new DateTimeZone('UTC'));
+    $dtBogota->setTimezone(new DateTimeZone('America/Bogota'));
+    $fechaDespacho = $dtBogota->format('d/m/Y, H:i');
+
+    // Construir tabla de productos en HTML alineada
     $tablaProductos = '
-    <table style="border-collapse:collapse; width:100%; margin:18px 0; font-size:15px;">
+    <table style="border-collapse:collapse; width:100%; margin:18px 0; font-size:16px;">
       <tr>
-        <th style="background:#fff;border:1px solid #dedede; color:#5c1769; padding:8px 6px;">Producto</th>
-        <th style="background:#fff;border:1px solid #dedede; color:#5c1769; padding:8px 6px;">Cantidad</th>
-        <th style="background:#fff;border:1px solid #dedede; color:#5c1769; padding:8px 6px;">Subtotal</th>
+        <th style="background:#fff; border-bottom:2px solid #dedede; color:#5c1769; padding:12px 8px; text-align:left;">Producto</th>
+        <th style="background:#fff; border-bottom:2px solid #dedede; color:#5c1769; padding:12px 8px; text-align:center;">Cantidad</th>
+        <th style="background:#fff; border-bottom:2px solid #dedede; color:#5c1769; padding:12px 8px; text-align:right;">Subtotal</th>
       </tr>';
     foreach ($productosPedido as $prod) {
-        $tablaProductos .= '<tr>
-          <td style="border:1px solid #dedede;padding:6px 6px;">
-            <img src="https://doggies-production.up.railway.app/img/'.htmlspecialchars($prod['Imagen_URL']).'" alt="" style="height:38px;vertical-align:middle;margin-right:8px;border-radius:7px;">
-            <span style="vertical-align:middle;color:#5c1769;font-weight:500;">'.htmlspecialchars($prod['Nombre']).'</span>
-          </td>
-          <td style="border:1px solid #dedede;padding:6px 6px;">'.intval($prod['Cantidad']).'</td>
-          <td style="border:1px solid #dedede;padding:6px 6px;">$ '.number_format($prod['Subtotal'],0,',','.').'</td>
+        $imgUrl = !empty($prod['Imagen_URL']) ? $prod['Imagen_URL'] : 'img/Productos/default.jpg';
+        $tablaProductos .= '<tr style="background:#fafbfe;">
+            <td style="padding:10px 6px; border-bottom:1px solid #e8e8e8;">
+                <div style="display:flex;align-items:center;gap:13px;">
+                  <img src="https://doggies-production.up.railway.app/' . $imgUrl . '" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:7px;border:1px solid #e5e6ef;">
+                  <span style="font-weight:500;color:#5c1769; font-size:17px;">' . htmlspecialchars($prod['Nombre']) . '</span>
+                </div>
+            </td>
+            <td style="padding:10px 6px; border-bottom:1px solid #e8e8e8; text-align:center; font-size:16px;">' . intval($prod['Cantidad']) . '</td>
+            <td style="padding:10px 6px; border-bottom:1px solid #e8e8e8; text-align:right; font-size:16px;">$ ' . number_format($prod['Subtotal'],0,',','.') . '</td>
         </tr>';
     }
     $tablaProductos .= '</table>';
 
-
+    // ENVÍA EL EMAIL SOLO SI HAY CORREO
     if ($pedidoInfo && $pedidoInfo['Correo']) {
         $mail = new PHPMailer(true);
         try {
-            $mail->CharSet = "UTF-8"; // Muy importante para tildes y caracteres
+            $mail->CharSet = "UTF-8";
             $mail->isSMTP();
             $mail->Host = 'smtp.gmail.com';
             $mail->SMTPAuth = true;
             $mail->Username = 'doggiespasto22@gmail.com';
-            $mail->Password = 'nfav ibzv txxd wvwl'; // Contraseña de aplicación
+            $mail->Password = 'nfav ibzv txxd wvwl'; // Cambia tu pass
             $mail->SMTPSecure = 'tls';
             $mail->Port = 587;
 
@@ -93,28 +101,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['enviar_email'])) {
             $mail->Subject = "Tu pedido fue despachado 🐾 - Doggies";
             $mail->isHTML(true);
 
-            // Email con productos y detalles de despacho
+            // Email con tabla de productos alineados
             $mail->Body = '
             <div style="max-width:540px;margin:auto;background:#f7fafd;border-radius:12px;padding:20px 16px;">
               <div style="background:#2cc6e7;color:#fff;padding:16px 0 10px 0;font-size:25px;border-radius:12px 12px 0 0;text-align:center;font-weight:700;margin:-20px -16px 20px -16px;">
                 Tu pedido fue enviado 🐾
               </div>
-              <div style="font-size:17px;margin-bottom:12px;">¡Hola <b>'.htmlspecialchars($pedidoInfo['Nombre']).'</b>!</div>
+              <div style="font-size:17px;margin-bottom:12px;">¡Hola <b>' . htmlspecialchars($pedidoInfo['Nombre']) . '</b>!</div>
               <div style="margin-bottom:10px;">
-                <b>Fecha de despacho:</b> '.date('d/m/Y, H:i', strtotime($pedidoInfo['Fecha_Pedido'])).'
+                <b>Fecha de despacho:</b> ' . $fechaDespacho . ' <span style="font-size:13px;color:#888;">(Hora Bogotá)</span>
               </div>
               <div style="margin-bottom:12px;">
-                <b>Empresa de mensajería:</b> '.htmlspecialchars($empresa).'<br>
-                <b>Número de guía:</b> '.htmlspecialchars($guia).'<br>
-                <b>Enlace de rastreo:</b> <a href="'.htmlspecialchars($link_rastreo).'" target="_blank">'.htmlspecialchars($link_rastreo).'</a>
+                <b>Empresa de mensajería:</b> ' . htmlspecialchars($empresa) . '<br>
+                <b>Número de guía:</b> ' . htmlspecialchars($guia) . '<br>
+                <b>Enlace de rastreo:</b> <a href="' . htmlspecialchars($link_rastreo) . '" target="_blank">' . htmlspecialchars($link_rastreo) . '</a>
               </div>
               <div style="color:#5c1769; font-weight:bold; margin-bottom:10px;">Resumen de tu pedido:</div>
-              '.$tablaProductos.'
+              ' . $tablaProductos . '
               <div style="font-size:18px;color:#5c1769;margin-top:12px;margin-bottom:6px;">
-                <b>Total: $ '.number_format($pedidoInfo['Total'],0,',','.').'</b>
+                <b>Total: $ ' . number_format($pedidoInfo['Total'], 0, ',', '.') . '</b>
               </div>
               <div style="margin-top:10px;">
-                <b style="color:#5c1769;">Dirección de entrega:</b> '.htmlspecialchars($pedidoInfo['Direccion_Entrega']).'
+                <b style="color:#5c1769;">Dirección de entrega:</b> ' . htmlspecialchars($pedidoInfo['Direccion_Entrega']) . '
               </div>
               <div style="margin-top:13px;">
                 ¡Gracias por confiar en Doggies!<br>
@@ -123,17 +131,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['enviar_email'])) {
             </div>
             ';
 
-
-            $mail->AltBody = "Hola {$pedidoInfo['Nombre']},\nTu pedido #{$id_pedido} fue despachado.\nEmpresa: {$empresa}\nGuía: {$guia}\nRastreo: {$link_rastreo}\nTotal: $".number_format($pedidoInfo['Total'],0,',','.')."\nGracias por tu compra en Doggies 🐾";
+            $mail->AltBody = "Hola {$pedidoInfo['Nombre']},\nTu pedido #{$id_pedido} fue despachado.\nEmpresa: {$empresa}\nGuía: {$guia}\nRastreo: {$link_rastreo}\nTotal: $" . number_format($pedidoInfo['Total'], 0, ',', '.') . "\nGracias por tu compra en Doggies 🐾";
 
             $mail->send();
-            $mensaje = "<div style='color:green;font-weight:bold;'>✅ Correo enviado correctamente a {$pedidoInfo['Correo']}</div>";
+            $_SESSION['mensaje_alerta'] = [
+                'icon' => 'success',
+                'title' => '¡Éxito!',
+                'text' => "Correo enviado correctamente a {$pedidoInfo['Correo']}"
+            ];
         } catch (Exception $e) {
-            $mensaje = "<div style='color:red;font-weight:bold;'>❌ Error al enviar el correo: {$mail->ErrorInfo}</div>";
+            $_SESSION['mensaje_alerta'] = [
+                'icon' => 'error',
+                'title' => 'Error',
+                'text' => "Error al enviar el correo: {$mail->ErrorInfo}"
+            ];
         }
     } else {
-        $mensaje = "<div style='color:red;font-weight:bold;'>❌ No se encontró correo para el pedido $id_pedido</div>";
+        $_SESSION['mensaje_alerta'] = [
+            'icon' => 'error',
+            'title' => 'Error',
+            'text' => "No se encontró correo para el pedido $id_pedido"
+        ];
     }
+
+    header("Location: admin.php");
+    exit;
 }
 
 // --- Reportes de pagos ---
@@ -169,6 +191,7 @@ $pedidos = $pdo->query("SELECT p.*, u.Nombre AS Nombre_Usuario FROM pedido p LEF
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <link rel="stylesheet" href="css/Login.css"/>
   <link rel="icon" type="image/jpeg" href="img/fondo.jpg" />
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     body { font-family: 'Roboto', sans-serif; background: #f6f7fb; margin: 0; min-height: 100vh; }
     .admin-container { max-width: 1150px; margin: 2em auto; background: #fff; padding: 2em 1em; border-radius: 12px; box-shadow: 0 4px 14px rgba(0,0,0,0.09); }
@@ -191,7 +214,6 @@ $pedidos = $pdo->query("SELECT p.*, u.Nombre AS Nombre_Usuario FROM pedido p LEF
     .report-title { margin: 2em 0 0.5em 0; text-align: center; }
     .reporte-pagos { background: #e8f5e9; border-radius: 8px; padding: 1em; box-shadow: 0 2px 7px #d6ebe2; margin: 2em 0 1em 0; }
     .reporte-pagos th { background: #c8e6c9; }
-    /* --- Header centrado --- */
     header nav .menu {
       display: flex;
       justify-content: center;
@@ -209,7 +231,7 @@ $pedidos = $pdo->query("SELECT p.*, u.Nombre AS Nombre_Usuario FROM pedido p LEF
       justify-content: center;
     }
     header nav .menu .logo {
-      padding-top: 0.5rem;
+      padding-top: 0.8rem;
       height: 54px;
       width: auto;
       object-fit: contain;
@@ -234,6 +256,17 @@ $pedidos = $pdo->query("SELECT p.*, u.Nombre AS Nombre_Usuario FROM pedido p LEF
   </style>
 </head>
 <body>
+  <script>
+  <?php if (!empty($_SESSION['mensaje_alerta'])): ?>
+    Swal.fire({
+      icon: '<?= $_SESSION['mensaje_alerta']['icon'] ?>',
+      title: '<?= $_SESSION['mensaje_alerta']['title'] ?>',
+      text: '<?= $_SESSION['mensaje_alerta']['text'] ?>',
+      confirmButtonColor: '#39c5e0'
+    });
+    <?php unset($_SESSION['mensaje_alerta']); ?>
+  <?php endif; ?>
+  </script>
   <header>
     <nav>
       <ul class="menu">
@@ -281,7 +314,6 @@ $pedidos = $pdo->query("SELECT p.*, u.Nombre AS Nombre_Usuario FROM pedido p LEF
           <?php endforeach; ?>
         </tbody>
       </table>
-
       <!-- Productos -->
       <h3>Gestión de Productos</h3>
       <a href="nuevo_producto.php" class="btn btn-add">➕ Añadir Producto</a>
@@ -310,7 +342,6 @@ $pedidos = $pdo->query("SELECT p.*, u.Nombre AS Nombre_Usuario FROM pedido p LEF
           <?php endforeach; ?>
         </tbody>
       </table>
-
       <!-- Pedidos -->
       <h3>Pedidos Recientes</h3>
       <form method="GET" class="filtro-form">
@@ -371,7 +402,6 @@ $pedidos = $pdo->query("SELECT p.*, u.Nombre AS Nombre_Usuario FROM pedido p LEF
           <?php endforeach; ?>
         </tbody>
       </table>
-
       <!-- Reportes -->
       <h3 class="report-title">Reporte de Pagos (Despachados)</h3>
       <form method="GET" class="form-inline" style="margin-bottom:10px;">

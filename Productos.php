@@ -18,21 +18,43 @@ if (
     exit;
 }
 
-// Agregar producto al carrito
+// Agregar producto al carrito (SUMAR cantidad si ya existe)
 if (
     $_SERVER['REQUEST_METHOD'] === 'POST' &&
     isset($_POST['nombre'], $_POST['precio'], $_POST['cantidad'], $_POST['imagen']) &&
     !isset($_POST['update'])
 ) {
-    $producto = [
-        'nombre'   => $_POST['nombre'],
-        'precio'   => floatval($_POST['precio']),
-        'cantidad' => max(1, min(25, intval($_POST['cantidad']))),
-        'imagen'   => $_POST['imagen']
-    ];
-    $_SESSION['carrito'][] = $producto;
+    $nombre   = $_POST['nombre'];
+    $precio   = floatval($_POST['precio']);
+    $cantidad = max(1, min(25, intval($_POST['cantidad'])));
+    $imagen   = $_POST['imagen'];
+
+    $encontrado = false;
+    foreach ($_SESSION['carrito'] as &$item) {
+        if (
+            $item['nombre'] === $nombre &&
+            $item['precio'] == $precio &&
+            $item['imagen'] === $imagen
+        ) {
+            // Suma la cantidad, máximo 25
+            $item['cantidad'] = min(25, $item['cantidad'] + $cantidad);
+            $encontrado = true;
+            break;
+        }
+    }
+    unset($item); // Rompe referencia
+
+    if (!$encontrado) {
+        $_SESSION['carrito'][] = [
+            'nombre'   => $nombre,
+            'precio'   => $precio,
+            'cantidad' => $cantidad,
+            'imagen'   => $imagen
+        ];
+    }
     exit;
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -43,6 +65,7 @@ if (
   <link rel="stylesheet" href="css/Productos.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="icon" type="image/jpeg" href="img/fondo.jpg" />
   <style>
     .modal { display:none; position:fixed; z-index:1000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);}
     .modal-contenido { background:#fff; margin:5% auto; padding:30px; width:90%; max-width:800px; border-radius:18px; box-shadow:0 0 20px rgba(0,0,0,0.18);}
@@ -421,7 +444,7 @@ if (
         <a href="https://www.facebook.com/profile.php?id=100069951193254" target="_blank"><i class="fab fa-facebook-f"></i></a>
         <a href="https://www.instagram.com/doggiespaseadores/" target="_blank"><i class="fab fa-instagram"></i></a>
         <a href="https://www.tiktok.com/@doggies_paseadores" target="_blank"><i class="fab fa-tiktok"></i></a>
-        <a href="mailto:doggiespasto@gmail.com"><i class="fas fa-envelope"></i></a>
+        <a href="mailto:doggiespasto22@gmail.com"><i class="fas fa-envelope"></i></a>
       </div>
     </div>
   </footer>
