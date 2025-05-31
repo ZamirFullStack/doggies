@@ -13,8 +13,9 @@ if (!isset($_SESSION['usuario']) || $_SESSION['usuario']['ID_Rol'] != 2) {
 }
 
 $nombreAdmin = $_SESSION['usuario']['Nombre'];
+$mensaje = "";
 
-// --- Actualización de estado/guía y envío de email ---
+// --- Actualización de estado/guía ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_pedido'])) {
     $id_pedido = intval($_POST['id_pedido']);
     $nuevo_estado = $_POST['nuevo_estado'];
@@ -24,52 +25,115 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_pedido']))
 
     $stmt = $pdo->prepare("UPDATE pedido SET Estado=?, Guia=?, Empresa_Guia=?, Link_Rastreo=? WHERE ID_Pedido=?");
     $stmt->execute([$nuevo_estado, $guia, $empresa, $link_rastreo, $id_pedido]);
+    $mensaje = "<div style='color:green;font-weight:bold;'>✅ Pedido actualizado correctamente.</div>";
+}
 
-    // Envío de email si fue solicitado
-    if (!empty($_POST['enviar_email'])) {
-        // Busca correo del cliente
-        $stmtC = $pdo->prepare("SELECT u.Correo, u.Nombre, p.Total FROM pedido p LEFT JOIN usuario u ON p.ID_Usuario=u.ID_Usuario WHERE p.ID_Pedido=?");
-        $stmtC->execute([$id_pedido]);
-        $pedidoInfo = $stmtC->fetch(PDO::FETCH_ASSOC);
+// --- Envío de email solo si se presiona el botón enviar_email ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['enviar_email'])) {
+    $id_pedido = intval($_POST['id_pedido']);
+    $nuevo_estado = $_POST['nuevo_estado'];
+    $guia = trim($_POST['guia']);
+    $empresa = trim($_POST['empresa']);
+    $link_rastreo = trim($_POST['link_rastreo']);
 
-        if ($pedidoInfo && $pedidoInfo['Correo']) {
-            $mail = new PHPMailer(true);
-            try {
-                // Configuración del servidor SMTP (puedes usar Gmail, SMTP propio, etc.)
-                $mail->isSMTP();
-                $mail->Host = 'smtp.gmail.com';         // Cambia según tu proveedor SMTP
-                $mail->SMTPAuth = true;
-                $mail->Username = 'doggiespasto22@gmail.com';   // Tu correo Gmail
-                $mail->Password = 'nfav ibzv txxd wvwl'; // Contraseña de aplicación
-                $mail->SMTPSecure = 'tls';
-                $mail->Port = 587;
+    // Actualiza el pedido a "despachado" y guarda datos de logística (opcional)
+    $stmt = $pdo->prepare("UPDATE pedido SET Estado=?, Guia=?, Empresa_Guia=?, Link_Rastreo=? WHERE ID_Pedido=?");
+    $stmt->execute([$nuevo_estado, $guia, $empresa, $link_rastreo, $id_pedido]);
 
-                $mail->setFrom('doggiespasto22@gmail.com', 'Doggies');
-                $mail->addAddress($pedidoInfo['Correo'], $pedidoInfo['Nombre']);
-                $mail->Subject = "Tu pedido ha sido despachado - Doggies";
-                $mail->isHTML(true);
-                $mail->Body = "<h2>¡Tu pedido ha sido despachado!</h2>
-                    <p>Hola <b>{$pedidoInfo['Nombre']}</b>,</p>
-                    <p>Tu pedido #{$id_pedido} ha sido despachado.<br>
-                    <b>Empresa de mensajería:</b> {$empresa}<br>
-                    <b>Número de guía:</b> {$guia}<br>
-                    <b><a href='{$link_rastreo}' target='_blank'>Rastrea tu pedido aquí</a></b><br><br>
-                    <b>Total:</b> $" . number_format($pedidoInfo['Total'],0,',','.') . "<br><br>
-                    ¡Gracias por tu compra en Doggies 🐾!
-                    </p>";
+    $stmtC = $pdo->prepare("SELECT COALESCE(u.Correo, p.Email) as Correo, COALESCE(u.Nombre, p.Nombre) as Nombre, p.Total, p.Direccion_Entrega, p.Fecha_Pedido
+                            FROM pedido p 
+                            LEFT JOIN usuario u ON p.ID_Usuario=u.ID_Usuario 
+                            WHERE p.ID_Pedido=?");
+    $stmtC->execute([$id_pedido]);
+    $pedidoInfo = $stmtC->fetch(PDO::FETCH_ASSOC);
 
-                $mail->AltBody = "Hola {$pedidoInfo['Nombre']},\nTu pedido #{$id_pedido} ha sido despachado.\n
-                Empresa de mensajería: {$empresa}\nNúmero de guía: {$guia}\nRastrea tu pedido aquí: {$link_rastreo}\nTotal: $" . number_format($pedidoInfo['Total'],0,',','.') . "\nGracias por tu compra en Doggies 🐾";
+    // Obtener los productos del pedido
+    $stmtD = $pdo->prepare("SELECT dp.Cantidad, dp.Subtotal, pr.Nombre, pr.Imagen_URL
+                            FROM detalle_pedido dp 
+                            JOIN producto pr ON dp.ID_Producto = pr.ID_Producto 
+                            WHERE dp.ID_Pedido = ?");
+    $stmtD->execute([$id_pedido]);
+    $productosPedido = $stmtD->fetchAll(PDO::FETCH_ASSOC);
 
-                $mail->send();
-            } catch (Exception $e) {
-                // Puedes mostrar un mensaje si falla el envío
-                error_log("Mailer Error: {$mail->ErrorInfo}");
-            }
-        }
+    // Construir tabla de productos en HTML
+    $tablaProductos = '
+    <table style="border-collapse:collapse; width:100%; margin:18px 0; font-size:15px;">
+      <tr>
+        <th style="background:#fff;border:1px solid #dedede; color:#5c1769; padding:8px 6px;">Producto</th>
+        <th style="background:#fff;border:1px solid #dedede; color:#5c1769; padding:8px 6px;">Cantidad</th>
+        <th style="background:#fff;border:1px solid #dedede; color:#5c1769; padding:8px 6px;">Subtotal</th>
+      </tr>';
+    foreach ($productosPedido as $prod) {
+        $tablaProductos .= '<tr>
+          <td style="border:1px solid #dedede;padding:6px 6px;">
+            <img src="https://doggies-production.up.railway.app/img/'.htmlspecialchars($prod['Imagen_URL']).'" alt="" style="height:38px;vertical-align:middle;margin-right:8px;border-radius:7px;">
+            <span style="vertical-align:middle;color:#5c1769;font-weight:500;">'.htmlspecialchars($prod['Nombre']).'</span>
+          </td>
+          <td style="border:1px solid #dedede;padding:6px 6px;">'.intval($prod['Cantidad']).'</td>
+          <td style="border:1px solid #dedede;padding:6px 6px;">$ '.number_format($prod['Subtotal'],0,',','.').'</td>
+        </tr>';
     }
-    header("Location: admin.php?msg=actualizado");
-    exit;
+    $tablaProductos .= '</table>';
+
+
+    if ($pedidoInfo && $pedidoInfo['Correo']) {
+        $mail = new PHPMailer(true);
+        try {
+            $mail->CharSet = "UTF-8"; // Muy importante para tildes y caracteres
+            $mail->isSMTP();
+            $mail->Host = 'smtp.gmail.com';
+            $mail->SMTPAuth = true;
+            $mail->Username = 'doggiespasto22@gmail.com';
+            $mail->Password = 'nfav ibzv txxd wvwl'; // Contraseña de aplicación
+            $mail->SMTPSecure = 'tls';
+            $mail->Port = 587;
+
+            $mail->setFrom('doggiespasto22@gmail.com', 'Doggies');
+            $mail->addAddress($pedidoInfo['Correo'], $pedidoInfo['Nombre']);
+            $mail->Subject = "Tu pedido fue despachado 🐾 - Doggies";
+            $mail->isHTML(true);
+
+            // Email con productos y detalles de despacho
+            $mail->Body = '
+            <div style="max-width:540px;margin:auto;background:#f7fafd;border-radius:12px;padding:20px 16px;">
+              <div style="background:#2cc6e7;color:#fff;padding:16px 0 10px 0;font-size:25px;border-radius:12px 12px 0 0;text-align:center;font-weight:700;margin:-20px -16px 20px -16px;">
+                Tu pedido fue enviado 🐾
+              </div>
+              <div style="font-size:17px;margin-bottom:12px;">¡Hola <b>'.htmlspecialchars($pedidoInfo['Nombre']).'</b>!</div>
+              <div style="margin-bottom:10px;">
+                <b>Fecha de despacho:</b> '.date('d/m/Y, H:i', strtotime($pedidoInfo['Fecha_Pedido'])).'
+              </div>
+              <div style="margin-bottom:12px;">
+                <b>Empresa de mensajería:</b> '.htmlspecialchars($empresa).'<br>
+                <b>Número de guía:</b> '.htmlspecialchars($guia).'<br>
+                <b>Enlace de rastreo:</b> <a href="'.htmlspecialchars($link_rastreo).'" target="_blank">'.htmlspecialchars($link_rastreo).'</a>
+              </div>
+              <div style="color:#5c1769; font-weight:bold; margin-bottom:10px;">Resumen de tu pedido:</div>
+              '.$tablaProductos.'
+              <div style="font-size:18px;color:#5c1769;margin-top:12px;margin-bottom:6px;">
+                <b>Total: $ '.number_format($pedidoInfo['Total'],0,',','.').'</b>
+              </div>
+              <div style="margin-top:10px;">
+                <b style="color:#5c1769;">Dirección de entrega:</b> '.htmlspecialchars($pedidoInfo['Direccion_Entrega']).'
+              </div>
+              <div style="margin-top:13px;">
+                ¡Gracias por confiar en Doggies!<br>
+                <b style="color:#2cc6e7">Doggies 🐾</b>
+              </div>
+            </div>
+            ';
+
+
+            $mail->AltBody = "Hola {$pedidoInfo['Nombre']},\nTu pedido #{$id_pedido} fue despachado.\nEmpresa: {$empresa}\nGuía: {$guia}\nRastreo: {$link_rastreo}\nTotal: $".number_format($pedidoInfo['Total'],0,',','.')."\nGracias por tu compra en Doggies 🐾";
+
+            $mail->send();
+            $mensaje = "<div style='color:green;font-weight:bold;'>✅ Correo enviado correctamente a {$pedidoInfo['Correo']}</div>";
+        } catch (Exception $e) {
+            $mensaje = "<div style='color:red;font-weight:bold;'>❌ Error al enviar el correo: {$mail->ErrorInfo}</div>";
+        }
+    } else {
+        $mensaje = "<div style='color:red;font-weight:bold;'>❌ No se encontró correo para el pedido $id_pedido</div>";
+    }
 }
 
 // --- Reportes de pagos ---
@@ -97,12 +161,6 @@ $productos = $pdo->query("SELECT * FROM producto")->fetchAll(PDO::FETCH_ASSOC);
 $pedidos = $pdo->query("SELECT p.*, u.Nombre AS Nombre_Usuario FROM pedido p LEFT JOIN usuario u ON p.ID_Usuario = u.ID_Usuario $whereEstado ORDER BY p.Fecha_Pedido DESC")->fetchAll(PDO::FETCH_ASSOC);
 
 ?>
-<!-- AQUI TODO TU HTML (lo puedes dejar igual) -->
-<!-- Solo cambia los botones de formulario de pedidos, como lo tienes: 
-     <button class="btn btn-edit" name="actualizar_pedido" type="submit" title="Actualizar">...</button>
-     <button class="btn btn-send" name="enviar_email" value="1" title="Enviar Email">...</button>
--->
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -133,9 +191,36 @@ $pedidos = $pdo->query("SELECT p.*, u.Nombre AS Nombre_Usuario FROM pedido p LEF
     .report-title { margin: 2em 0 0.5em 0; text-align: center; }
     .reporte-pagos { background: #e8f5e9; border-radius: 8px; padding: 1em; box-shadow: 0 2px 7px #d6ebe2; margin: 2em 0 1em 0; }
     .reporte-pagos th { background: #c8e6c9; }
+    /* --- Header centrado --- */
+    header nav .menu {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 80px;
+      list-style: none;
+      background: #fff;
+      padding: 18px 7px;
+      margin-bottom: 2em;
+    }
+    header nav .menu li {
+      padding-top: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    header nav .menu .logo {
+      padding-top: 0.5rem;
+      height: 54px;
+      width: auto;
+      object-fit: contain;
+      border-radius: 12px;
+      margin: 0 18px;
+      display: block;
+    }
     @media (max-width: 900px) {
       .admin-container { max-width: 97vw; padding: 1em 2vw;}
       table, th, td { font-size: 0.95rem; }
+      header nav .menu { gap: 20px; }
     }
     @media (max-width: 600px) {
       .admin-container { padding: 0.2em 0.2em;}
@@ -143,22 +228,25 @@ $pedidos = $pdo->query("SELECT p.*, u.Nombre AS Nombre_Usuario FROM pedido p LEF
       th, td { padding: 7px 2px;}
       .form-inline { flex-direction: column; align-items: stretch;}
       .filtro-form { text-align: left; }
+      header nav .menu { gap: 4px; }
+      header nav .menu .logo img { height: 40px; }
     }
   </style>
 </head>
 <body>
   <header>
     <nav>
-      <ul class="menu" style="display:flex;justify-content:space-between;align-items:center;list-style:none;background:#fff;padding:14px 7px;margin-bottom:2em;">
-        <li><a href="Productos.php"><i class="fas fa-dog"></i> Productos</a></li>
-        <li class="logo"><a href="index.php"><img src="img/fondo.jpg" style="height:38px;width:92px;object-fit:contain;border-radius:12px;"></a></li>
-        <li><a href="Servicios.php"><i class="fas fa-concierge-bell"></i> Servicios</a></li>
+      <ul class="menu">
+        <li><a href="Productos.php"><i class="fas fa-dog"></i> <span style="font-size:21px;font-weight:600;margin-left:6px;">Productos</span></a></li>
+        <li class="logo"><a href="index.php"><img src="img/fondo.jpg" alt="Doggies logo"></a></li>
+        <li><a href="Servicios.php"><i class="fas fa-concierge-bell"></i> <span style="font-size:21px;font-weight:600;margin-left:6px;">Servicios</span></a></li>
       </ul>
     </nav>
   </header>
   <main>
     <div class="admin-container">
       <h2>Bienvenido, <?= htmlspecialchars($nombreAdmin) ?></h2>
+      <?php if (!empty($mensaje)) echo $mensaje; ?>
       <!-- Usuarios -->
       <h3>Usuarios Registrados</h3>
       <a href="nuevo_usuario.php" class="btn btn-add">➕ Añadir Usuario</a>
@@ -275,7 +363,7 @@ $pedidos = $pdo->query("SELECT p.*, u.Nombre AS Nombre_Usuario FROM pedido p LEF
                 <input type="text" name="empresa" value="<?= htmlspecialchars($p['Empresa_Guia'] ?? '') ?>" placeholder="Empresa" style="width:80px;">
                 <input type="text" name="link_rastreo" value="<?= htmlspecialchars($p['Link_Rastreo'] ?? '') ?>" placeholder="Link rastreo" style="width:105px;">
                 <button class="btn btn-edit" name="actualizar_pedido" type="submit" title="Actualizar"><i class="fas fa-save"></i></button>
-                <button class="btn btn-send" name="enviar_email" value="1" title="Enviar Email"><i class="fas fa-envelope"></i></button>
+                <button class="btn btn-send" name="enviar_email" value="1" type="submit" title="Enviar Email"><i class="fas fa-envelope"></i></button>
               </form>
               <a href="detalle_pedido.php?id=<?= $p['ID_Pedido'] ?>" class="btn btn-csv" style="margin-top:4px;display:block;">Ver</a>
             </td>
