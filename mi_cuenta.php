@@ -10,6 +10,7 @@ require 'conexion.php';
 
 $usuario = $_SESSION['usuario'];
 
+// Datos de usuario
 $stmt = $pdo->prepare("SELECT * FROM usuario WHERE ID_Usuario = :id");
 $stmt->execute(['id' => $usuario['ID_Usuario']]);
 $datos = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -17,34 +18,58 @@ if (!$datos) {
     die("❌ Error: No se encontró el usuario.");
 }
 
-$stmt_pedidos = $pdo->prepare("SELECT p.ID_Pedido, p.Fecha_Pedido, p.Total, p.Metodo_Pago,
-  dp.Cantidad, dp.Precio_Unitario, pr.Nombre AS Nombre_Producto, pr.Imagen_URL, pr.Stock
-  FROM pedido p
-  JOIN pedido_productos dp ON p.ID_Pedido = dp.ID_Pedido
-  LEFT JOIN producto pr ON pr.Nombre = dp.Nombre_Producto
-  WHERE p.ID_Usuario = :id
-  ORDER BY p.Fecha_Pedido DESC");
-$stmt_pedidos->execute(['id' => $usuario['ID_Usuario']]);
-$pedidos = $stmt_pedidos->fetchAll(PDO::FETCH_ASSOC);
+// Obtener historial de pedidos y sus productos (agrupados)
+$stmt = $pdo->prepare("
+    SELECT p.ID_Pedido, p.Fecha_Pedido, p.Total, p.Metodo_Pago,
+        dp.Cantidad, dp.Precio_Unitario, dp.Nombre_Producto,
+        pr.Imagen_URL, pr.Stock
+    FROM pedido p
+    JOIN pedido_productos dp ON p.ID_Pedido = dp.ID_Pedido
+    LEFT JOIN producto pr ON pr.Nombre = dp.Nombre_Producto
+    WHERE p.ID_Usuario = :id
+    ORDER BY p.Fecha_Pedido DESC, p.ID_Pedido DESC
+");
+$stmt->execute(['id' => $usuario['ID_Usuario']]);
+$rawPedidos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$carrito = isset($_SESSION['carrito']) ? $_SESSION['carrito'] : [];
+// Agrupar productos por pedido
+$pedidos = [];
+foreach ($rawPedidos as $row) {
+    $id = $row['ID_Pedido'];
+    if (!isset($pedidos[$id])) {
+        $pedidos[$id] = [
+            'ID_Pedido' => $row['ID_Pedido'],
+            'Fecha_Pedido' => $row['Fecha_Pedido'],
+            'Total' => $row['Total'],
+            'Metodo_Pago' => $row['Metodo_Pago'],
+            'productos' => [],
+        ];
+    }
+    // Construir ruta de imagen (igual que en webhook/admin)
+    $imgRuta = !empty($row['Imagen_URL']) ? $row['Imagen_URL'] : 'default.jpg';
+    if (strpos($imgRuta, 'img/Productos/') === false) {
+        $imgRuta = 'img/Productos/' . $imgRuta;
+    }
+    $imgRuta = ltrim($imgRuta, '/');
+    $imgUrlFull = "https://doggies-production.up.railway.app/$imgRuta";
+    $row['Imagen_Url_Full'] = $imgUrlFull;
+    $pedidos[$id]['productos'][] = $row;
+}
+
 function formatearFecha($fecha) {
     $meses = [
         '01' => 'enero', '02' => 'febrero', '03' => 'marzo', '04' => 'abril',
         '05' => 'mayo', '06' => 'junio', '07' => 'julio', '08' => 'agosto',
         '09' => 'septiembre', '10' => 'octubre', '11' => 'noviembre', '12' => 'diciembre'
     ];
-
     $fechaObj = new DateTime($fecha);
     $dia = $fechaObj->format('d');
     $mes = $meses[$fechaObj->format('m')];
     $anio = $fechaObj->format('Y');
-
     return "$dia de $mes de $anio";
 }
 
 ?>
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -76,55 +101,79 @@ function formatearFecha($fecha) {
       text-indent: -9999px;
       margin: 0 auto;
     }
-    .pedido-box {
+    .pedido-group {
       background: #fff;
       border: 1px solid #ccc;
       border-radius: 10px;
-      padding: 15px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      padding: 15px 18px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.10);
+    }
+    .pedido-header {
+      font-size: 17px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #1b2945;
+    }
+    .productos-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .pedido-producto {
       display: flex;
       align-items: center;
-      gap: 20px;
+      border-bottom: 1px solid #f0f0f0;
+      padding: 10px 0;
+      gap: 18px;
     }
-    .pedido-box img {
-      width: 80px;
-      height: 80px;
+    .pedido-producto:last-child {
+      border-bottom: none;
+    }
+    .pedido-producto img {
+      width: 68px;
+      height: 68px;
       object-fit: cover;
       border-radius: 8px;
+      background: #f9f9f9;
+      border: 1px solid #ececec;
     }
     .pedido-info {
       flex: 1;
     }
     .pedido-info h4 {
-      margin: 0 0 5px;
+      margin: 0 0 2px;
       color: #333;
+      font-size: 16px;
+      font-weight: bold;
     }
     .pedido-info p {
       margin: 2px 0;
       color: #555;
+      font-size: 14px;
     }
-    .pedido-box form button {
-      background-color: #4caf50;
+    .pedido-producto form button {
+      background-color: #39c5e0;
       color: white;
-      padding: 6px 12px;
+      padding: 5px 13px;
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      font-size: 14px;
+      margin-left: 8px;
+      transition: background 0.18s;
     }
-    .pedido-box .agotado {
+    .pedido-producto .agotado {
       color: red;
       font-weight: bold;
+      margin-left: 14px;
     }
-    .input-group.password-wrapper {
-      position: relative;
-    }
-    .input-group.password-wrapper i.fa-eye {
-      position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      cursor: pointer;
+    .pedido-total {
+      color: #311e4c;
+      font-size: 16px;
+      font-weight: bold;
+      margin-top: 8px;
+      text-align: right;
     }
   </style>
 </head>
@@ -140,7 +189,7 @@ function formatearFecha($fecha) {
   </header>
 
   <main>
-    <div class="auth-container" style="max-width: 800px;">
+    <div class="auth-container" style="max-width: 900px;">
       <h2>Mi Perfil</h2>
       <form action="actualizar_perfil.php" method="POST">
         <div class="input-group">
@@ -168,26 +217,37 @@ function formatearFecha($fecha) {
 
       <h2 style="margin-top: 2em;">Historial de Compras</h2>
       <?php if (count($pedidos) > 0): ?>
-        <?php foreach ($pedidos as $pedido): ?>
-          <div class="pedido-box">
-            <img src="<?= htmlspecialchars($pedido['Imagen_URL'] ?? 'img/default.jpg') ?>" alt="<?= htmlspecialchars($pedido['Nombre_Producto']) ?>">
-            <div class="pedido-info">
-              <h4><?= htmlspecialchars($pedido['Nombre_Producto']) ?></h4>
-              <p>Fecha: <?= formatearFecha($pedido['Fecha_Pedido']) ?></p>
-              <p>Cantidad: <?= $pedido['Cantidad'] ?> - Precio: $<?= number_format($pedido['Precio_Unitario'], 0, ',', '.') ?></p>
-              <p>Total: $<?= number_format($pedido['Precio_Unitario'] * $pedido['Cantidad'], 0, ',', '.') ?></p>
-              <p>Forma de pago: <?= $pedido['Metodo_Pago'] ?></p>
+        <?php foreach ($pedidos as $p): ?>
+          <div class="pedido-group">
+            <div class="pedido-header">
+              Pedido #<?= $p['ID_Pedido'] ?> &mdash; <?= formatearFecha($p['Fecha_Pedido']) ?>
+              <span style="float:right; color:#556;">Forma de pago: <?= htmlspecialchars($p['Metodo_Pago']) ?></span>
             </div>
-            <?php if ($pedido['Stock'] > 0): ?>
-              <form method="POST" action="agregar_carrito.php">
-                <input type="hidden" name="nombre" value="<?= htmlspecialchars($pedido['Nombre_Producto']) ?>">
-                <input type="hidden" name="precio" value="<?= $pedido['Precio_Unitario'] ?>">
-                <input type="hidden" name="cantidad" value="1">
-                <button type="submit">Volver a comprar</button>
-              </form>
-            <?php else: ?>
-              <span class="agotado">Producto no disponible</span>
-            <?php endif; ?>
+            <ul class="productos-list">
+              <?php foreach ($p['productos'] as $prod): ?>
+                <li class="pedido-producto">
+                  <img src="<?= htmlspecialchars($prod['Imagen_Url_Full']) ?>" alt="<?= htmlspecialchars($prod['Nombre_Producto']) ?>">
+                  <div class="pedido-info">
+                    <h4><?= htmlspecialchars($prod['Nombre_Producto']) ?></h4>
+                    <p>Cantidad: <?= $prod['Cantidad'] ?> &mdash; Precio: $<?= number_format($prod['Precio_Unitario'], 0, ',', '.') ?></p>
+                    <p>Subtotal: $<?= number_format($prod['Precio_Unitario'] * $prod['Cantidad'], 0, ',', '.') ?></p>
+                  </div>
+                  <?php if ($prod['Stock'] > 0): ?>
+                    <form method="POST" action="agregar_carrito.php">
+                      <input type="hidden" name="nombre" value="<?= htmlspecialchars($prod['Nombre_Producto']) ?>">
+                      <input type="hidden" name="precio" value="<?= $prod['Precio_Unitario'] ?>">
+                      <input type="hidden" name="cantidad" value="1">
+                      <button type="submit">Volver a comprar</button>
+                    </form>
+                  <?php else: ?>
+                    <span class="agotado">Producto no disponible</span>
+                  <?php endif; ?>
+                </li>
+              <?php endforeach; ?>
+            </ul>
+            <div class="pedido-total">
+              Total del pedido: $<?= number_format($p['Total'], 0, ',', '.') ?>
+            </div>
           </div>
         <?php endforeach; ?>
       <?php else: ?>
