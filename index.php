@@ -109,12 +109,12 @@
         <a href="https://www.facebook.com/profile.php?id=100069951193254" target="_blank"><i class="fab fa-facebook-f"></i></a>
         <a href="https://www.instagram.com/doggiespaseadores/" target="_blank"><i class="fab fa-instagram"></i></a>
         <a href="https://www.tiktok.com/@doggies_paseadores?is_from_webapp=1&sender_device=pc" target="_blank"><i class="fab fa-tiktok"></i></a>
-        <a href="mailto:doggiespasto@gmail.com"><i class="fas fa-envelope"></i></a>
+        <a href="mailto:doggiespasto22@gmail.com"><i class="fas fa-envelope"></i></a>
       </div>
     </div>
   </footer>
 
-  <a href="https://wa.me/573177319062" class="whatsapp-float" target="_blank">
+  <a href="https://wa.me/573216734085" class="whatsapp-float" target="_blank">
     <i class="fab fa-whatsapp"></i> <span>Contacto</span>
   </a>
 </body>
