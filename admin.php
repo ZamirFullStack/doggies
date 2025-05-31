@@ -410,7 +410,7 @@ $pedidos = $pdo->query("SELECT p.*, u.Nombre AS Nombre_Usuario FROM pedido p LEF
             ?>
             <tr>
               <td><?= $p['ID_Pedido'] ?></td>
-              <td><?= htmlspecialchars($p['ID_Usuario']) ?></td>
+              <td><?= htmlspecialchars($p['ID_Usuario'] ?? 'Invitado') ?></td>
               <td><?= $p['Fecha_Pedido'] ?></td>
               <td>$<?= number_format($p['Total'], 0, ',', '.') ?></td>
               <td><?= htmlspecialchars($p['Guia'] ?? '') ?></td>
