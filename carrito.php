@@ -381,44 +381,66 @@ footer::after {
             <th>Acción</th>
           </tr>
         </thead>
-        <tbody>
-          <?php foreach ($carrito as $index => $producto):
-            $stmt = $pdo->prepare("SELECT Imagen_URL FROM producto WHERE Nombre = ?");
-            $stmt->execute([$producto['nombre']]);
-            $fila   = $stmt->fetch(PDO::FETCH_ASSOC);
-            $imgRuta= $fila['Imagen_URL'] ?? 'img/Productos/default.jpg';
-            $subtotal = $producto['precio'] * $producto['cantidad'];
-            $total   += $subtotal;
-          ?>
-          <tr>
-            <td>
-              <div class="producto-detalle">
-                <img src="<?= htmlspecialchars($imgRuta) ?>" alt="<?= htmlspecialchars($producto['nombre']) ?>" class="carrito-img">
-                <?= htmlspecialchars($producto['nombre']) ?>
-              </div>
-            </td>
-            <td>$<?= number_format($producto['precio'],0,',','.') ?></td>
-            <td>
-              <form method="POST" action="carrito.php" class="cantidad-form">
-                <input type="hidden" name="update_index" value="<?= $index ?>">
-                <input type="number"
-                       name="cantidad"
-                       value="<?= $producto['cantidad'] ?>"
-                       min="1" max="25"
-                       class="cantidad-input"
-                       onchange="this.form.submit()">
-              </form>
-            </td>
-            <td>$<?= number_format($subtotal,0,',','.') ?></td>
-            <td>
-              <form method="POST" action="carrito.php" class="delete-form" onsubmit="return confirm('¿Eliminar este producto?');">
-                <input type="hidden" name="delete_index" value="<?= $index ?>">
-                <button type="submit"><i class="fas fa-trash"></i> Eliminar</button>
-              </form>
-            </td>
-          </tr>
-          <?php endforeach; ?>
-        </tbody>
+  <tbody>
+    <?php foreach ($carrito as $index => $producto):
+      // Obtiene el campo de imagen de la base de datos
+      $stmt = $pdo->prepare("SELECT Imagen_URL FROM producto WHERE Nombre = ?");
+      $stmt->execute([$producto['nombre']]);
+      $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+
+      // Si la imagen es una URL absoluta, úsala. Si solo es el nombre, construye la URL.
+      $imgFile = trim($fila['Imagen_URL'] ?? '');
+      $imgFile = ltrim($imgFile, '/'); // elimina slash al inicio si existe
+
+      if (!$imgFile) {
+        $imgRuta = "https://doggies-production.up.railway.app/img/default.jpg";
+      } else if (filter_var($imgFile, FILTER_VALIDATE_URL)) {
+        $imgRuta = $imgFile;
+      } else if (strpos($imgFile, 'img/') === 0) {
+        $imgRuta = "https://doggies-production.up.railway.app/" . $imgFile;
+      } else {
+        $imgRuta = "https://doggies-production.up.railway.app/img/" . $imgFile;
+      }
+
+      $subtotal = $producto['precio'] * $producto['cantidad'];
+      $total += $subtotal;
+    ?>
+    <tr>
+      <td>
+        <div class="producto-detalle" style="justify-content:flex-start;gap:16px;">
+          <img 
+            src="<?= htmlspecialchars($imgRuta) ?>" 
+            alt="<?= htmlspecialchars($producto['nombre']) ?>" 
+            class="carrito-img"
+            style="min-width:50px;min-height:50px;"
+            onerror="this.onerror=null;this.src='https://doggies-production.up.railway.app/img/default.jpg';"
+          >
+          <span style="font-size:1.08rem;"><?= htmlspecialchars($producto['nombre']) ?></span>
+        </div>
+      </td>
+      <td>$<?= number_format($producto['precio'],0,',','.') ?></td>
+      <td>
+        <form method="POST" action="carrito.php" class="cantidad-form">
+          <input type="hidden" name="update_index" value="<?= $index ?>">
+          <input type="number"
+                name="cantidad"
+                value="<?= $producto['cantidad'] ?>"
+                min="1" max="25"
+                class="cantidad-input"
+                onchange="this.form.submit()">
+        </form>
+      </td>
+      <td>$<?= number_format($subtotal,0,',','.') ?></td>
+      <td>
+        <form method="POST" action="carrito.php" class="delete-form" onsubmit="return confirm('¿Eliminar este producto?');">
+          <input type="hidden" name="delete_index" value="<?= $index ?>">
+          <button type="submit"><i class="fas fa-trash"></i> Eliminar</button>
+        </form>
+      </td>
+    </tr>
+    <?php endforeach; ?>
+  </tbody>
+
         <tfoot>
           <tr>
             <th colspan="3" style="text-align:right;">Total:</th>
