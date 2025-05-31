@@ -60,8 +60,6 @@ try {
   padding: 0;
   box-sizing: border-box;
 }
-
-/* ==== BODY Y FUENTE ==== */
 body {
   font-family: 'Roboto', sans-serif;
   background-color: #f9f9f9;
@@ -148,12 +146,80 @@ main {
   margin: 0 auto;
   width: 100%;
 }
-
 h2 {
   text-align: center;
   font-size: 2rem;
   margin: 1.5rem 0 1rem 0;
   color: #333;
+}
+/* ==== CARD EMPTY CARRITO ==== */
+.carrito-card-empty {
+  max-width: 450px;
+  margin: 3.3em auto 2.5em auto;
+  background: #fff;
+  box-shadow: 0 2px 14px rgba(0,0,0,0.10);
+  border-radius: 15px;
+  padding: 2.3em 1.3em 2.5em 1.3em;
+  text-align: center;
+  position: relative;
+  border: 1px solid #eee;
+  animation: cardFadeIn 1s;
+}
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: translateY(32px);}
+  to   { opacity: 1; transform: none;}
+}
+.carrito-card-empty .icon-empty {
+  font-size: 3.5em;
+  color: #ffd600;
+  margin-bottom: 12px;
+  display: block;
+}
+.carrito-card-empty h3 {
+  color: #333;
+  font-size: 1.37em;
+  margin-bottom: 9px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.carrito-card-empty p {
+  color: #555;
+  font-size: 1.11em;
+  margin-bottom: 1.6em;
+  line-height: 1.5;
+}
+.carrito-card-empty .acciones-empty {
+  display: flex;
+  gap: 1em;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.carrito-card-empty .btn-empty {
+  background: #28a745;
+  color: #fff;
+  border: none;
+  padding: 13px 30px;
+  border-radius: 7px;
+  font-size: 1.09em;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.17s;
+  cursor: pointer;
+  margin-bottom: 0.5em;
+}
+.carrito-card-empty .btn-empty:hover {
+  background: #1b7d31;
+}
+.carrito-card-empty .btn-outline {
+  background: #fff;
+  color: #28a745;
+  border: 2px solid #28a745;
+  padding: 12px 27px;
+  font-weight: 600;
+}
+.carrito-card-empty .btn-outline:hover {
+  background: #28a745;
+  color: #fff;
 }
 
 /* ==== CARRITO ==== */
@@ -199,7 +265,6 @@ h2 {
   object-fit: cover;
   border-radius: 8px;
 }
-
 .cantidad-form, .delete-form {
   display: inline-block;
   margin: 0;
@@ -213,7 +278,6 @@ h2 {
   background: #fafafa;
   padding: 3px;
 }
-
 /* ==== BOTON COMPRAR ==== */
 .boton-comprar {
   background-color: #28a745;
@@ -246,7 +310,6 @@ h2 {
   }
   .resumen-footer { text-align: center; }
 }
-
 /* ==== ELIMINAR BUTTON ==== */
 .delete-form button {
   background: #f44336;
@@ -270,7 +333,6 @@ h2 {
     min-width: 70px;
   }
 }
-
 /* ==== RESPONSIVE TABLA ==== */
 @media (max-width: 700px) {
   .carrito-wrapper { padding: 1vw 1vw; }
@@ -286,7 +348,6 @@ h2 {
   .boton-comprar { font-size: 1rem; }
   .menu-link { font-size: 0.91rem; }
 }
-
 /* ==== FOOTER ==== */
 footer {
   background-color: #333;
@@ -317,7 +378,6 @@ footer::after {
   font-size: 0.9rem;
   color: #ccc;
 }
-
 /* ==== FOOTER SIEMPRE ABAJO EN RESPONSIVE ==== */
 @media (max-width: 700px) {
   body {
@@ -335,15 +395,12 @@ footer::after {
     min-width: 0;
   }
 }
-
-/* ==== CORRECCION DE SCROLL EN HEADER ==== */
 @media (max-width: 410px) {
   .header-container {
     gap: 0.07em;
   }
   .logo-img { max-width: 30vw; }
 }
-
   </style>
 </head>
 <body>
@@ -363,12 +420,24 @@ footer::after {
   </nav>
 </header>
 
-
 <main>
   <h2>Mi Carrito</h2>
 
   <?php if (empty($carrito)): ?>
-    <p style="text-align:center; margin-top:2em;">Tu carrito está vacío.</p>
+    <div class="carrito-card-empty">
+      <span class="icon-empty"><i class="fas fa-shopping-cart"></i></span>
+      <h3>¡Tu carrito está vacío!</h3>
+      <p>
+        Agrega productos a tu carrito para verlos aquí y finalizar tu compra.<br>
+        ¿Buscas productos para tu mascota? ¡Explora nuestra tienda!<br>
+        También puedes revisar nuestros <b>servicios</b> personalizados.
+      </p>
+      <div class="acciones-empty">
+        <a href="Productos.php" class="btn-empty"><i class="fas fa-dog"></i> Ver Productos</a>
+        <a href="Servicios.php" class="btn-empty btn-outline"><i class="fas fa-concierge-bell"></i> Ver Servicios</a>
+        <a href="index.php" class="btn-empty btn-outline"><i class="fas fa-home"></i> Inicio</a>
+      </div>
+    </div>
   <?php else: ?>
     <div class="carrito-wrapper">
       <table class="carrito-table">
@@ -381,66 +450,65 @@ footer::after {
             <th>Acción</th>
           </tr>
         </thead>
-  <tbody>
-    <?php foreach ($carrito as $index => $producto):
-      // Obtiene el campo de imagen de la base de datos
-      $stmt = $pdo->prepare("SELECT Imagen_URL FROM producto WHERE Nombre = ?");
-      $stmt->execute([$producto['nombre']]);
-      $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+        <tbody>
+          <?php foreach ($carrito as $index => $producto):
+            // Obtiene el campo de imagen de la base de datos
+            $stmt = $pdo->prepare("SELECT Imagen_URL FROM producto WHERE Nombre = ?");
+            $stmt->execute([$producto['nombre']]);
+            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
 
-      // Si la imagen es una URL absoluta, úsala. Si solo es el nombre, construye la URL.
-      $imgFile = trim($fila['Imagen_URL'] ?? '');
-      $imgFile = ltrim($imgFile, '/'); // elimina slash al inicio si existe
+            // Si la imagen es una URL absoluta, úsala. Si solo es el nombre, construye la URL.
+            $imgFile = trim($fila['Imagen_URL'] ?? '');
+            $imgFile = ltrim($imgFile, '/');
 
-      if (!$imgFile) {
-        $imgRuta = "https://doggies-production.up.railway.app/img/default.jpg";
-      } else if (filter_var($imgFile, FILTER_VALIDATE_URL)) {
-        $imgRuta = $imgFile;
-      } else if (strpos($imgFile, 'img/') === 0) {
-        $imgRuta = "https://doggies-production.up.railway.app/" . $imgFile;
-      } else {
-        $imgRuta = "https://doggies-production.up.railway.app/img/" . $imgFile;
-      }
+            if (!$imgFile) {
+              $imgRuta = "https://doggies-production.up.railway.app/img/default.jpg";
+            } else if (filter_var($imgFile, FILTER_VALIDATE_URL)) {
+              $imgRuta = $imgFile;
+            } else if (strpos($imgFile, 'img/') === 0) {
+              $imgRuta = "https://doggies-production.up.railway.app/" . $imgFile;
+            } else {
+              $imgRuta = "https://doggies-production.up.railway.app/img/" . $imgFile;
+            }
 
-      $subtotal = $producto['precio'] * $producto['cantidad'];
-      $total += $subtotal;
-    ?>
-    <tr>
-      <td>
-        <div class="producto-detalle" style="justify-content:flex-start;gap:16px;">
-          <img 
-            src="<?= htmlspecialchars($imgRuta) ?>" 
-            alt="<?= htmlspecialchars($producto['nombre']) ?>" 
-            class="carrito-img"
-            style="min-width:50px;min-height:50px;"
-            onerror="this.onerror=null;this.src='https://doggies-production.up.railway.app/img/default.jpg';"
-          >
-          <span style="font-size:1.08rem;"><?= htmlspecialchars($producto['nombre']) ?></span>
-        </div>
-      </td>
-      <td>$<?= number_format($producto['precio'],0,',','.') ?></td>
-      <td>
-        <form method="POST" action="carrito.php" class="cantidad-form">
-          <input type="hidden" name="update_index" value="<?= $index ?>">
-          <input type="number"
-                name="cantidad"
-                value="<?= $producto['cantidad'] ?>"
-                min="1" max="25"
-                class="cantidad-input"
-                onchange="this.form.submit()">
-        </form>
-      </td>
-      <td>$<?= number_format($subtotal,0,',','.') ?></td>
-      <td>
-        <form method="POST" action="carrito.php" class="delete-form" onsubmit="return confirm('¿Eliminar este producto?');">
-          <input type="hidden" name="delete_index" value="<?= $index ?>">
-          <button type="submit"><i class="fas fa-trash"></i> Eliminar</button>
-        </form>
-      </td>
-    </tr>
-    <?php endforeach; ?>
-  </tbody>
-
+            $subtotal = $producto['precio'] * $producto['cantidad'];
+            $total += $subtotal;
+          ?>
+          <tr>
+            <td>
+              <div class="producto-detalle" style="justify-content:flex-start;gap:16px;">
+                <img 
+                  src="<?= htmlspecialchars($imgRuta) ?>" 
+                  alt="<?= htmlspecialchars($producto['nombre']) ?>" 
+                  class="carrito-img"
+                  style="min-width:50px;min-height:50px;"
+                  onerror="this.onerror=null;this.src='https://doggies-production.up.railway.app/img/default.jpg';"
+                >
+                <span style="font-size:1.08rem;"><?= htmlspecialchars($producto['nombre']) ?></span>
+              </div>
+            </td>
+            <td>$<?= number_format($producto['precio'],0,',','.') ?></td>
+            <td>
+              <form method="POST" action="carrito.php" class="cantidad-form">
+                <input type="hidden" name="update_index" value="<?= $index ?>">
+                <input type="number"
+                      name="cantidad"
+                      value="<?= $producto['cantidad'] ?>"
+                      min="1" max="25"
+                      class="cantidad-input"
+                      onchange="this.form.submit()">
+              </form>
+            </td>
+            <td>$<?= number_format($subtotal,0,',','.') ?></td>
+            <td>
+              <form method="POST" action="carrito.php" class="delete-form" onsubmit="return confirm('¿Eliminar este producto?');">
+                <input type="hidden" name="delete_index" value="<?= $index ?>">
+                <button type="submit"><i class="fas fa-trash"></i> Eliminar</button>
+              </form>
+            </td>
+          </tr>
+          <?php endforeach; ?>
+        </tbody>
         <tfoot>
           <tr>
             <th colspan="3" style="text-align:right;">Total:</th>

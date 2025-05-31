@@ -49,7 +49,6 @@ if (
     .modal-contenido h2 {
       text-align:center; margin-bottom:20px; color: #28a745; font-size:1.55em; font-weight:700; letter-spacing: 0.01em;
     }
-    /* --- TABLA RESPONSIVE --- */
     .modal-contenido table {
       width:100%; border-collapse:collapse; margin-bottom:18px;
       display: block; overflow-x: auto; white-space: nowrap;
@@ -75,7 +74,7 @@ if (
       gap: 8px;
       text-align: left;
       min-width: 120px;
-      max-width: 220px;    /* Limita el ancho en escritorio */
+      max-width: 220px;
       overflow: hidden;
     }
     .producto-descripcion span {
@@ -85,7 +84,7 @@ if (
       white-space: normal;
       overflow-wrap: break-word;
       word-break: break-word;
-      max-width: 150px;    /* Ajusta según tamaño de tu celda */
+      max-width: 150px;
       font-size: 1rem;
     }
     .cantidad-input {
@@ -130,6 +129,42 @@ if (
       .modal-contenido th, .modal-contenido td { padding:3px 1px; font-size:0.90em;}
       .cantidad-input { width:32px;}
     }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .page-container {
+    flex: 1 0 auto;
+  }
+
+  /* El footer se mantiene pegado abajo */
+  footer {
+    margin-top: auto;
+    width: 100%;
+    background: #333;
+    color: #fff;
+    text-align: center;
+    padding: 20px 10px 36px 10px;
+    box-sizing: border-box;
+  }
+
+  /* Opcional: mejora el footer en dispositivos pequeños */
+  @media (max-width: 700px) {
+    footer {
+      padding: 18px 3vw 32px 3vw;
+      font-size: 0.99em;
+    }
+  }
+
   </style>
 </head>
 <body>
@@ -215,6 +250,18 @@ if (
       </form>
     </div>
   </div>
+
+  <footer>
+    <div class="footer-content">
+      <h3>Síguenos</h3>
+      <div class="social-links">
+        <a href="https://www.facebook.com/profile.php?id=100069951193254" target="_blank"><i class="fab fa-facebook-f"></i></a>
+        <a href="https://www.instagram.com/doggiespaseadores/" target="_blank"><i class="fab fa-instagram"></i></a>
+        <a href="https://www.tiktok.com/@doggies_paseadores" target="_blank"><i class="fab fa-tiktok"></i></a>
+        <a href="mailto:doggiespasto@gmail.com"><i class="fas fa-envelope"></i></a>
+      </div>
+    </div>
+  </footer>
 
   <script>
     function cambiarCantidad(btn, cambio) {
