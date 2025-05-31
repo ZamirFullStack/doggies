@@ -124,7 +124,7 @@ try {
         ],
         "auto_return" => "approved",
         "external_reference" => $pedidoId,
-        "installments" => 1 // <--- SOLO PERMITIR 1 CUOTA
+        "installments" == 1 // <--- SOLO PERMITIR 1 CUOTA
     ]);
 
     echo json_encode(["preference_id" => $preference->id]);

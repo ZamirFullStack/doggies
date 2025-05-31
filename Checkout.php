@@ -386,7 +386,7 @@ $tiposDocumento = obtenerValoresEnum($pdo, 'usuario', 'Tipo_Documento');
         <a href="https://www.facebook.com/profile.php?id=100069951193254" target="_blank"><i class="fab fa-facebook-f"></i></a>
         <a href="https://www.instagram.com/doggiespaseadores/" target="_blank"><i class="fab fa-instagram"></i></a>
         <a href="https://www.tiktok.com/@doggies_paseadores" target="_blank"><i class="fab fa-tiktok"></i></a>
-        <a href="mailto:doggiespasto@gmail.com"><i class="fas fa-envelope"></i></a>
+        <a href="mailto:doggiespasto22@gmail.com"><i class="fas fa-envelope"></i></a>
       </div>
     </div>
   </footer>

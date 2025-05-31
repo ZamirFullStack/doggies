@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['enviar_email'])) {
     $dtBogota->setTimezone(new DateTimeZone('America/Bogota'));
     $fechaDespacho = $dtBogota->format('d/m/Y, H:i');
 
-    // Construir tabla de productos en HTML alineada
+    // Construir tabla de productos en HTML alineada (ESTILO WEBHOOK)
     $tablaProductos = '
     <table style="border-collapse:collapse; width:100%; margin:18px 0; font-size:16px;">
       <tr>
@@ -69,18 +69,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['enviar_email'])) {
         <th style="background:#fff; border-bottom:2px solid #dedede; color:#5c1769; padding:12px 8px; text-align:right;">Subtotal</th>
       </tr>';
     foreach ($productosPedido as $prod) {
-        $imgUrl = !empty($prod['Imagen_URL']) ? $prod['Imagen_URL'] : 'img/Productos/default.jpg';
+        $nombre = $prod['Nombre'];
+        $cantidad = $prod['Cantidad'];
+        $subtotal = $prod['Subtotal'];
+        // Buscar la imagen igual que en el webhook
+        $stmtImg = $pdo->prepare("SELECT Imagen_URL FROM producto WHERE Nombre = ?");
+        $stmtImg->execute([$nombre]);
+        $fila = $stmtImg->fetch(PDO::FETCH_ASSOC);
+        $imgRuta = ($fila && !empty($fila['Imagen_URL'])) ? $fila['Imagen_URL'] : 'img/Productos/default.jpg';
+        // Si Imagen_URL es solo el nombre de archivo, arma la ruta completa
+        if (strpos($imgRuta, 'img/Productos/') === false) {
+            $imgRuta = 'img/Productos/' . $imgRuta;
+        }
+        $imgRuta = ltrim($imgRuta, '/');
+        $imgUrlFull = "https://doggies-production.up.railway.app/$imgRuta";
+
         $tablaProductos .= '<tr style="background:#fafbfe;">
             <td style="padding:10px 6px; border-bottom:1px solid #e8e8e8;">
                 <div style="display:flex;align-items:center;gap:13px;">
-                  <img src="https://doggies-production.up.railway.app/' . $imgUrl . '" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:7px;border:1px solid #e5e6ef;">
-                  <span style="font-weight:500;color:#5c1769; font-size:17px;">' . htmlspecialchars($prod['Nombre']) . '</span>
+                  <img src="' . $imgUrlFull . '" alt="Producto" width="44" height="44" style="object-fit:cover;border-radius:7px;border:1px solid #e5e6ef;vertical-align:middle;">
+                  <span style="font-weight:500;color:#5c1769; font-size:17px;vertical-align:middle;">' . htmlspecialchars($nombre) . '</span>
                 </div>
             </td>
-            <td style="padding:10px 6px; border-bottom:1px solid #e8e8e8; text-align:center; font-size:16px;">' . intval($prod['Cantidad']) . '</td>
-            <td style="padding:10px 6px; border-bottom:1px solid #e8e8e8; text-align:right; font-size:16px;">$ ' . number_format($prod['Subtotal'],0,',','.') . '</td>
+            <td style="padding:10px 6px; border-bottom:1px solid #e8e8e8; text-align:center; font-size:16px;">' . intval($cantidad) . '</td>
+            <td style="padding:10px 6px; border-bottom:1px solid #e8e8e8; text-align:right; font-size:16px;">$ ' . number_format($subtotal,0,',','.') . '</td>
         </tr>';
     }
+    $tablaProductos .= '</table>';
+    
     $tablaProductos .= '</table>';
 
     // ENVÍA EL EMAIL SOLO SI HAY CORREO
