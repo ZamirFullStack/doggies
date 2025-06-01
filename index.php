@@ -145,7 +145,7 @@
     <div class="content">
 <h1 class="main-title">¡Bienvenido a Doggies!</h1>
 <p class="sub-title">
-  Tu tienda y centro de cuidado para peluditos 🐶
+  Tu Tienda y Centro de Cuidado para Peluditos
 </p>
 
       <a href="Nosotros.php" class="nosotros-link"><i class="fas fa-paw"></i> Conócenos</a>
