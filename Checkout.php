@@ -439,7 +439,6 @@ $tiposDocumento = obtenerValoresEnum($pdo, 'usuario', 'Tipo_Documento');
       <tr><td colspan="3"><strong>Total de tu compra:</strong></td><td><strong>$${totalConTodo.toLocaleString('es-CO')}</strong></td></tr>
     `;
   }
-
   actualizarResumen();
 </script>
 </body>

@@ -291,6 +291,89 @@ if (
     .page-container { flex: 1 0 auto;}
     footer { margin-top: auto; width: 100%; background: #333; color: #fff; text-align: center; padding: 20px 10px 36px 10px; box-sizing: border-box;}
     @media (max-width: 700px) { footer { padding: 18px 3vw 32px 3vw; font-size: 0.99em;} }
+
+.producto-descripcion {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 80px;
+  max-width: 110px;
+  word-break: break-word;
+}
+.producto-descripcion img {
+  width: 48px !important;
+  height: 48px !important;
+  display: block;
+  margin: 0 auto 3px auto;
+}
+.nombre-modal {
+  font-weight: 600;
+  font-size: 0.98em;
+  text-align: center;
+  display: block;
+  max-width: 85px;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+@media (max-width: 700px) {
+  .producto-descripcion img {
+    width: 35px !important;
+    height: 35px !important;
+  }
+  .nombre-modal {
+    font-size: 0.91em;
+    max-width: 64px;
+  }
+}
+
+.celda-producto {
+  display: flex;
+  align-items: center;     /* Centra verticalmente */
+  gap: 13px;
+  justify-content: left;
+  min-width: 140px;
+  max-width: 210px;
+  padding: 7px 4px;
+  border: none;
+  background: none;
+  word-break: break-word;
+}
+
+.nombre-producto-modal {
+  display: flex;                /* Cambia a flex para centrar vertical */
+  align-items: center;          /* Centra verticalmente el texto */
+  font-weight: 600;
+  color: #232323;
+  font-size: 1em;
+  line-height: 1.16em;
+  max-width: 120px;
+  word-break: break-word;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+  min-height: 48px;             /* Igual que la imagen para centrar mejor */
+}
+
+@media (max-width: 700px) {
+  .celda-producto {
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    min-width: 70px;
+    max-width: 85px;
+  }
+  .nombre-producto-modal {
+    font-size: 0.97em;
+    text-align: center;
+    max-width: 64px;
+    min-height: unset;
+    align-items: unset;
+    display: block;
+  }
+}
+
+
   </style>
 </head>
 <body>
@@ -554,21 +637,23 @@ if (
               const src   = form.imagen.value;
               tabla.innerHTML = '';
               const tr = document.createElement('tr');
-              tr.innerHTML = `
-                <td class="producto-descripcion">
-                  <img src="${src}" alt="${name}"><span>${name}</span>
-                </td>
-                <td>$${price.toLocaleString('es-CO')}</td>
-                <td>
-                  <input type="number"
-                         class="cantidad-input"
-                         data-price="${price}"
-                         min="1" max="25"
-                         value="${qtyCard}"
-                         onchange="actualizarSubtotalModal(this)">
-                </td>
-                <td class="subtotal-cell">$${(price*qtyCard).toLocaleString('es-CO')}</td>
-              `;
+            tr.innerHTML = `
+              <td class="celda-producto">
+                <img src="${src}" alt="${name}" class="img-modal">
+                <span class="nombre-producto-modal">${name}</span>
+              </td>
+              <td>$${price.toLocaleString('es-CO')}</td>
+              <td>
+                <input type="number"
+                      class="cantidad-input"
+                      data-price="${price}"
+                      min="1" max="25"
+                      value="${qtyCard}"
+                      onchange="actualizarSubtotalModal(this)">
+              </td>
+              <td class="subtotal-cell">$${(price*qtyCard).toLocaleString('es-CO')}</td>
+            `;
+
               tabla.appendChild(tr);
             });
         });

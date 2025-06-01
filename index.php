@@ -49,6 +49,38 @@
     .nosotros-link:hover {
       background-color: #388e3c;
     }
+
+    .carrusel {
+      margin: 2rem auto;
+      max-width: 100%;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .carousel-container {
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .carousel-slide {
+      display: flex;
+      width: 300%;
+      animation: slide 12s infinite;
+    }
+
+    .carousel-slide img {
+      width: 100%;
+      flex: 1 0 100%;
+      object-fit: cover;
+    }
+
+    @keyframes slide {
+      0%   { transform: translateX(0%); }
+      33%  { transform: translateX(-100%); }
+      66%  { transform: translateX(-200%); }
+      100% { transform: translateX(0%); }
+    }
+
   </style>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -101,6 +133,17 @@
       <a href="Nosotros.php" class="nosotros-link"><i class="fas fa-paw"></i> Conócenos</a>
     </div>
   </section>
+
+  <section class="carrusel">
+  <div class="carousel-container">
+    <div class="carousel-slide">
+      <img src="img/productos.png" alt="Productos Doggies">
+      <img src="img/promos.png" alt="Promociones especiales">
+      <img src="img/servicios.png" alt="Nuestros servicios">
+    </div>
+  </div>
+</section>
+
 
   <footer>
     <div class="footer-content">
