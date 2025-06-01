@@ -243,12 +243,43 @@ if (
       .banner-item { font-size: 0.95em; padding: 7px 1vw 7px 2vw; }
       .carrusel-btn { font-size: 1em;}
     }
-    /* --- resto estilos productos... igual que antes --- */
     .productos-page { flex: 1 1 auto; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; width: 100%; min-width: 0;}
     .productos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 28px 18px; padding: 25px 25px 65px 25px; width: 100%; box-sizing: border-box; align-items: stretch;}
-    .producto-card { background: #fff; border-radius: 13px; box-shadow: 0 2px 12px rgba(30,30,30,0.08); padding: 17px 13px 15px 13px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: 100%; max-width: 330px; min-width: 0; margin: 0 auto; transition: box-shadow 0.18s;}
+    .producto-card {
+      background: #fff;
+      border-radius: 13px;
+      box-shadow: 0 2px 12px rgba(30,30,30,0.08);
+      padding: 17px 13px 15px 13px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      width: 100%;
+      max-width: 330px;
+      min-width: 0;
+      margin: 0 auto;
+      transition: box-shadow 0.18s;
+      /* Cambios nuevos para igualar altura y acciones abajo */
+      min-height: 450px;
+      height: 100%;
+    }
     .producto-card img { width: 155px; height: 155px; object-fit: cover; border-radius: 8px; margin-bottom: 12px; background: #f4f4f4; display: block; box-shadow: 0 2px 7px rgba(60,60,60,0.08);}
-    .producto-info { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 4px;}
+    .producto-info {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      flex: 1 1 auto; /* Permite crecer y empujar acciones-producto abajo */
+    }
+    .acciones-producto {
+      margin-top: auto;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+    }
     .producto-info h3 { font-size: 1.09em; margin-bottom: 0.5px; font-weight: bold; color: #333; text-align: center;}
     .producto-info p { font-size: 0.99em; color: #666; margin-bottom: 4px; text-align: center; min-height: 34px; max-height: 40px; overflow: hidden;}
     .producto-info span { font-size: 1.10em; color: #28a745; font-weight: bold; margin-bottom: 6px;}
@@ -256,7 +287,6 @@ if (
     .producto-descripcion { display: flex; align-items: center; gap: 8px; text-align: left; min-width: 120px; max-width: 220px; overflow: hidden;}
     .producto-descripcion span { display: block; font-weight: 500; color: #222; white-space: normal; overflow-wrap: break-word; word-break: break-word; max-width: 150px; font-size: 1rem;}
     .agotado { color:red; font-weight:bold; margin-top:10px;}
-    /* ... Más media queries igual que antes ... */
     body { min-height: 100vh; display: flex; flex-direction: column;}
     .page-container { flex: 1 0 auto;}
     footer { margin-top: auto; width: 100%; background: #333; color: #fff; text-align: center; padding: 20px 10px 36px 10px; box-sizing: border-box;}
@@ -373,7 +403,6 @@ if (
     </div>
   </div>
 </div>
-
     </aside>
 
     <main class="productos-page">
@@ -396,23 +425,24 @@ if (
             <h3><?php echo $nombre; ?></h3>
             <p><?php echo $descripcion; ?></p>
             <span>$<?php echo $precioF; ?></span>
-
-            <?php if ($stock > 0): ?>
-            <div class="cantidad-comprar">
-              <button onclick="cambiarCantidad(this,-1)">−</button>
-              <input type="number" value="1" min="1" max="25" readonly>
-              <button onclick="cambiarCantidad(this,1)">+</button>
+            <div class="acciones-producto">
+              <?php if ($stock > 0): ?>
+              <div class="cantidad-comprar">
+                <button onclick="cambiarCantidad(this,-1)">−</button>
+                <input type="number" value="1" min="1" max="25" readonly>
+                <button onclick="cambiarCantidad(this,1)">+</button>
+              </div>
+              <form method="POST">
+                <input type="hidden" name="nombre"   value="<?php echo $nombre; ?>">
+                <input type="hidden" name="precio"   value="<?php echo $precio; ?>">
+                <input type="hidden" name="cantidad" value="1" class="input-cantidad">
+                <input type="hidden" name="imagen"   value="<?php echo $imagen; ?>">
+                <button type="submit" class="btn-comprar">Comprar</button>
+              </form>
+              <?php else: ?>
+                <p class="agotado">Agotado</p>
+              <?php endif; ?>
             </div>
-            <form method="POST">
-              <input type="hidden" name="nombre"   value="<?php echo $nombre; ?>">
-              <input type="hidden" name="precio"   value="<?php echo $precio; ?>">
-              <input type="hidden" name="cantidad" value="1" class="input-cantidad">
-              <input type="hidden" name="imagen"   value="<?php echo $imagen; ?>">
-              <button type="submit" class="btn-comprar">Comprar</button>
-            </form>
-            <?php else: ?>
-              <p class="agotado">Agotado</p>
-            <?php endif; ?>
           </div>
         </div>
         <?php endforeach; ?>
@@ -420,6 +450,9 @@ if (
     </main>
   </div>
 
+  <!-- ... El resto del HTML permanece igual ... -->
+
+  <!-- MODAL Y FOOTER (sin cambios) -->
   <div id="modal-confirmacion" class="modal">
     <div class="modal-contenido">
       <h2>Producto agregado al carrito</h2>
@@ -449,7 +482,7 @@ if (
     </div>
   </footer>
 
-  <script>
+ <script>
     // Carrusel banners vertical
     let carruselIndex = 0;
     let banners;

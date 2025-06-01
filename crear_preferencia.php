@@ -5,7 +5,7 @@ use MercadoPago\MercadoPagoConfig;
 use MercadoPago\Client\Preference\PreferenceClient;
 
 // Configura tu access token real o de prueba
-MercadoPagoConfig::setAccessToken("TEST-7533043630493954-052015-7926e661894c7b075e8d779a3c67e94d-822556558");
+MercadoPagoConfig::setAccessToken("APP_USR-7533043630493954-052015-54d6e694f724d08327f9bcf85aa2a2e9-822556558");
 
 // Conexión a la BD (Railway)
 $url = 'mysql://root:AaynZNNKYegnXoInEgQefHggDxoRieEL@centerbeam.proxy.rlwy.net:58462/railway';

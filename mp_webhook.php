@@ -8,7 +8,7 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 // Access Token Mercado Pago
-MercadoPagoConfig::setAccessToken("TEST-7533043630493954-052015-7926e661894c7b075e8d779a3c67e94d-822556558");
+MercadoPagoConfig::setAccessToken("APP_USR-7533043630493954-052015-54d6e694f724d08327f9bcf85aa2a2e9-822556558");
 
 // Recibe el JSON de Mercado Pago
 $input = file_get_contents('php://input');
