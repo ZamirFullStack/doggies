@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="icon" type="image/jpeg" href="img/fondo.jpg" />
   <style>
+
     .submenu { position: relative; cursor: pointer; }
     .submenu-opciones {
       display: none;
@@ -50,40 +51,6 @@
       background-color: #388e3c;
     }
 
-      .carrusel {
-      max-width: 100%;
-      overflow: hidden;
-      position: relative;
-      height: 350px; /* define el alto del carrusel */
-    }
-
-    .carousel-container {
-      width: 100%;
-      overflow: hidden;
-    }
-
-    .carousel-slide {
-      display: flex;
-      width: 50%; /* 3 imágenes */
-      animation: slide 12s infinite;
-    }
-
-
-    .carousel-slide img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      flex-shrink: 0;
-    }
-
-
-    @keyframes slide {
-      0%   { transform: translateX(0%); }
-      33%  { transform: translateX(-100%); }
-      66%  { transform: translateX(-200%); }
-      100% { transform: translateX(0%); }
-    }
-
     @media (max-width: 768px) {
   .carrusel {
     height: 250px;
@@ -94,8 +61,6 @@
     height: 180px;
   }
 }
-
-
   </style>
   <script>
     document.addEventListener('DOMContentLoaded', function () {

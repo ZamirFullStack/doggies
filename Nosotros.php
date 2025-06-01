@@ -149,7 +149,7 @@
         En Doggies estamos comprometidos con tu satisfacción. Si algún producto no cumple con tus expectativas, puedes devolverlo en un plazo máximo de 7 días hábiles a partir de la fecha de entrega, siempre y cuando el artículo esté sin usar, en su empaque original y acompañado de la factura de compra. El proceso de devolución se iniciará una vez se verifique el estado del producto. El reembolso se realizará utilizando el mismo método de pago original dentro de los 10 días hábiles siguientes.
       </p>
       <p>
-        Para los servicios (guardería, paseos, peluquería), aceptamos cancelaciones o reprogramaciones con al menos 24 horas de antelación. De lo contrario, se aplicará una penalización del 50% del valor del servicio reservado. Para iniciar cualquier proceso de cambio o devolución, escríbenos a <strong>doggiespasto@gmail.com</strong>.
+        Para los servicios (guardería, paseos, peluquería), aceptamos cancelaciones o reprogramaciones con al menos 24 horas de antelación. De lo contrario, se aplicará una penalización del 50% del valor del servicio reservado. Para iniciar cualquier proceso de cambio o devolución, escríbenos a <strong>doggiespasto22@gmail.com</strong>.
       </p>
 
       <h3>Política de Privacidad y Protección de Datos</h3>
@@ -157,7 +157,7 @@
         Doggies respeta y protege la privacidad de todos sus clientes y visitantes. Todos los datos personales que recopilamos a través de formularios de contacto, registro de usuarios o compras en línea se utilizan exclusivamente para procesar tus pedidos, brindarte soporte, enviar actualizaciones de tus compras y ofrecerte promociones relacionadas con nuestros productos o servicios.
       </p>
       <p>
-        Cumplimos con la Ley 1581 de 2012 y el Decreto 1377 de 2013 de Colombia. Implementamos medidas de seguridad físicas, electrónicas y administrativas para proteger tu información contra acceso no autorizado. Puedes solicitar en cualquier momento la actualización, corrección o eliminación de tus datos mediante solicitud escrita al correo <strong>doggiespasto@gmail.com</strong>.
+        Cumplimos con la Ley 1581 de 2012 y el Decreto 1377 de 2013 de Colombia. Implementamos medidas de seguridad físicas, electrónicas y administrativas para proteger tu información contra acceso no autorizado. Puedes solicitar en cualquier momento la actualización, corrección o eliminación de tus datos mediante solicitud escrita al correo <strong>doggiespasto22@gmail.com</strong>.
       </p>
 
       <h3>Condiciones Generales de Uso</h3>
