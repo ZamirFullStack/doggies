@@ -10,7 +10,7 @@ require 'conexion.php';
 
 $usuario = $_SESSION['usuario'];
 
-// Info del usuario
+// Cargar datos usuario
 $stmt = $pdo->prepare("SELECT * FROM usuario WHERE ID_Usuario = :id");
 $stmt->execute(['id' => $usuario['ID_Usuario']]);
 $datos = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -18,10 +18,25 @@ if (!$datos) {
     die("❌ Error: No se encontró el usuario.");
 }
 
-// Trae todos los pedidos del usuario
-$stmt_pedidos = $pdo->prepare("SELECT * FROM pedido WHERE ID_Usuario = :id ORDER BY Fecha_Pedido DESC");
+// Consulta corregida: Historial de compras SOLO del usuario logueado
+$stmt_pedidos = $pdo->prepare("
+    SELECT 
+        p.ID_Pedido, p.Fecha_Pedido, p.Total, p.Metodo_Pago,
+        dp.Cantidad, dp.Precio_Unitario, dp.Nombre_Producto,
+        pr.Imagen_URL, pr.Stock
+    FROM pedido p
+    JOIN pedido_productos dp ON p.ID_Pedido = dp.ID_Pedido
+    LEFT JOIN producto pr ON pr.Nombre = dp.Nombre_Producto
+    WHERE p.ID_Usuario = :id
+    ORDER BY p.Fecha_Pedido DESC
+");
 $stmt_pedidos->execute(['id' => $usuario['ID_Usuario']]);
 $pedidos = $stmt_pedidos->fetchAll(PDO::FETCH_ASSOC);
+
+// DEBUG: puedes descomentar para ver los pedidos en bruto
+// echo '<pre>'; print_r($pedidos); echo '</pre>';
+
+$carrito = isset($_SESSION['carrito']) ? $_SESSION['carrito'] : [];
 
 function formatearFecha($fecha) {
     $meses = [
@@ -29,12 +44,45 @@ function formatearFecha($fecha) {
         '05' => 'mayo', '06' => 'junio', '07' => 'julio', '08' => 'agosto',
         '09' => 'septiembre', '10' => 'octubre', '11' => 'noviembre', '12' => 'diciembre'
     ];
-    $fechaObj = new DateTime($fecha);
+
+    // Convertir de UTC a Bogotá
+    $fechaObj = new DateTime($fecha, new DateTimeZone('UTC'));
+    $fechaObj->setTimezone(new DateTimeZone('America/Bogota'));
+
     $dia = $fechaObj->format('d');
     $mes = $meses[$fechaObj->format('m')];
     $anio = $fechaObj->format('Y');
-    return "$dia de $mes de $anio";
+    $hora = $fechaObj->format('H:i');
+
+    return "$dia de $mes de $anio, $hora";
 }
+
+
+require 'conexion.php';
+$usuario = $_SESSION['usuario'];
+
+// ... Tu consulta de datos de usuario aquí ...
+
+// Consulta de pedidos (usa el SQL corregido que te pasé):
+$stmt_pedidos = $pdo->prepare("
+    SELECT 
+        p.ID_Pedido, p.Fecha_Pedido, p.Total, p.Metodo_Pago, p.Email,
+        dp.Cantidad, dp.Precio_Unitario, dp.Nombre_Producto,
+        pr.Imagen_URL, pr.Stock
+    FROM pedido p
+    JOIN pedido_productos dp ON p.ID_Pedido = dp.ID_Pedido
+    LEFT JOIN producto pr ON pr.Nombre = dp.Nombre_Producto
+    WHERE (p.ID_Usuario = :id OR p.Email = :correo)
+    ORDER BY p.Fecha_Pedido DESC
+");
+$stmt_pedidos->execute([
+    'id' => $usuario['ID_Usuario'],
+    'correo' => $datos['Correo']
+]);
+$pedidos = $stmt_pedidos->fetchAll(PDO::FETCH_ASSOC);
+
+
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -75,23 +123,14 @@ function formatearFecha($fecha) {
       margin-bottom: 20px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .pedido-producto {
-      display: flex;
       align-items: center;
-      gap: 18px;
-      background: #f8f8f8;
-      border-radius: 7px;
-      padding: 9px 7px;
+      gap: 20px;
     }
-    .pedido-producto img {
-      width: 70px;
-      height: 70px;
+    .pedido-box img {
+      width: 80px;
+      height: 80px;
       object-fit: cover;
       border-radius: 8px;
-      border: 1px solid #eee;
     }
     .pedido-info {
       flex: 1;
@@ -99,13 +138,12 @@ function formatearFecha($fecha) {
     .pedido-info h4 {
       margin: 0 0 5px;
       color: #333;
-      font-size: 18px;
     }
     .pedido-info p {
       margin: 2px 0;
       color: #555;
     }
-    .pedido-producto form button {
+    .pedido-box form button {
       background-color: #4caf50;
       color: white;
       padding: 6px 12px;
@@ -113,7 +151,7 @@ function formatearFecha($fecha) {
       border-radius: 6px;
       cursor: pointer;
     }
-    .pedido-producto .agotado {
+    .pedido-box .agotado {
       color: red;
       font-weight: bold;
     }
@@ -130,6 +168,7 @@ function formatearFecha($fecha) {
   </style>
 </head>
 <body class="login-page">
+  
   <header>
     <nav>
       <ul class="menu">
@@ -171,42 +210,24 @@ function formatearFecha($fecha) {
       <?php if (count($pedidos) > 0): ?>
         <?php foreach ($pedidos as $pedido): ?>
           <div class="pedido-box">
-            <div style="margin-bottom:5px;">
-              <b>Pedido N° <?= $pedido['ID_Pedido'] ?></b> - <?= formatearFecha($pedido['Fecha_Pedido']) ?>
-              <span style="margin-left:10px; font-size:13px; color:#555;">Estado: <?= htmlspecialchars($pedido['Estado']) ?></span>
-              <div style="font-size:13px; color:#666;">Total: $<?= number_format($pedido['Total'], 0, ',', '.') ?> | Pago: <?= htmlspecialchars($pedido['Metodo_Pago']) ?></div>
+            <img src="<?= !empty($pedido['Imagen_URL']) ? htmlspecialchars($pedido['Imagen_URL']) : 'img/Productos/default.jpg' ?>" alt="<?= htmlspecialchars($pedido['Nombre_Producto']) ?>">
+            <div class="pedido-info">
+              <h4><?= htmlspecialchars($pedido['Nombre_Producto']) ?></h4>
+              <p>Fecha: <?= formatearFecha($pedido['Fecha_Pedido']) ?></p>
+              <p>Cantidad: <?= $pedido['Cantidad'] ?> - Precio: $<?= number_format($pedido['Precio_Unitario'], 0, ',', '.') ?></p>
+              <p>Total: $<?= number_format($pedido['Precio_Unitario'] * $pedido['Cantidad'], 0, ',', '.') ?></p>
+              <p>Forma de pago: <?= $pedido['Metodo_Pago'] ?></p>
             </div>
-            <?php
-            // Productos de este pedido
-            $stmt_prod = $pdo->prepare("
-                SELECT pp.Cantidad, pp.Precio_Unitario, pp.Nombre_Producto, pr.Imagen_URL, pr.Stock
-                FROM pedido_productos pp
-                LEFT JOIN producto pr ON pp.Nombre_Producto = pr.Nombre
-                WHERE pp.ID_Pedido = ?
-            ");
-            $stmt_prod->execute([$pedido['ID_Pedido']]);
-            $productos = $stmt_prod->fetchAll(PDO::FETCH_ASSOC);
-            ?>
-            <?php foreach ($productos as $prod): ?>
-              <div class="pedido-producto">
-                <img src="<?= htmlspecialchars($prod['Imagen_URL'] ?? 'img/Productos/default.jpg') ?>" alt="<?= htmlspecialchars($prod['Nombre_Producto']) ?>">
-                <div class="pedido-info">
-                  <h4><?= htmlspecialchars($prod['Nombre_Producto']) ?></h4>
-                  <p>Cantidad: <?= $prod['Cantidad'] ?> - Precio: $<?= number_format($prod['Precio_Unitario'], 0, ',', '.') ?></p>
-                  <p>Subtotal: $<?= number_format($prod['Precio_Unitario'] * $prod['Cantidad'], 0, ',', '.') ?></p>
-                </div>
-                <?php if (isset($prod['Stock']) && $prod['Stock'] > 0): ?>
-                  <form method="POST" action="agregar_carrito.php" style="margin-left:auto;">
-                    <input type="hidden" name="nombre" value="<?= htmlspecialchars($prod['Nombre_Producto']) ?>">
-                    <input type="hidden" name="precio" value="<?= $prod['Precio_Unitario'] ?>">
-                    <input type="hidden" name="cantidad" value="1">
-                    <button type="submit">Volver a comprar</button>
-                  </form>
-                <?php else: ?>
-                  <span class="agotado" style="margin-left:auto;">Producto no disponible</span>
-                <?php endif; ?>
-              </div>
-            <?php endforeach; ?>
+            <?php if (isset($pedido['Stock']) && $pedido['Stock'] > 0): ?>
+              <form method="POST" action="agregar_carrito.php">
+                <input type="hidden" name="nombre" value="<?= htmlspecialchars($pedido['Nombre_Producto']) ?>">
+                <input type="hidden" name="precio" value="<?= $pedido['Precio_Unitario'] ?>">
+                <input type="hidden" name="cantidad" value="1">
+                <button type="submit">Volver a comprar</button>
+              </form>
+            <?php else: ?>
+              <span class="agotado">Producto no disponible</span>
+            <?php endif; ?>
           </div>
         <?php endforeach; ?>
       <?php else: ?>
@@ -222,7 +243,7 @@ function formatearFecha($fecha) {
         <a href="https://www.facebook.com/profile.php?id=100069951193254" target="_blank"><i class="fab fa-facebook-f"></i></a>
         <a href="https://www.instagram.com/doggiespaseadores/" target="_blank"><i class="fab fa-instagram"></i></a>
         <a href="https://www.tiktok.com/@doggies_paseadores" target="_blank"><i class="fab fa-tiktok"></i></a>
-        <a href="mailto:doggiespasto22@gmail.com"><i class="fas fa-envelope"></i></a>
+        <a href="mailto:doggiespasto@gmail.com"><i class="fas fa-envelope"></i></a>
       </div>
     </div>
   </footer>
