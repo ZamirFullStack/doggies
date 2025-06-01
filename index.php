@@ -143,8 +143,11 @@
     <img src="img/hueso.png" class="huesito h3" alt="Hueso decorativo" />
     <img src="img/hueso.png" class="huesito h4" alt="Hueso decorativo" />
     <div class="content">
-      <h1 class="main-title">¡Bienvenido a Doggies! </h1>
-      <p class="sub-title">Tu tienda y centro de servicios confiables para el bienestar de tu peludito 🐶 Contamos con Alimento 🦴 • Paseos 🚶‍♂️ • Peluquería ✂️ • Guardería 🏠 y más.</p>
+<h1 class="main-title">¡Bienvenido a Doggies!</h1>
+<p class="sub-title">
+  Tu tienda y centro de cuidado para peluditos 🐶
+</p>
+
       <a href="Nosotros.php" class="nosotros-link"><i class="fas fa-paw"></i> Conócenos</a>
     </div>
   </section>
