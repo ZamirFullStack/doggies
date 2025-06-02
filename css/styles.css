@@ -17,16 +17,13 @@ body {
   flex-direction: column;
 }
 
-nav {
-  background-color: rgba(255, 255, 255, 0.9);
-  padding: 1em 2em;
-}
 
 .menu {
   display: flex;
   justify-content: space-between;
   align-items: center;
   list-style: none;
+  
 }
 
 .menu li {
@@ -47,26 +44,9 @@ nav {
 
 .logo-img {
   width: 60px;
-  height: 60px;
   object-fit: cover;
   border-radius: 50%;
   border: 2px solid #333;
-}
-
-/* Asegura que el logo quede centrado correctamente */
-.menu {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  list-style: none;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.menu li.logo {
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 
@@ -95,6 +75,7 @@ nav {
   margin: 0 auto;
   z-index: 2;
   animation: fadeIn 2s ease-in-out;
+  
 }
 
 /* Animación para título y subtítulo */
@@ -281,22 +262,5 @@ footer::after {
   
   .logo {
     width: 0;
-    padding-right: 10px;
-    padding-right: 15px
   }
-  .menu li a{
-    position: relative;
-    right: 25px;
-    padding-left: 27px;
-  }
-  .menu a[href="Login.php"],
-  .menu a[href="Registro.php"] {
-  left:5px
-}
 
-.menu .submenu > a { 
-  left: 10px;
- }
-.menu li > a[href="carrito.php"] { 
-  left: 15px;
- }

@@ -60,6 +60,7 @@ try {
   padding: 0;
   box-sizing: border-box;
 }
+
 body {
   font-family: 'Roboto', sans-serif;
   background-color: #f9f9f9;
@@ -67,6 +68,25 @@ body {
   display: flex;
   flex-direction: column;
 }
+
+.logo-img {
+  height: 55px;         /* Antes: 44px */
+  width: auto;
+  max-width: 140px;     /* Antes: 110px */
+  object-fit: contain;
+  border-radius: 10px;
+  display: block;
+  margin: 0 6px;
+  transition: transform 0.3s ease;
+}
+
+@media (max-width: 700px) {
+  .logo-img {
+    height: 42px;        /* Antes: 28px */
+    max-width: 33vw;     /* Antes: 25vw */
+  }
+}
+
 
 /* ==== HEADER NUEVO ==== */
 header {
@@ -104,15 +124,7 @@ header {
   justify-content: center;
   align-items: center;
 }
-.logo-img {
-  height: 44px;
-  width: auto;
-  max-width: 110px;
-  object-fit: contain;
-  border-radius: 10px;
-  display: block;
-  margin: 0 6px;
-}
+
 .menu-link {
   color: #222;
   font-weight: bold;
@@ -134,7 +146,7 @@ header {
     padding: 0 2px;
     max-width: 98vw;
   }
-  .logo-img { height: 28px; max-width: 25vw; }
+
   .menu-link { font-size: 0.97rem; padding: 0.25em 0.3em; }
 }
 
@@ -395,12 +407,7 @@ footer::after {
     min-width: 0;
   }
 }
-@media (max-width: 410px) {
-  .header-container {
-    gap: 0.07em;
-  }
-  .logo-img { max-width: 30vw; }
-}
+
   </style>
 </head>
 <body>

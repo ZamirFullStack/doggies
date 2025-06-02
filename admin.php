@@ -269,6 +269,28 @@ $pedidos = $pdo->query("SELECT p.*, u.Nombre AS Nombre_Usuario FROM pedido p LEF
       header nav .menu { gap: 4px; }
       header nav .menu .logo img { height: 40px; }
     }
+
+    .scrollable-table {
+      max-height: 380px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin-bottom: 2em;
+    }
+
+    .scrollable-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .scrollable-table thead th {
+      position: sticky;
+      top: 0;
+      background: #f8f8f8;
+      z-index: 1;
+    }
+
+
   </style>
 </head>
 <body>
@@ -295,10 +317,11 @@ $pedidos = $pdo->query("SELECT p.*, u.Nombre AS Nombre_Usuario FROM pedido p LEF
   <main>
     <div class="admin-container">
       <h2>Bienvenido, <?= htmlspecialchars($nombreAdmin) ?></h2>
-      <?php if (!empty($mensaje)) echo $mensaje; ?>
+      <?php if (!empty($mensaje)) echo $mensaje; ?> </br>
       <!-- Usuarios -->
-      <h3>Usuarios Registrados</h3>
+      <h3>Gestión de Usuarios</h3>
       <a href="nuevo_usuario.php" class="btn btn-add">➕ Añadir Usuario</a>
+      <div class="scrollable-table">
       <table>
         <thead>
           <tr>
@@ -330,9 +353,11 @@ $pedidos = $pdo->query("SELECT p.*, u.Nombre AS Nombre_Usuario FROM pedido p LEF
           <?php endforeach; ?>
         </tbody>
       </table>
+      </div>
       <!-- Productos -->
       <h3>Gestión de Productos</h3>
       <a href="nuevo_producto.php" class="btn btn-add">➕ Añadir Producto</a>
+      <div class="scrollable-table">
       <table>
         <thead>
           <tr>
@@ -358,8 +383,9 @@ $pedidos = $pdo->query("SELECT p.*, u.Nombre AS Nombre_Usuario FROM pedido p LEF
           <?php endforeach; ?>
         </tbody>
       </table>
+      </div>
       <!-- Pedidos -->
-      <h3>Pedidos Recientes</h3>
+      <h3>Gestión de Pedidos</h3>
       <form method="GET" class="filtro-form">
         <label for="estado">Filtrar por estado:</label>
         <select name="estado" id="estado" onchange="this.form.submit()">
@@ -370,6 +396,7 @@ $pedidos = $pdo->query("SELECT p.*, u.Nombre AS Nombre_Usuario FROM pedido p LEF
           <option value="fallido" <?= $estadoFiltro === 'fallido' ? 'selected' : '' ?>>Fallido</option>
         </select>
       </form>
+      <div class="scrollable-table">
       <table>
         <thead>
           <tr>
@@ -418,6 +445,7 @@ $pedidos = $pdo->query("SELECT p.*, u.Nombre AS Nombre_Usuario FROM pedido p LEF
           <?php endforeach; ?>
         </tbody>
       </table>
+      </div>
       <!-- Reportes -->
       <h3 class="report-title">Reporte de Pagos (Despachados)</h3>
       <form method="GET" class="form-inline" style="margin-bottom:10px;">
@@ -437,6 +465,7 @@ $pedidos = $pdo->query("SELECT p.*, u.Nombre AS Nombre_Usuario FROM pedido p LEF
         <a href="admin.php?exportar=excel&mes=<?= $mes_actual ?>&ano=<?= $ano_actual ?>" class="btn btn-csv">Descargar Excel</a>
       </form>
       <div class="reporte-pagos">
+        <div class="scrollable-table">
         <table>
           <thead>
             <tr>
@@ -471,6 +500,7 @@ $pedidos = $pdo->query("SELECT p.*, u.Nombre AS Nombre_Usuario FROM pedido p LEF
             </tr>
           </tfoot>
         </table>
+        </div>
       </div>
     </div>
   </main>

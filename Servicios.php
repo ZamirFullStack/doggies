@@ -73,7 +73,7 @@ header {
   }
   .menu li.logo a {
     width: 78px;
-    height: 38px;
+    height: 50px;
   }
   .titulo-servicios {
     padding-top: 70px; /* ← igual o mayor que header! */

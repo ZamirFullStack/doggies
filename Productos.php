@@ -5,6 +5,7 @@ if (!isset($_SESSION['carrito'])) {
     $_SESSION['carrito'] = [];
 }
 
+
 // Actualizar cantidad del último producto agregado
 if (
     $_SERVER['REQUEST_METHOD'] === 'POST' &&
@@ -171,47 +172,6 @@ if (
       width: 100%;
     }
     .filtro label input[type="number"] { margin-left: 6px;}
-    /* Carrusel vertical y compacto */
-    .carrusel-banner {
-      width: 100%;
-      min-height: 100px;
-      margin: 16px 0 0 0;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      justify-content: flex-start;
-      position: relative;
-      gap: 10px;
-      z-index: 3;
-    }
-    .carrusel-controls {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-      margin-bottom: 5px;
-    }
-    .carrusel-btn {
-      background: none;
-      border: none;
-      color: #d8a200;
-      font-size: 1.2em;
-      cursor: pointer;
-      padding: 2px 9px;
-      border-radius: 50%;
-      transition: background 0.13s;
-    }
-    .carrusel-btn:hover { background: #fff7d2;}
-    .carrusel-btn:active { background: #ffe393;}
-    .carrusel-contenido {
-      flex: 1 1 auto;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      min-width: 0;
-      width: 100%;
-      gap: 0;
-    }
     .banner-item {
       display: none;
       background: linear-gradient(90deg, #ffe083 70%, #ffd97d 100%);
@@ -373,11 +333,13 @@ if (
   }
 }
 
-
-  </style>
+</style>
 </head>
+
 <body>
+  
   <header>
+</form>
     <nav>
       <ul class="menu">
         <li><a href="Servicios.php"><i class="fas fa-concierge-bell"></i> Servicios</a></li>
@@ -386,6 +348,7 @@ if (
       </ul>
     </nav>
   </header>
+  
 
   <div class="page-container">
     <aside class="filtro">
@@ -403,35 +366,6 @@ if (
         </label>
       </div>
       <button onclick="filtrarProductos()">Filtrar</button>
-      <!-- Carrusel banners vertical compacto -->
-<div class="carrusel-banner" id="carrusel-banners">
-  <div class="carrusel-controls">
-    <button class="carrusel-btn carrusel-prev" onclick="moverCarrusel(-1)" aria-label="Anterior">
-      <i class="fas fa-chevron-up"></i>
-    </button>
-    <button class="carrusel-btn carrusel-next" onclick="moverCarrusel(1)" aria-label="Siguiente">
-      <i class="fas fa-chevron-down"></i>
-    </button>
-  </div>
-  <div class="carrusel-contenido">
-    <div class="banner-item activo">
-      <i class="fas fa-bone"></i>
-      <span><strong>¡20% OFF!</strong> Snacks para perros este mes.</span>
-    </div>
-    <div class="banner-item">
-      <i class="fas fa-dog"></i>
-      <span><strong>ENVÍO GRATIS</strong> por compras superiores a $80.000</span>
-    </div>
-    <div class="banner-item">
-      <i class="fas fa-star"></i>
-      <span><strong>2x1</strong> en juguetes seleccionados 🦴</span>
-    </div>
-    <div class="banner-item">
-      <i class="fas fa-gift"></i>
-      <span>¡Participa por <strong>premios</strong> en nuestro sorteo mensual!</span>
-    </div>
-  </div>
-</div>
 
 <!-- Preguntas Frecuentes (FAQ) debajo del carrusel -->
 <div class="faq-section" style="margin-top:22px; background:#f8f9fc; border-radius:16px; box-shadow:0 2px 10px rgba(60,60,80,0.07); padding:18px 10px 13px 18px;">
@@ -487,7 +421,6 @@ if (
   </div>
 </div>
     </aside>
-
     <main class="productos-page">
       <div class="productos-grid">
         <?php

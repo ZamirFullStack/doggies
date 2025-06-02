@@ -11,28 +11,79 @@
   <link rel="icon" type="image/jpeg" href="img/fondo.jpg" />
   <style>
 
-    .submenu { position: relative; cursor: pointer; }
+
+    .menu {
+      list-style: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 40px;
+      padding: 2px 10px;
+      background-color: rgba(255, 255, 255, 0.9);
+      padding: 1em 2em;
+      flex-wrap: wrap;
+    }
+
+    .menu li a {
+      display: inline-block;
+      text-align: center;
+      line-height: 1.2;
+      font-weight: bold;
+      color: #000;
+      text-decoration: none;
+    }
+
+    .submenu {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .submenu > a {
+      text-align: center;
+      white-space: nowrap;
+    }
+
     .submenu-opciones {
-      display: none;
+      min-width: 140px;
+      background-color: #fff;
       position: absolute;
       top: 100%;
-      left: 0;
-      background-color: #fff;
-      list-style: none;
+      left: 50%;
+      transform: translateX(-50%);
       padding: 0;
+      margin-top: 4px;
       border: 1px solid #ccc;
-      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 999;
+      display: none;
     }
-    .submenu.open .submenu-opciones { display: block; }
+
+    .submenu.open .submenu-opciones {
+      display: block;
+    }
+
     .submenu-opciones li {
       padding: 8px 12px;
+      text-align: center;
     }
+
     .submenu-opciones li a {
-      color: #333;
-      text-decoration: none;
       display: block;
-      padding-left: 8px 12px;
+      text-decoration: none;
+      color: #333;
     }
+
+    .submenu-opciones li a:hover {
+      background-color: #f4f4f4;
+    }
+
+    .logo img.logo-img {
+      height: 60px;
+      border-radius: 50%;
+    }
+
     .nosotros-link {
       display: inline-block;
       margin-top: 30px;
@@ -47,20 +98,34 @@
       opacity: 0;
       transition: background-color 0.3s ease;
     }
+
     .nosotros-link:hover {
       background-color: #388e3c;
     }
 
-    @media (max-width: 768px) {
-  .carrusel {
-    height: 250px;
-  }
-}
-@media (max-width: 480px) {
-  .carrusel {
-    height: 180px;
-  }
-}
+    @media (max-width: 600px) {
+      .menu {
+        gap: 10px;
+      }
+
+      .menu li a {
+        font-size: 0.9rem;
+        line-height: 1.2;
+      }
+
+      .submenu > a span.mi-parte {
+        display: inline-block;
+      }
+
+      .submenu > a span.cuenta-parte {
+        display: block;
+        margin-top: 2px;
+      }
+
+      .submenu > a i {
+        margin-left: 2px;
+      }
+    }
   </style>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -77,14 +142,17 @@
   <header>
     <nav>
       <ul class="menu">
-        <li><a href="Productos.php"><i class="fas fa-dog"></i> Productos</a></li>
-        <li><a href="Servicios.php"><i class="fas fa-concierge-bell"></i> Servicios</a></li>
+        <li><a href="Productos.php"><i class="fas fa-dog"></i><br>Productos</a></li>
+        <li><a href="Servicios.php"><i class="fas fa-concierge-bell"></i><br>Servicios</a></li>
         <li class="logo">
           <img src="img/fondo.jpg" alt="Logo Doggies" class="logo-img">
         </li>
         <?php if (isset($_SESSION['usuario'])): ?>
           <li class="submenu">
-            <a href="cuenta"><i class="fas fa-user"></i> Mi cuenta</a>
+            <a href="cuenta">
+              <span class="mi-parte">Mi <i class="fas fa-user"></i></span>
+              <span class="cuenta-parte">Cuenta</span>
+            </a>
             <ul class="submenu-opciones">
               <li><a href="mi_cuenta.php">Mi perfil</a></li>
               <?php if ($_SESSION['usuario']['ID_Rol'] == 2): ?>
@@ -93,10 +161,10 @@
               <li><a href="logout.php">Cerrar sesión</a></li>
             </ul>
           </li>
-          <li><a href="carrito.php"><i class="fas fa-cart-shopping"></i> Carrito</a></li>
+          <li><a href="carrito.php"><i class="fas fa-cart-shopping"></i><br>Carrito</a></li>
         <?php else: ?>
-          <li><a href="Login.php"><i class="fas fa-sign-in-alt"></i> Login</a></li>
-          <li><a href="Registro.php"><i class="fas fa-user-plus"></i> Crear Cuenta</a></li>
+          <li><a href="Login.php"><i class="fas fa-sign-in-alt"></i><br>Login</a></li>
+          <li><a href="Registro.php"><i class="fas fa-user-plus"></i><br>Crear Cuenta</a></li>
         <?php endif; ?>
       </ul>
     </nav>
@@ -108,11 +176,8 @@
     <img src="img/hueso.png" class="huesito h3" alt="Hueso decorativo" />
     <img src="img/hueso.png" class="huesito h4" alt="Hueso decorativo" />
     <div class="content">
-<h1 class="main-title">¡Bienvenido a Doggies!</h1>
-<p class="sub-title">
-  Tu Tienda y Centro de Cuidado para Peluditos
-</p>
-
+      <h1 class="main-title">¡Bienvenido a Doggies!</h1>
+      <p class="sub-title">Tu Tienda y Centro de Cuidado para Peluditos</p>
       <a href="Nosotros.php" class="nosotros-link"><i class="fas fa-paw"></i> Conócenos</a>
     </div>
   </section>
