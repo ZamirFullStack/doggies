@@ -118,6 +118,9 @@ $preferenceData = [
         "name" => $cliente['nombre'] ?? 'Cliente',
         "email" => $cliente['email'] ?? 'cliente@test.com'
     ],
+    "payment_methods" => [
+        "installments" => 1 // <-- Esto obliga a que solo se permita pagar en una sola cuota
+    ],
     "back_urls" => [
         "success" => "https://doggies-production.up.railway.app/pago_exitoso.php",
         "failure" => "https://doggies-production.up.railway.app/pago_fallido.php",
@@ -125,6 +128,7 @@ $preferenceData = [
     ],
     "auto_return" => "approved"
 ];
+
 
 try {
     $client = new PreferenceClient();

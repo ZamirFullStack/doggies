@@ -331,28 +331,102 @@ if (
     align-items: unset;
     display: block;
   }
+.buscador-principal {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  background: #fff;
+  padding: 22px 0 10px 0;
+  box-sizing: border-box;
+  border-bottom: 1.5px solid #e7e7e7;
+  margin-bottom: 10px;
+}
+
+#form-busqueda {
+  display: flex;
+  width: 100%;
+  max-width: 420px;
+}
+
+#buscador-producto {
+  flex: 1;
+  padding: 11px 15px;
+  border: 2px solid #28a745;
+  border-right: none;
+  border-radius: 9px 0 0 9px;
+  font-size: 1.09em;
+  outline: none;
+  background: #f8faf9;
+  transition: border-color 0.18s;
+}
+
+#buscador-producto:focus {
+  border-color: #21936a;
+  background: #fff;
+}
+
+.btn-buscar {
+  padding: 0 19px;
+  background: linear-gradient(90deg, #28a745 60%, #21936a 100%);
+  color: #fff;
+  font-weight: 600;
+  border: 2px solid #28a745;
+  border-left: none;
+  border-radius: 0 9px 9px 0;
+  cursor: pointer;
+  font-size: 1.06em;
+  display: flex;
+  align-items: center;
+  transition: background 0.18s;
+}
+.btn-buscar:hover {
+  background: linear-gradient(90deg, #21936a 70%, #28a745 100%);
+}
+@media (max-width: 800px) {
+  .buscador-principal { padding: 14px 0 6px 0;}
+  #form-busqueda { max-width: 99vw;}
+}
+@media (max-width: 480px) {
+  .buscador-principal { padding: 8px 0 3px 0;}
+  #form-busqueda { max-width: 98vw; }
+  #buscador-producto { font-size: 0.98em; padding: 8px 8px; }
+  .btn-buscar { font-size: 0.97em; padding: 0 12px; }
+}
+
 }
 
 </style>
 </head>
 
 <body>
-  
-  <header>
-</form>
-    <nav>
-      <ul class="menu">
-        <li><a href="Servicios.php"><i class="fas fa-concierge-bell"></i> Servicios</a></li>
-        <li class="logo"><a href="index.php">Doggies</a></li>
-        <li id="icono-carrito"><a href="carrito.php"><i class="fas fa-cart-shopping"></i> Carrito <span id="contador-carrito"><?php echo '(' . count($_SESSION['carrito']) . ')'; ?></span></a></li>
-      </ul>
-    </nav>
-  </header>
-  
+<header class="header-principal">
+  <nav class="nav-bar">
+    <a href="Servicios.php" class="nav-link">
+      <i class="fas fa-concierge-bell"></i>
+      <span>Servicios</span>
+    </a>
+    <a href="index.php" class="logo-box">
+      <img src="img/fondo.jpg" alt="Doggies" class="logo-img" />
+    </a>
+    <form class="search-box" onsubmit="event.preventDefault(); filtrarPorNombre();">
+      <input type="text" id="buscador-producto" placeholder="Buscar productos..." autocomplete="off"/>
+      <button type="button" class="icono-lupa" onclick="filtrarPorNombre()">
+        <i class="fas fa-search"></i>
+      </button>
+    </form>
+    <a href="carrito.php" id="icono-carrito" class="nav-link">
+      <i class="fas fa-cart-shopping"></i>
+      <span>Carrito (<span id="contador-carrito"><?php echo count($_SESSION['carrito']); ?></span>)</span>
+    </a>
+  </nav>
+</header>
+
+
 
   <div class="page-container">
     <aside class="filtro">
-      <h2>Filtrar por edad</h2>
+    <h2>Filtrar por edad</h2>
       <label><input type="checkbox" class="filtro-edad" value="cachorro"> Cachorro</label>
       <label><input type="checkbox" class="filtro-edad" value="adulto"> Adulto</label>
       <label><input type="checkbox" class="filtro-edad" value="senior"> Senior</label>
@@ -642,6 +716,24 @@ if (
       ans.style.display = (ans.style.display === "block") ? "none" : "block";
     });
   });
+</script>
+<script>
+function filtrarPorNombre() {
+  const texto = document.getElementById('buscador-producto').value.trim().toLowerCase();
+  document.querySelectorAll('.producto-card').forEach(card => {
+    const nombre = card.querySelector('h3').textContent.toLowerCase();
+    const descripcion = card.querySelector('p').textContent.toLowerCase();
+    card.style.display = (
+      nombre.includes(texto) || descripcion.includes(texto)
+    ) ? 'flex' : 'none';
+  });
+}
+
+// Buscador en vivo
+document.getElementById('buscador-producto').addEventListener('input', filtrarPorNombre);
+
+// Opcional: Cuando se haga click en el botón, también filtra
+document.getElementById('form-busqueda').addEventListener('submit', filtrarPorNombre);
 </script>
 
 </body>
