@@ -168,7 +168,7 @@ if (
       cursor: pointer;
       box-shadow: 0 1px 6px rgba(40, 160, 90, 0.10);
       transition: background 0.17s, box-shadow 0.13s;
-      letter-spacing: 0.6px;
+letter-spacing: 0.6px;
       width: 100%;
     }
     .filtro label input[type="number"] { margin-left: 6px;}
@@ -194,6 +194,12 @@ if (
     .banner-item strong { color: #bc8400;}
     @media (max-width:700px) {
       .filtro { padding: 15px 4vw 16px 4vw;}
+      .filtro {
+        padding: 15px 4vw 16px 4vw;
+        width: 92vw;
+        max-width: none;
+        margin: 1em auto;
+      }
       .carrusel-banner { max-width: 99vw; }
       .banner-item { font-size: 0.97em; padding: 10px 2vw 10px 2vw;}
       .banner-item i { font-size: 1.13em;}
