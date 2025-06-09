@@ -5,7 +5,43 @@ if (!isset($_SESSION['carrito'])) {
     $_SESSION['carrito'] = [];
 }
 
-// Eliminar producto
+if (
+  $_SERVER['REQUEST_METHOD'] === 'POST' &&
+  isset($_POST['nombre'], $_POST['precio'], $_POST['cantidad'], $_POST['imagen'], $_POST['presentacion'])
+) {
+    $nombre = $_POST['nombre'];
+    $precio = floatval($_POST['precio']);
+    $cantidad = max(1, min(25, intval($_POST['cantidad'])));
+    $imagen = $_POST['imagen'];
+    $presentacion = strtolower(trim($_POST['presentacion'])); // Normaliza el peso para evitar duplicados tipo "2KG" vs "2kg"
+
+    $encontrado = false;
+    foreach ($_SESSION['carrito'] as &$item) {
+        if (
+            $item['nombre'] === $nombre &&
+            $item['precio'] == $precio &&
+            $item['imagen'] === $imagen &&
+            strtolower(trim($item['presentacion'])) === $presentacion
+        ) {
+            $item['cantidad'] = min(25, $item['cantidad'] + $cantidad);
+            $encontrado = true;
+            break;
+        }
+    }
+    unset($item); // rompe referencia
+    if (!$encontrado) {
+        $_SESSION['carrito'][] = [
+            'nombre' => $nombre,
+            'precio' => $precio,
+            'cantidad' => $cantidad,
+            'imagen' => $imagen,
+            'presentacion' => $presentacion,
+        ];
+    }
+    exit;
+}
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_index'])) {
     $idx = intval($_POST['delete_index']);
     if (isset($_SESSION['carrito'][$idx])) {
@@ -16,7 +52,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_index'])) {
     exit;
 }
 
-// Actualizar cantidad
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_index'], $_POST['cantidad'])) {
     $idx = intval($_POST['update_index']);
     $qty = max(1, min(25, intval($_POST['cantidad'])));
@@ -55,6 +90,8 @@ try {
   <link rel="icon" type="image/jpeg" href="img/fondo.jpg" />
   <style>
 /* ==== RESETEO GENERAL ==== */
+
+
 * {
   margin: 0;
   padding: 0;
@@ -459,62 +496,73 @@ footer::after {
         </thead>
         <tbody>
           <?php foreach ($carrito as $index => $producto):
-            // Obtiene el campo de imagen de la base de datos
-            $stmt = $pdo->prepare("SELECT Imagen_URL FROM producto WHERE Nombre = ?");
-            $stmt->execute([$producto['nombre']]);
-            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Obtiene la imagen del producto
+    $stmt = $pdo->prepare("SELECT Imagen_URL FROM producto WHERE Nombre = ?");
+    $stmt->execute([$producto['nombre']]);
+    $fila = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            // Si la imagen es una URL absoluta, úsala. Si solo es el nombre, construye la URL.
-            $imgFile = trim($fila['Imagen_URL'] ?? '');
-            $imgFile = ltrim($imgFile, '/');
+    $imgFile = trim($fila['Imagen_URL'] ?? '');
+    $imgFile = ltrim($imgFile, '/');
+    if (!$imgFile) {
+        $imgRuta = "https://doggies-production.up.railway.app/img/default.jpg";
+    } else if (filter_var($imgFile, FILTER_VALIDATE_URL)) {
+        $imgRuta = $imgFile;
+    } else if (strpos($imgFile, 'img/') === 0) {
+        $imgRuta = "https://doggies-production.up.railway.app/" . $imgFile;
+    } else {
+        $imgRuta = "https://doggies-production.up.railway.app/img/" . $imgFile;
+    }
 
-            if (!$imgFile) {
-              $imgRuta = "https://doggies-production.up.railway.app/img/default.jpg";
-            } else if (filter_var($imgFile, FILTER_VALIDATE_URL)) {
-              $imgRuta = $imgFile;
-            } else if (strpos($imgFile, 'img/') === 0) {
-              $imgRuta = "https://doggies-production.up.railway.app/" . $imgFile;
-            } else {
-              $imgRuta = "https://doggies-production.up.railway.app/img/" . $imgFile;
-            }
+    // NUEVO: Obtener el peso real de la presentación
+    $peso = '';
+    if (!empty($producto['presentacion'])) {
+        $stmtPeso = $pdo->prepare("SELECT Peso FROM presentacion WHERE ID_Presentacion = ?");
+        $stmtPeso->execute([$producto['presentacion']]);
+        $filaPeso = $stmtPeso->fetch(PDO::FETCH_ASSOC);
+        if ($filaPeso) {
+            $peso = $filaPeso['Peso'];
+        }
+    }
 
-            $subtotal = $producto['precio'] * $producto['cantidad'];
-            $total += $subtotal;
-          ?>
-          <tr>
-            <td>
-              <div class="producto-detalle" style="justify-content:flex-start;gap:16px;">
+    $subtotal = $producto['precio'] * $producto['cantidad'];
+    $total += $subtotal;
+    ?>
+    <tr>
+        <td>
+            <div class="producto-detalle" style="justify-content:flex-start;gap:16px;">
                 <img 
-                  src="<?= htmlspecialchars($imgRuta) ?>" 
-                  alt="<?= htmlspecialchars($producto['nombre']) ?>" 
-                  class="carrito-img"
-                  style="min-width:50px;min-height:50px;"
-                  onerror="this.onerror=null;this.src='https://doggies-production.up.railway.app/img/default.jpg';"
-                >
-                <span style="font-size:1.08rem;"><?= htmlspecialchars($producto['nombre']) ?></span>
-              </div>
-            </td>
-            <td>$<?= number_format($producto['precio'],0,',','.') ?></td>
-            <td>
-              <form method="POST" action="carrito.php" class="cantidad-form">
+                    src="<?= htmlspecialchars($imgRuta) ?>" 
+                    alt="<?= htmlspecialchars($producto['nombre']) ?>" 
+                    class="carrito-img"
+                    style="min-width:50px;min-height:50px;"
+                    onerror="this.onerror=null;this.src='https://doggies-production.up.railway.app/img/default.jpg';" >
+                <span style="font-size:1.08rem;">
+                <?= htmlspecialchars($producto['nombre'] . ' - ' . $producto['presentacion']) ?>
+                </span>
+            </div>
+        </td>
+        <td>$<?= number_format($producto['precio'],0,',','.') ?></td>
+        <td>
+            <form method="POST" action="carrito.php" class="cantidad-form">
                 <input type="hidden" name="update_index" value="<?= $index ?>">
                 <input type="number"
-                      name="cantidad"
-                      value="<?= $producto['cantidad'] ?>"
-                      min="1" max="25"
-                      class="cantidad-input"
-                      onchange="this.form.submit()">
-              </form>
-            </td>
-            <td>$<?= number_format($subtotal,0,',','.') ?></td>
-            <td>
-              <form method="POST" action="carrito.php" class="delete-form" onsubmit="return confirm('¿Eliminar este producto?');">
+                    name="cantidad"
+                    value="<?= $producto['cantidad'] ?>"
+                    min="1" max="25"
+                    class="cantidad-input"
+                    onchange="this.form.submit()">
+            </form>
+        </td>
+        <td>$<?= number_format($subtotal,0,',','.') ?></td>
+        <td>
+            <form method="POST" action="carrito.php" class="delete-form" onsubmit="return confirm('¿Eliminar este producto?');">
                 <input type="hidden" name="delete_index" value="<?= $index ?>">
                 <button type="submit"><i class="fas fa-trash"></i> Eliminar</button>
-              </form>
-            </td>
-          </tr>
-          <?php endforeach; ?>
+            </form>
+        </td>
+    </tr>
+    <?php endforeach; ?>
+
         </tbody>
         <tfoot>
           <tr>
@@ -537,7 +585,7 @@ footer::after {
       <a href="https://www.facebook.com/profile.php?id=100069951193254" target="_blank"><i class="fab fa-facebook-f"></i></a>
       <a href="https://www.instagram.com/doggiespaseadores/" target="_blank"><i class="fab fa-instagram"></i></a>
       <a href="https://www.tiktok.com/@doggies_paseadores" target="_blank"><i class="fab fa-tiktok"></i></a>
-      <a href="mailto:doggiespasto@gmail.com"><i class="fas fa-envelope"></i></a>
+      <a href="mailto:doggiespasto22@gmail.com"><i class="fas fa-envelope"></i></a>
     </div>
   </div>
 </footer>

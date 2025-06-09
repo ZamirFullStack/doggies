@@ -65,6 +65,59 @@ try {
 $stmt = $pdo->prepare("UPDATE pedido SET Estado = 'pagado', Fecha_Pago = NOW() WHERE ID_Pedido = ?");
 $stmt->execute([$pedidoId]);
 
+// ------ ENVÍO DEL CORREO PARA CALIFICAR LOS PRODUCTOS --------
+foreach ($productos as $producto) {
+    // Busca la URL del detalle del producto
+    $stmtP = $pdo->prepare("SELECT ID_Producto FROM producto WHERE Nombre = ?");
+    $stmtP->execute([$producto['Nombre_Producto']]);
+    $fila = $stmtP->fetch(PDO::FETCH_ASSOC);
+
+    if ($fila && $cliente_email) {
+        $enlace = "https://doggies-production.up.railway.app/producto_detalle.php?id=" . $fila['ID_Producto'] . "#opiniones";
+        $nombreProd = htmlspecialchars($producto['Nombre_Producto']);
+        $mensaje = "
+        <div style='font-family:Arial,sans-serif; max-width:540px; margin:auto; border:1px solid #eee; border-radius:8px;'>
+          <div style='background:#ffbc00;color:#333; padding:10px 0; border-radius:8px 8px 0 0; text-align:center;'>
+            <h2>¿Qué te pareció <span style='color:#c59c09;'>$nombreProd</span>?</h2>
+          </div>
+          <div style='padding:20px; background:#fff;'>
+            <p>¡Tu opinión es muy importante para nosotros!</p>
+            <p>¿Nos dejas tu calificación?</p>
+            <p>
+              <a href='$enlace' style='background:#28a745;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;'>Calificar producto</a>
+            </p>
+            <p>Gracias por comprar en Doggies 🐾</p>
+          </div>
+        </div>
+        ";
+
+        try {
+            $mail = new PHPMailer(true);
+            $mail->CharSet = 'UTF-8';
+            $mail->isSMTP();
+            $mail->Host = 'smtp.gmail.com';
+            $mail->SMTPAuth = true;
+            $mail->Username = 'doggiespasto22@gmail.com';
+            $mail->Password = 'nfav ibzv txxd wvwl';
+            $mail->SMTPSecure = 'tls';
+            $mail->Port = 587;
+
+            $mail->setFrom('doggiespasto22@gmail.com', 'Doggies');
+            $mail->addAddress($cliente_email, $cliente_nombre);
+
+            $mail->Subject = mb_encode_mimeheader("¿Qué te pareció $nombreProd? 🐾", 'UTF-8');
+            $mail->isHTML(true);
+            $mail->Body    = $mensaje;
+            $mail->AltBody = "Por favor, califica el producto que compraste en Doggies: $enlace";
+
+            $mail->send();
+        } catch (Exception $e) {
+            file_put_contents('/tmp/webhook_error.log', "[Mailer-Opinion] ".$e->getMessage()."\n", FILE_APPEND);
+        }
+    }
+}
+
+
 // Datos del pedido y productos
 $stmt = $pdo->prepare("SELECT * FROM pedido WHERE ID_Pedido = ?");
 $stmt->execute([$pedidoId]);

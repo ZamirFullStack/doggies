@@ -41,108 +41,89 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Editar Usuario</title>
-  <link rel="stylesheet" href="css/Login.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <link rel="icon" type="image/jpeg" href="img/fondo.jpg" />
-  <style>
-    
-    .password-wrapper {
-      position: relative;
-    }
-    .toggle-btn {
-      position: absolute;
-      top: 50%;
-      right: 12px;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: #888;
-      font-size: 1.2em;
-      padding: 0;
-    }
-
-    .password-wrapper i {
-      position: absolute;
-      top: 50%;
-      right: 12px;
-      transform: translateY(-50%);
-      cursor: pointer;
-      color: #888;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Editar Usuario - Doggies</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="css/Login.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="icon" type="image/jpeg" href="img/fondo.jpg" />
 </head>
 <body class="login-page">
-  <header>
-    <nav>
-      <ul class="menu">
-        <li><a href="Productos.php">Productos</a></li>
-        <li class="logo"><a href="index.php">Doggies</a></li>
-        <li><a href="Servicios.php">Servicios</a></li>
-      </ul>
-    </nav>
-  </header>
 
-  <main>
-    <div class="auth-container" style="max-width:600px;">
-      <h2>Editar Usuario</h2>
-      <form method="POST">
-        <div class="input-group">
-          <input type="text" name="nombre" value="<?= htmlspecialchars($usuario['Nombre'] ?? '') ?>" placeholder="Nombre" required>
-        </div>
-        <div class="input-group">
-          <input type="email" name="correo" value="<?= htmlspecialchars($usuario['Correo'] ?? '') ?>" placeholder="Correo" required>
-        </div>
-        <div class="input-group">
-          <input type="text" name="telefono" value="<?= htmlspecialchars($usuario['Telefono'] ?? '') ?>" placeholder="Teléfono">
-        </div>
-        <div class="input-group">
-          <input type="text" name="direccion" value="<?= htmlspecialchars($usuario['Direccion'] ?? '') ?>" placeholder="Dirección">
-        </div>
-        <div class="input-group">
-          <select name="rol" required>
-            <option value="1" <?= ($usuario['ID_Rol'] ?? 1) == 1 ? 'selected' : '' ?>>Cliente</option>
-            <option value="2" <?= ($usuario['ID_Rol'] ?? 1) == 2 ? 'selected' : '' ?>>Administrador</option>
-          </select>
-        </div>
-        <div class="input-group password-wrapper">
-          <input type="password" name="nueva_contrasena" id="nueva_contrasena" placeholder="Nueva contraseña (opcional)">
-          <i class="fas fa-eye" id="toggleIcon" onclick="togglePassword()"></i>
-        </div>
-        <button class="auth-btn" type="submit">Guardar Cambios</button>
-      </form>
-    </div>
-  </main>
+    <header>
+        <nav>
+            <ul class="menu">
+                <li><a href="Productos.php"><i class="fas fa-dog"></i> Productos</a></li>
+                <li class="logo"><a href="index.php">Doggies</a></li>
+                <li><a href="Servicios.php"><i class="fas fa-concierge-bell"></i> Servicios</a></li>
+            </ul>
+        </nav>
+    </header>
 
-  <footer>
-    <div class="footer-content">
-      <h3>Síguenos</h3>
-      <div class="social-links">
-        <a href="https://facebook.com/" target="_blank">Facebook</a>
-        <a href="https://instagram.com/" target="_blank">Instagram</a>
-        <a href="mailto:doggiespasto@gmail.com">Email</a>
-      </div>
-    </div>
-  </footer>
+    <main>
+        <section class="auth-container">
+            <h2>Editar Usuario</h2>
+            <form method="POST">
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" name="nombre" value="<?= htmlspecialchars($usuario['Nombre'] ?? '') ?>" placeholder="Nombre" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" name="correo" value="<?= htmlspecialchars($usuario['Correo'] ?? '') ?>" placeholder="Correo Electrónico" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-phone"></i>
+                    <input type="text" name="telefono" value="<?= htmlspecialchars($usuario['Telefono'] ?? '') ?>" placeholder="Teléfono">
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <input type="text" name="direccion" value="<?= htmlspecialchars($usuario['Direccion'] ?? '') ?>" placeholder="Dirección">
+                </div>
+                <div class="input-group">
+                    <select name="rol" required>
+                        <option value="1" <?= ($usuario['ID_Rol'] ?? 1) == 1 ? 'selected' : '' ?>>Cliente</option>
+                        <option value="2" <?= ($usuario['ID_Rol'] ?? 1) == 2 ? 'selected' : '' ?>>Administrador</option>
+                    </select>
+                </div>
+                <div class="input-group password-group">
+                    <input type="password" name="nueva_contrasena" id="nueva_contrasena" placeholder="Nueva contraseña (opcional)">
+                    <span class="toggle-password" onclick="togglePassword()">
+                        <i class="fas fa-eye" id="toggleIcon"></i>
+                    </span>
+                </div>
+                <button class="auth-btn" type="submit">Guardar Cambios</button>
+            </form>
+        </section>
+    </main>
 
-  <script>
+    <footer>
+        <div class="footer-content">
+            <h3>Síguenos</h3>
+            <div class="social-links">
+                <a href="https://www.facebook.com/profile.php?id=100069951193254" target="_blank"><i class="fab fa-facebook-f"></i></a>
+                <a href="https://www.instagram.com/doggiespaseadores/" target="_blank"><i class="fab fa-instagram"></i></a>
+                <a href="https://www.tiktok.com/@doggies_paseadores" target="_blank"><i class="fab fa-tiktok"></i></a>
+                <a href="mailto:doggiespasto@gmail.com"><i class="fas fa-envelope"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
     function togglePassword() {
-      const input = document.getElementById("nueva_contrasena");
-      const icon = document.getElementById("toggleIcon");
-      if (input.type === "password") {
-        input.type = "text";
-        icon.classList.replace("fa-eye", "fa-eye-slash");
-      } else {
-        input.type = "password";
-        icon.classList.replace("fa-eye-slash", "fa-eye");
-      }
+        const input = document.getElementById("nueva_contrasena");
+        const icon = document.getElementById("toggleIcon");
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.replace("fa-eye", "fa-eye-slash");
+        } else {
+            input.type = "password";
+            icon.classList.replace("fa-eye-slash", "fa-eye");
+        }
     }
-  </script>
+    </script>
 </body>
 </html>

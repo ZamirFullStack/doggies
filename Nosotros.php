@@ -17,10 +17,47 @@
       color: #333;
       margin: 0;
     }
-    header {
-      background-color: #fff;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
+header {
+  display: flex;
+  align-items: center;
+  justify-content: center;    /* Centra todo horizontal */
+  gap: 40px;                  /* Espaciado entre los elementos */
+  padding: 15px 0;
+  background: #fff;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.1);
+  flex-wrap: wrap;            /* Permite bajar los ítems en móvil */
+}
+
+.header-menu {
+  display: flex;
+  align-items: center;
+  gap: 35px;                 /* Espacio entre menú izquierdo y derecho */
+}
+
+.logo-box img {
+  height: 55px; 
+  margin: 0 18px;
+  display: block;
+}
+
+@media (max-width: 700px) {
+  header {
+    flex-direction: column;
+    gap: 12px;
+    padding: 10px 0;
+  }
+  .header-menu {
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    align-items: center;
+  }
+  .logo-box img {
+    height: 45px;
+    margin: 0;
+  }
+}
+
     nav ul.menu {
       display: flex;
       justify-content: space-between;

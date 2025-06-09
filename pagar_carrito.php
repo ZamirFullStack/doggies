@@ -14,7 +14,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'tipo_documento' => trim($_POST['tipo_documento'] ?? ''),
         'numero_documento' => trim($_POST['numero_documento'] ?? '')
     ];
+
+    // --- CAPTURA LOS VALORES ENVIADOS DEL FORMULARIO ---
+    $subtotal = isset($_POST['subtotal']) ? floatval($_POST['subtotal']) : 0;
+    $iva      = isset($_POST['iva']) ? floatval($_POST['iva']) : 0;
+    $envio    = isset($_POST['envio']) ? floatval($_POST['envio']) : 0;
+    $total    = isset($_POST['total']) ? floatval($_POST['total']) : 0;
+
+    // Por seguridad, si quieres puedes recalcular en PHP a partir del carrito.
+    // Pero el valor que enviarás a MercadoPago debe ser el que incluye IVA y envío.
+    if ($total < 1) {
+        die('Total incorrecto');
+    }
+    // También puedes guardar estos valores en la sesión si lo necesitas después:
+    $_SESSION['pago_subtotal'] = $subtotal;
+    $_SESSION['pago_iva'] = $iva;
+    $_SESSION['pago_envio'] = $envio;
+    $_SESSION['pago_total'] = $total;
 }
+
 
 if (empty($_SESSION['carrito'])) {
     echo "<h3>❌ Tu carrito está vacío.</h3>";
@@ -46,8 +64,6 @@ $carrito = $_SESSION['carrito'];
 $cliente = $_SESSION['cliente'] ?? [];
 $usuarioId = $_SESSION['usuario_id'] ?? null;
 $items = [];
-$total = 0;
-
 foreach ($carrito as $producto) {
     $nombre = $producto['nombre'] ?? 'Producto sin nombre';
     $precio = floatval($producto['precio'] ?? 0);
@@ -60,9 +76,27 @@ foreach ($carrito as $producto) {
             "unit_price" => $precio,
             "currency_id" => "COP"
         ];
-        $total += $precio * $cantidad;
     }
 }
+
+if ($envio > 0) {
+    $items[] = [
+        "title" => "Costo de Envío",
+        "quantity" => 1,
+        "unit_price" => $envio,
+        "currency_id" => "COP"
+    ];
+}
+if ($iva > 0) {
+    $items[] = [
+        "title" => "IVA (5%)",
+        "quantity" => 1,
+        "unit_price" => $iva,
+        "currency_id" => "COP"
+    ];
+}
+
+// $total ahora viene del POST procesado arriba
 
 if (empty($items)) {
     echo "<h3>❌ No hay productos válidos para procesar el pago.</h3>";

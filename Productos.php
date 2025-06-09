@@ -22,40 +22,65 @@ if (
 // Agregar producto al carrito (SUMAR cantidad si ya existe)
 if (
     $_SERVER['REQUEST_METHOD'] === 'POST' &&
-    isset($_POST['nombre'], $_POST['precio'], $_POST['cantidad'], $_POST['imagen']) &&
+    isset($_POST['nombre'], $_POST['precio'], $_POST['cantidad'], $_POST['imagen'], $_POST['presentacion']) &&
     !isset($_POST['update'])
 ) {
     $nombre   = $_POST['nombre'];
     $precio   = floatval($_POST['precio']);
     $cantidad = max(1, min(25, intval($_POST['cantidad'])));
     $imagen   = $_POST['imagen'];
+    $presentacion = $_POST['presentacion']; // <<--- AGREGA ESTO
 
     $encontrado = false;
-    foreach ($_SESSION['carrito'] as &$item) {
-        if (
-            $item['nombre'] === $nombre &&
-            $item['precio'] == $precio &&
-            $item['imagen'] === $imagen
-        ) {
-            // Suma la cantidad, máximo 25
-            $item['cantidad'] = min(25, $item['cantidad'] + $cantidad);
-            $encontrado = true;
-            break;
-        }
-    }
-    unset($item); // Rompe referencia
+    
+// Estandarizar la presentación para evitar duplicados "2kg" vs "2 kg" vs "2KG"
+$presentacion = strtolower(trim($_POST['presentacion']));
+// ...lo demás igual...
 
-    if (!$encontrado) {
-        $_SESSION['carrito'][] = [
-            'nombre'   => $nombre,
-            'precio'   => $precio,
-            'cantidad' => $cantidad,
-            'imagen'   => $imagen
-        ];
+$encontrado = false;
+foreach ($_SESSION['carrito'] as &$item) {
+    if (
+        $item['nombre'] === $nombre &&
+        $item['precio'] == $precio &&
+        $item['imagen'] === $imagen &&
+        isset($item['presentacion']) &&
+        strtolower(trim($item['presentacion'])) === $presentacion
+    ) {
+        $item['cantidad'] = min(25, $item['cantidad'] + $cantidad);
+        $encontrado = true;
+        break;
     }
-    exit;
+}
+unset($item);
+
+if (!$encontrado) {
+    $_SESSION['carrito'][] = [
+        'nombre'   => $nombre,
+        'precio'   => $precio,
+        'cantidad' => $cantidad,
+        'imagen'   => $imagen,
+        'presentacion' => $presentacion
+    ];
 }
 
+}
+
+require 'conexion.php';
+
+$productos = $pdo->query("SELECT * FROM producto")->fetchAll(PDO::FETCH_ASSOC);
+$presentaciones = $pdo->query("SELECT * FROM presentacion")->fetchAll(PDO::FETCH_ASSOC);
+
+$productosOrganizados = [];
+
+foreach ($productos as $producto) {
+    $producto['Presentaciones'] = [];
+    foreach ($presentaciones as $pres) {
+        if ($pres['ID_Producto'] == $producto['ID_Producto']) {
+            $producto['Presentaciones'][] = $pres;
+        }
+    }
+    $productosOrganizados[] = $producto;
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -63,373 +88,635 @@ if (
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Productos - Doggies</title>
-  <link rel="stylesheet" href="css/Productos.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="icon" type="image/jpeg" href="img/fondo.jpg" />
   <style>
-    .modal { display:none; position:fixed; z-index:1000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);}
-    .modal-contenido { background:#fff; margin:5% auto; padding:30px; width:90%; max-width:800px; border-radius:18px; box-shadow:0 0 20px rgba(0,0,0,0.18);}
-    .modal-contenido h2 { text-align:center; margin-bottom:20px; color: #28a745; font-size:1.55em; font-weight:700; letter-spacing: 0.01em;}
-    .modal-contenido table { width:100%; border-collapse:collapse; margin-bottom:18px; display: block; overflow-x: auto; white-space: nowrap;}
-    .modal-contenido thead, .modal-contenido tbody, .modal-contenido tr { display: table; width: 100%; table-layout: fixed;}
-    .modal-contenido th, .modal-contenido td { padding:15px 7px; text-align:center; border:1px solid #ccc; font-size: 1rem; background: #fff; word-break: break-word;}
-    .modal-contenido thead th { background:#f4f4f4; color: #333; font-weight: 600; font-size: 1.09em;}
-    .modal-contenido img { width:56px; height:56px; object-fit:cover; margin-right:8px; vertical-align:middle; border-radius: 7px;}
-    .cantidad-input { width:54px; text-align:center; padding:7px 3px; font-size:1em; border-radius: 7px; border:1px solid #bbb;}
-    .modal-contenido button, .modal-contenido form button { margin:7px 8px; padding:14px 25px; border:none; border-radius:9px; background:#28a745; color:#fff; cursor:pointer; font-size:1.13em; font-weight: 600; min-width: 150px; transition: background 0.18s; display: inline-block;}
-    .modal-contenido button:hover, .modal-contenido form button:hover { background:#218838; }
-    .modal-contenido form { display:inline-block;}
-    .carrito-animado { position:fixed; z-index:2000; transition:transform .8s, opacity .8s; width:60px; height:60px; object-fit:cover; }
-    .agotado { color:red; font-weight:bold; margin-top:10px; }
-    @media (max-width: 650px) {
-      .modal-contenido { padding: 8px 1px; min-width: 0; width: 99%; border-radius:12px;}
-      .modal-contenido h2 { font-size: 1.1em;}
-      .modal-contenido table { font-size: 0.96em;}
-      .modal-contenido th, .modal-contenido td { padding: 8px 2px; font-size: 0.93em;}
-      .cantidad-input { width:38px; font-size:0.97em; padding:5px 2px;}
-      .modal-contenido button, .modal-contenido form button { width: 98%; max-width: 330px; margin: 7px auto; display: block; font-size:1.09em;}
-      .modal-contenido form { display:block;}
-    }
-    @media (max-width:400px) {
-      .modal-contenido { padding:2px 0;}
-      .modal-contenido th, .modal-contenido td { padding:3px 1px; font-size:0.90em;}
-      .cantidad-input { width:32px;}
-    }
+* {
+  box-sizing: border-box;
+}
 
-    /* -------- FILTRO -------- */
-    .filtro {
-      min-width: 210px;
-      max-width: 310px;
-      background: #fff;
-      border-radius: 18px;
-      box-shadow: 0 3px 15px rgba(50,80,60,0.13);
-      margin: 2em 1.5em 2em 1.5em;
-      padding: 28px 22px 18px 22px;
-      font-size: 1.07em;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      height: fit-content;
-      border: 1px solid #f1f1f1;
-      transition: box-shadow 0.18s;
-      align-items: flex-start;
-    }
-    .filtro:hover { box-shadow: 0 6px 24px rgba(40, 160, 90, 0.14);}
-    .filtro h2 { font-size: 1.17em; margin-bottom: 0.25em; color: #28a745; font-weight: 700; letter-spacing: 0.5px;}
-    .filtro label { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; font-size: 1em; cursor: pointer; color: #252525; padding: 5px 0 3px 2px; border-radius: 6px; transition: background 0.15s;}
-    .filtro label:hover { background: #f3faf6;}
-    .filtro input[type="checkbox"] { accent-color: #28a745; width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid #28a745; margin-right: 4px; cursor: pointer; transition: box-shadow 0.16s;}
-    /* --- NUEVO: campos de precios vertical y largos --- */
-    .filtro-precio-box {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .filtro-precio-box label {
-      width: 100%;
-      font-size: 1em;
-      gap: 12px;
-      margin-bottom: 0;
-      justify-content: flex-start;
-      color: #252525;
-    }
-    .filtro-precio-box input[type="number"] {
-      width: 100%;
-      max-width: 200px;
-      min-width: 110px;
-      border-radius: 7px;
-      padding: 10px 12px;
-      background: #f7fbfa;
-      font-size: 1.07em;
-      border: 1.5px solid #dadada;
-      box-shadow: 0 1px 3px rgba(30,150,40,0.03);
-      outline: none;
-      transition: border-color 0.19s, box-shadow 0.17s;
-      text-align: left;
-      color: #333;
-      font-family: inherit;
-    }
-    .filtro-precio-box input[type="number"]:focus {
-      border-color: #28a745;
-      background: #effff7;
-      box-shadow: 0 1px 8px rgba(40,170,80,0.13);
-    }
-    .filtro button {
-      background: linear-gradient(90deg, #28a745 60%, #21936a 100%);
-      color: #fff;
-      font-weight: bold;
-      border: none;
-      border-radius: 11px;
-      padding: 11px 0;
-      margin-top: 11px;
-      font-size: 1.07em;
-      cursor: pointer;
-      box-shadow: 0 1px 6px rgba(40, 160, 90, 0.10);
-      transition: background 0.17s, box-shadow 0.13s;
-letter-spacing: 0.6px;
-      width: 100%;
-    }
-    .filtro label input[type="number"] { margin-left: 6px;}
-    .banner-item {
-      display: none;
-      background: linear-gradient(90deg, #ffe083 70%, #ffd97d 100%);
-      border-radius: 12px;
-      font-size: 1em;
-      font-weight: 500;
-      box-shadow: 0 2px 8px #ffe0864d;
-      align-items: center;
-      gap: 10px;
-      min-width: 160px;
-      width: 100%;
-      min-height: 52px;
-      max-width: 280px;
-      padding: 13px 14px;
-      color: #bc8400;
-      margin: 0 auto 7px auto;
-    }
-    .banner-item.activo { display: flex;}
-    .banner-item i { font-size: 1.45em; color: #f7b500; flex-shrink: 0; margin-right: 9px;}
-    .banner-item strong { color: #bc8400;}
-    @media (max-width:700px) {
-      .filtro { padding: 15px 4vw 16px 4vw;}
-      .filtro {
-        padding: 15px 4vw 16px 4vw;
-        width: 92vw;
-        max-width: none;
-        margin: 1em auto;
-      }
-      .carrusel-banner { max-width: 99vw; }
-      .banner-item { font-size: 0.97em; padding: 10px 2vw 10px 2vw;}
-      .banner-item i { font-size: 1.13em;}
-      .filtro-precio-box input[type="number"] { font-size: 0.97em; max-width: none;}
-    }
-    @media (max-width:430px) {
-      .banner-item { font-size: 0.95em; padding: 7px 1vw 7px 2vw; }
-      .carrusel-btn { font-size: 1em;}
-    }
-    .productos-page { flex: 1 1 auto; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; width: 100%; min-width: 0;}
-    .productos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 28px 18px; padding: 25px 25px 65px 25px; width: 100%; box-sizing: border-box; align-items: stretch;}
-    .producto-card {
-      background: #fff;
-      border-radius: 13px;
-      box-shadow: 0 2px 12px rgba(30,30,30,0.08);
-      padding: 17px 13px 15px 13px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      width: 100%;
-      max-width: 330px;
-      min-width: 0;
-      margin: 0 auto;
-      transition: box-shadow 0.18s;
-      /* Cambios nuevos para igualar altura y acciones abajo */
-      min-height: 450px;
-      height: 100%;
-    }
-    .producto-card img { width: 155px; height: 155px; object-fit: cover; border-radius: 8px; margin-bottom: 12px; background: #f4f4f4; display: block; box-shadow: 0 2px 7px rgba(60,60,60,0.08);}
-    .producto-info {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      flex: 1 1 auto; /* Permite crecer y empujar acciones-producto abajo */
-    }
-    .acciones-producto {
-      margin-top: auto;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 7px;
-    }
-    .producto-info h3 { font-size: 1.09em; margin-bottom: 0.5px; font-weight: bold; color: #333; text-align: center;}
-    .producto-info p { font-size: 0.99em; color: #666; margin-bottom: 4px; text-align: center; min-height: 34px; max-height: 40px; overflow: hidden;}
-    .producto-info span { font-size: 1.10em; color: #28a745; font-weight: bold; margin-bottom: 6px;}
-    .cantidad-comprar { display: flex; align-items: center; gap: 7px; margin-bottom: 7px;}
-    .producto-descripcion { display: flex; align-items: center; gap: 8px; text-align: left; min-width: 120px; max-width: 220px; overflow: hidden;}
-    .producto-descripcion span { display: block; font-weight: 500; color: #222; white-space: normal; overflow-wrap: break-word; word-break: break-word; max-width: 150px; font-size: 1rem;}
-    .agotado { color:red; font-weight:bold; margin-top:10px;}
-    body { min-height: 100vh; display: flex; flex-direction: column;}
-    .page-container { flex: 1 0 auto;}
-    footer { margin-top: auto; width: 100%; background: #333; color: #fff; text-align: center; padding: 20px 10px 36px 10px; box-sizing: border-box;}
-    @media (max-width: 700px) { footer { padding: 18px 3vw 32px 3vw; font-size: 0.99em;} }
-
-.producto-descripcion {
+body {
+  font-family: 'Roboto', 'Arial', sans-serif;
+  background: #fafafa;
+  color: #222;
+  margin: 0;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  min-width: 80px;
-  max-width: 110px;
-  word-break: break-word;
-}
-.producto-descripcion img {
-  width: 48px !important;
-  height: 48px !important;
-  display: block;
-  margin: 0 auto 3px auto;
-}
-.nombre-modal {
-  font-weight: 600;
-  font-size: 0.98em;
-  text-align: center;
-  display: block;
-  max-width: 85px;
-  overflow-wrap: break-word;
-  word-break: break-word;
-}
-@media (max-width: 700px) {
-  .producto-descripcion img {
-    width: 35px !important;
-    height: 35px !important;
-  }
-  .nombre-modal {
-    font-size: 0.91em;
-    max-width: 64px;
-  }
 }
 
-.celda-producto {
-  display: flex;
-  align-items: center;     /* Centra verticalmente */
-  gap: 13px;
-  justify-content: left;
-  min-width: 140px;
-  max-width: 210px;
-  padding: 7px 4px;
-  border: none;
-  background: none;
-  word-break: break-word;
-}
-
-.nombre-producto-modal {
-  display: flex;                /* Cambia a flex para centrar vertical */
-  align-items: center;          /* Centra verticalmente el texto */
-  font-weight: 600;
-  color: #232323;
-  font-size: 1em;
-  line-height: 1.16em;
-  max-width: 120px;
-  word-break: break-word;
-  white-space: normal;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: left;
-  min-height: 48px;             /* Igual que la imagen para centrar mejor */
-}
-
-@media (max-width: 700px) {
-  .celda-producto {
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-    min-width: 70px;
-    max-width: 85px;
-  }
-  .nombre-producto-modal {
-    font-size: 0.97em;
-    text-align: center;
-    max-width: 64px;
-    min-height: unset;
-    align-items: unset;
-    display: block;
-  }
-.buscador-principal {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
+/* Header/Nav Compacto Mercado Libre style */
+.header-principal {
   background: #fff;
-  padding: 22px 0 10px 0;
-  box-sizing: border-box;
-  border-bottom: 1.5px solid #e7e7e7;
-  margin-bottom: 10px;
+  box-shadow: 0 2px 7px rgba(0,0,0,0.07);
+  padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 20;
 }
 
-#form-busqueda {
-  display: flex;
+/* --- CONTENEDOR CENTRALIZADO DEL HEADER --- */
+.header-principal .nav-bar {
+  max-width: 1050px;    /* No más largo en PC, bien compacto */
   width: 100%;
-  max-width: 420px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;   /* CENTRA todo horizontalmente */
+  gap: 18px;
+  padding: 14px 14px;
+  box-sizing: border-box;
+}
+
+.nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: nowrap; /* <-- ¡Esto es clave! */
+}
+
+.nav-links-row {
+  display: flex;
+  flex-direction: row; /* SIEMPRE en fila */
+  align-items: center;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  /* Para evitar que se hagan columnas por poco espacio: */
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 9px;
+  font-size: 1.06em;
+  white-space: nowrap; /* <- nunca hagas salto de línea interno */
+}
+
+.texto-desktop {
+  display: inline;
+}
+
+@media (max-width: 700px) {
+  .nav-bar {
+    padding: 7px 3vw;
+    gap: 3vw;
+  }
+  .search-box {
+    margin: 0 8px 0 8px;
+    min-width: 0;
+    width: 100%;
+    max-width: 100vw;
+  }
+  .nav-links-row {
+    gap: 4vw;
+  }
+  .texto-desktop {
+    display: none !important;  /* Solo íconos en móvil */
+  }
+  .nav-link {
+    font-size: 1.34em;
+    padding: 5px 3px;
+  }
+}
+
+/* --- LOGO --- */
+.logo-box img {
+  height: 34px;
+  border-radius: 8px;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.logo-box {
+  display: flex;
+  align-items: center;
+}
+
+/* --- BUSCADOR --- */
+.search-box {
+  display: flex;
+  align-items: center;
+  width: 340px;     /* BUSCADOR COMPACTO! */
+  max-width: 360px;
+  min-width: 120px;
+  margin: 0 18px;
+  height: 39px;
+  background: #fff;
+  border-radius: 8px;
+  border: 2px solid #28a745;
+  overflow: hidden;
+  position: relative;
 }
 
 #buscador-producto {
-  flex: 1;
-  padding: 11px 15px;
-  border: 2px solid #28a745;
-  border-right: none;
-  border-radius: 9px 0 0 9px;
-  font-size: 1.09em;
+  flex: 1 1 0%;
+  padding: 0 14px;
+  height: 39px;
+  font-size: 1.04em;
+  border: none;
   outline: none;
-  background: #f8faf9;
-  transition: border-color 0.18s;
+  background: #f5fbf8;
+}
+#buscador-producto::placeholder {
+  color: #8c8c8c;
+  opacity: 1;
 }
 
-#buscador-producto:focus {
-  border-color: #21936a;
-  background: #fff;
-}
-
-.btn-buscar {
-  padding: 0 19px;
-  background: linear-gradient(90deg, #28a745 60%, #21936a 100%);
+.icono-lupa {
+  width: 39px;
+  height: 39px;
+  background: #28a745;
   color: #fff;
-  font-weight: 600;
-  border: 2px solid #28a745;
-  border-left: none;
-  border-radius: 0 9px 9px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: none;
+  border-radius: 0 7px 7px 0;
+  font-size: 1.22em;
   cursor: pointer;
-  font-size: 1.06em;
+  transition: background 0.2s;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+.icono-lupa:hover { background: #218838; }
+
+/* --- LINKS HEADER --- */
+.nav-link {
+  color: #222;
   display: flex;
   align-items: center;
-  transition: background 0.18s;
-}
-.btn-buscar:hover {
-  background: linear-gradient(90deg, #21936a 70%, #28a745 100%);
-}
-@media (max-width: 800px) {
-  .buscador-principal { padding: 14px 0 6px 0;}
-  #form-busqueda { max-width: 99vw;}
-}
-@media (max-width: 480px) {
-  .buscador-principal { padding: 8px 0 3px 0;}
-  #form-busqueda { max-width: 98vw; }
-  #buscador-producto { font-size: 0.98em; padding: 8px 8px; }
-  .btn-buscar { font-size: 0.97em; padding: 0 12px; }
+  gap: 7px;
+  cursor: pointer;
+  font-weight: 600;
+  border-radius: 7px;
+  padding: 7px 11px;
+  text-decoratio
 }
 
+a, a:visited, a:focus, a:active, a:hover {
+  text-decoration: none !important;
+  outline: none !important;
 }
+
+
+.page-container {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 28px 0 28px 0;
+  gap: 36px;
+}
+
+@media (max-width: 800px) {
+  .page-container {
+    flex-direction: column;
+    gap: 18px;
+    align-items: stretch;
+    padding: 19px 1vw;
+  }
+  aside.filtro {
+    margin: 0 auto 18px auto;
+    width: 100%;
+    max-width: 100vw;
+  }
+}
+
+
+/* Filtros */
+.filtro {
+  min-width: 200px;
+  max-width: 300px;
+  background: #fff;
+  border-radius: 15px;
+  box-shadow: 0 3px 14px rgba(50,80,60,0.09);
+  padding: 28px 22px 18px 22px;
+  font-size: 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border: 1px solid #f1f1f1;
+  align-items: flex-start;
+}
+.filtro h2 { font-size: 1.08em; color: #28a745; font-weight: 700; margin: 0 0 0.4em 0;}
+.filtro label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 1em;
+  cursor: pointer;
+  color: #222;
+  margin-bottom: 4px;
+  border-radius: 5px;
+  padding: 4px 3px 4px 3px;
+  transition: background 0.17s;
+}
+.filtro label:hover { background: #f6fcf7; }
+.filtro input[type="checkbox"] { accent-color: #28a745; width: 16px; height: 16px; }
+
+.filtro-precio-box {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.filtro-precio-box input[type="number"] {
+  width: 100%;
+  max-width: 170px;
+  border-radius: 7px;
+  padding: 9px 10px;
+  background: #f8faf9;
+  font-size: 1em;
+  border: 1.5px solid #dadada;
+  outline: none;
+  transition: border-color 0.17s;
+}
+.filtro-precio-box input[type="number"]:focus {
+  border-color: #28a745;
+  background: #f3fff7;
+}
+
+.filtro button {
+  background: linear-gradient(90deg, #28a745 60%, #21936a 100%);
+  color: #fff;
+  font-weight: bold;
+  border: none;
+  border-radius: 10px;
+  padding: 11px 0;
+  margin-top: 13px;
+  font-size: 1.05em;
+  cursor: pointer;
+  box-shadow: 0 1px 6px rgba(40, 160, 90, 0.10);
+  transition: background 0.17s;
+  width: 100%;
+}
+.filtro button:hover { background: #21936a; }
+
+/* FAQ sección lateral */
+.faq-section {
+  margin-top: 20px;
+  background: #f8f9fc;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(60,60,80,0.07);
+  padding: 15px 12px 11px 15px;
+  font-size: 1em;
+}
+.faq-title { font-size: 1.08em; font-weight: 700; color: #1a8357; margin-bottom: 8px;}
+.faq-list { display: flex; flex-direction: column; gap: 8px; }
+.faq-item {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 1px 5px #e5f9ed6b;
+  padding: 8px 12px;
+  cursor: pointer;
+  border: 1.3px solid #e3f2ed;
+  transition: background 0.13s;
+}
+.faq-item.open { background: #f2fff4; }
+.faq-question { font-weight: 600; color: #22885c; display: flex; align-items: center; justify-content: space-between;}
+.faq-answer { display: none; color: #2e5a42; font-size: 0.97em; margin-top: 5px; }
+.faq-item.open .faq-answer { display: block; }
+
+@media (max-width:700px) {
+  .filtro { padding: 12px 2vw 14px 2vw; min-width: 0; max-width: 100vw;}
+  .faq-section { font-size: 0.99em;}
+}
+
+/* Grid productos */
+.productos-page {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.productos-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 23px;
+  margin-bottom: 30px;
+}
+
+@media (max-width: 900px) {
+  .productos-grid { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px;}
+}
+
+@media (max-width: 540px) {
+  .productos-grid {
+    grid-template-columns: 1fr; /* SOLO 1 PRODUCTO POR FILA */
+    gap: 11px; /* Ajusta el espacio si quieres */
+  }
+}
+
+
+.producto-card {
+  background: #fff;
+  border-radius: 13px;
+  box-shadow: 0 2px 12px rgba(55, 160, 90, 0.06);
+  padding: 15px 11px 14px 11px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: box-shadow 0.21s, border 0.14s;
+  border: 1.3px solid #e5f4ee;
+  position: relative;
+  min-height: 350px;
+  height: 100%;
+}
+.producto-card:hover { box-shadow: 0 8px 25px #38e38b22; border-color: #27a045; z-index: 2;}
+.producto-card img {
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+  background: #f2f2f2;
+  border-radius: 8px;
+  box-shadow: 0 2px 7px rgba(60,60,60,0.09);
+  margin-bottom: 12px;
+}
+
+.producto-info {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1 1 auto;
+  justify-content: flex-start;
+}
+
+.producto-info h3 {
+  font-size: 1.09em;
+  margin-bottom: 0.5px;
+  font-weight: bold;
+  color: #222;
+  text-align: center;
+}
+.producto-info p {
+  font-size: 0.98em;
+  color: #666;
+  margin-bottom: 4px;
+  text-align: center;
+  min-height: 34px;
+  max-height: 40px;
+  overflow: hidden;
+}
+
+.presentaciones-lista {
+  margin: 7px 0 7px 0;
+  display: flex;
+  gap: 7px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.btn-presentacion {
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #e3e8e4;
+  border: none;
+  color: #555;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.99em;
+  transition: background 0.17s, color 0.18s;
+}
+.btn-presentacion.active,
+.btn-presentacion:hover {
+  background: #28a745;
+  color: #fff;
+}
+
+.precio-actual {
+  display: block;
+  font-size: 1.28em;
+  font-weight: 700;
+  color: #28a745;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.acciones-producto {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;  /* <-- Hace que esto siempre esté al fondo */
+}
+
+.cantidad-comprar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 0;
+}
+.cantidad-comprar button {
+  width: 31px;
+  height: 31px;
+  border: 1.6px solid #28a745;
+  background: white;
+  color: #28a745;
+  font-weight: 700;
+  font-size: 1.2rem;
+  cursor: pointer;
+  border-radius: 8px;
+  line-height: 0;
+  user-select: none;
+  transition: background 0.17s, color 0.18s;
+}
+.cantidad-comprar button:hover {
+  background: #28a745;
+  color: white;
+}
+.cantidad-comprar input {
+  width: 48px;
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 600;
+  border: 1.4px solid #28a745;
+  border-radius: 8px;
+  outline: none;
+  -moz-appearance: textfield;
+  background: #f5faf8;
+  padding: 2px 0;
+}
+.cantidad-comprar input::-webkit-outer-spin-button,
+.cantidad-comprar input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+.btn-comprar {
+  background: #28a745;
+  border: none;
+  color: white;
+  font-weight: 700;
+  font-size: 1.1rem;
+  padding: 11px 25px;       /* Cambia aquí: más padding a los lados */
+  border-radius: 8px;
+  cursor: pointer;
+  width: auto;              /* Quita el 100% y max-width, usa auto */
+  min-width: 100px;         /* Para que no sea muy pequeño */
+  margin: 18px auto 14px auto;
+  box-shadow: 0 6px 12px rgba(40, 160, 90, 0.15);
+  transition: background 0.18s;
+  display: block;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.btn-comprar:hover { background: #218838; }
+.agotado { color: red; font-weight: bold; margin-top: 9px; }
+
+/* MODAL Carrito */
+.modal { display: none; position: fixed; z-index: 1000; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.55);}
+.modal-contenido {
+  background: #fff;
+  margin: 5% auto;
+  padding: 30px;
+  width: 90%;
+  max-width: 700px;
+  border-radius: 18px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.16);
+}
+.modal-contenido h2 { text-align: center; margin-bottom: 18px; color: #28a745; font-size: 1.3em; font-weight: 700;}
+.modal-contenido table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+.modal-contenido th, .modal-contenido td { padding: 10px 7px; text-align: center; border: 1px solid #ccc; font-size: 1em; background: #fff;}
+.modal-contenido thead th { background: #f4f4f4; color: #333; font-weight: 600; }
+.modal-contenido img { width: 44px; height: 44px; object-fit: cover; border-radius: 6px;}
+.modal-contenido button, .modal-contenido form button {
+  margin: 5px 7px;
+  padding: 12px 21px;
+  border: none;
+  border-radius: 8px;
+  background: #28a745;
+  color: #fff;
+  cursor: pointer;
+  font-size: 1.06em;
+  min-width: 110px;
+  transition: background 0.16s;
+}
+.modal-contenido button:hover, .modal-contenido form button:hover { background: #218838; }
+.modal-contenido form { display: inline-block;}
+.cantidad-input { width: 48px; text-align: center; padding: 6px 2px; font-size: 1em; border-radius: 7px; border: 1px solid #bbb;}
+
+@media (max-width: 650px) {
+  .modal-contenido { padding: 10px 2vw; width: 98vw; }
+  .modal-contenido th, .modal-contenido td { padding: 6px 2px; font-size: 0.93em;}
+  .cantidad-input { width: 32px;}
+}
+
+/* Footer */
+footer {
+  margin-top: auto;
+  width: 100%;
+  background: #222;
+  color: white;
+  text-align: center;
+  padding: 22px 10px 35px 10px;
+  box-sizing: border-box;
+  position: relative;
+}
+
+footer::after {
+  content: "© 2025 Doggies. Todos los derechos reservados.";
+  display: block;
+  margin-top: 0.6em;
+  font-size: 0.93rem;
+  color: #bdbdbd;
+}
+.footer-content h3 { font-size: 1.28rem; font-weight: 700; margin-bottom: 13px; }
+.social-links a {
+  color: white;
+  margin: 0 10px;
+  font-size: 1.55rem;
+  transition: color 0.18s;
+  display: inline-block;
+}
+.social-links a:hover { color: #28a745;}
+.footer-content p { margin-top: 12px; font-size: 1em;}
+
+@media (max-width:700px) {
+  .footer-content h3 { font-size: 1.07rem;}
+  .social-links a { font-size: 1.18rem;}
+}
+@media (max-width:480px) {
+  footer { padding: 13px 3vw 18px 3vw; font-size: 0.99em;}
+}
+
+/* Solo se muestra el contador-movil en móvil, y se oculta el texto largo */
+.contador-movil {
+  display: none;
+  font-size: 1.05em;   /* <--- BAJA este valor, antes tenías 1.19em */
+  font-weight: 700;
+  margin-left: 3px;
+  line-height: 1.1;
+}
+@media (max-width: 700px) {
+  .contador-movil {
+    display: inline !important;
+    color: black;
+    margin-left: 5px;
+    font-size: 0.9em !important;  /* <--- AJUSTA aquí para móvil */
+  }
+  #icono-carrito {
+    font-size: 1.35em;
+    padding: 0 6px 0 0;
+  }
+}
+
+
+.carrito-animado {
+  position: fixed;
+  z-index: 9999;
+  width: 140px;   /* igual que las imágenes de producto */
+  height: 140px;
+  object-fit: contain;
+  border-radius: 8px;
+  transition:
+    transform 0.7s cubic-bezier(.55,-0.25,.54,1.39),
+    opacity 0.7s;
+  pointer-events: none;
+}
+
 
 </style>
 </head>
 
 <body>
 <header class="header-principal">
-  <nav class="nav-bar">
-    <a href="Servicios.php" class="nav-link">
-      <i class="fas fa-concierge-bell"></i>
-      <span>Servicios</span>
-    </a>
-    <a href="index.php" class="logo-box">
-      <img src="img/fondo.jpg" alt="Doggies" class="logo-img" />
-    </a>
-    <form class="search-box" onsubmit="event.preventDefault(); filtrarPorNombre();">
-      <input type="text" id="buscador-producto" placeholder="Buscar productos..." autocomplete="off"/>
-      <button type="button" class="icono-lupa" onclick="filtrarPorNombre()">
-        <i class="fas fa-search"></i>
-      </button>
-    </form>
-    <a href="carrito.php" id="icono-carrito" class="nav-link">
-      <i class="fas fa-cart-shopping"></i>
-      <span>Carrito (<span id="contador-carrito"><?php echo count($_SESSION['carrito']); ?></span>)</span>
-    </a>
-  </nav>
+<nav class="nav-bar">
+  <a href="Servicios.php" class="nav-link nav-servicios" id="nav-servicios">
+    <i class="fas fa-concierge-bell"></i>
+    <span class="texto-desktop">Servicios</span>
+  </a>
+  <a href="index.php" class="logo-box" id="nav-logo">
+    <img src="img/fondo.jpg" alt="Doggies" class="logo-img" />
+  </a>
+  <form class="search-box" id="form-busqueda" onsubmit="event.preventDefault(); filtrarPorNombre();">
+    <input type="text" id="buscador-producto" placeholder="Buscar.." autocomplete="off"/>
+    <button type="button" class="icono-lupa" onclick="filtrarPorNombre()">
+      <i class="fas fa-search"></i>
+    </button>
+  </form>
+<a href="carrito.php" id="icono-carrito" class="nav-link nav-carrito">
+  <i class="fas fa-cart-shopping"></i>
+  <span class="texto-desktop">
+    Carrito (<span id="contador-carrito"><?php echo count($_SESSION['carrito']); ?></span>)
+  </span>
+  <span class="contador-movil">
+    (<span id="contador-carrito-movil"><?php echo count($_SESSION['carrito']); ?></span>)
+  </span>
+</a>
+
+</nav>
 </header>
-
-
-
   <div class="page-container">
     <aside class="filtro">
     <h2>Filtrar por edad</h2>
@@ -501,50 +788,64 @@ letter-spacing: 0.6px;
   </div>
 </div>
     </aside>
+
     <main class="productos-page">
       <div class="productos-grid">
-        <?php
-        require 'conexion.php';
-        $productos = $pdo->query("SELECT * FROM producto")->fetchAll(PDO::FETCH_ASSOC);
-        foreach ($productos as $p):
-            $nombre      = htmlspecialchars($p['Nombre']);
-            $imagen      = $p['Imagen_URL'] ?: 'img/default.jpg';
-            $descripcion = htmlspecialchars($p['Descripcion']);
-            $precio      = floatval($p['Precio']);
-            $stock       = intval($p['Stock']);
-            $edad        = $p['edad'] ?: 'adulto';
-            $precioF     = number_format($precio,0,',','.');
-        ?>
-        <div class="producto-card" data-edad="<?php echo $edad; ?>" data-precio="<?php echo $precio; ?>">
-          <img src="<?php echo $imagen; ?>" alt="<?php echo $nombre; ?>">
-          <div class="producto-info">
-            <h3><?php echo $nombre; ?></h3>
-            <p><?php echo $descripcion; ?></p>
-            <span>$<?php echo $precioF; ?></span>
-            <div class="acciones-producto">
-              <?php if ($stock > 0): ?>
-              <div class="cantidad-comprar">
-                <button onclick="cambiarCantidad(this,-1)">−</button>
-                <input type="number" value="1" min="1" max="25" readonly>
-                <button onclick="cambiarCantidad(this,1)">+</button>
-              </div>
-              <form method="POST">
-                <input type="hidden" name="nombre"   value="<?php echo $nombre; ?>">
-                <input type="hidden" name="precio"   value="<?php echo $precio; ?>">
-                <input type="hidden" name="cantidad" value="1" class="input-cantidad">
-                <input type="hidden" name="imagen"   value="<?php echo $imagen; ?>">
-                <button type="submit" class="btn-comprar">Comprar</button>
-              </form>
-              <?php else: ?>
-                <p class="agotado">Agotado</p>
-              <?php endif; ?>
-            </div>
-          </div>
+<?php foreach ($productosOrganizados as $p): 
+    $nombre      = htmlspecialchars($p['Nombre']);
+    $imagen      = $p['Imagen_URL'] ?: 'img/default.jpg';
+    $descripcion = htmlspecialchars($p['Descripcion']);
+    $precio      = floatval($p['Precio']);
+    $stock       = intval($p['Stock']);
+    $edad        = $p['edad'] ?: 'adulto';
+    $precioF     = number_format($precio,0,',','.');
+?>
+  <div class="producto-card" data-edad="<?php echo $edad; ?>" data-precio="<?php echo $precio; ?>">
+    <a href="producto_detalle.php?id=<?php echo intval($p['ID_Producto']); ?>">
+      <img src="<?php echo $imagen; ?>" alt="<?php echo $nombre; ?>">
+    </a>
+    <div class="producto-info">
+      <h3><a href="producto_detalle.php?id=<?php echo intval($p['ID_Producto']); ?>" style="color:inherit; text-decoration:none;"><?php echo $nombre; ?></a></h3>
+      <p><?php echo $descripcion; ?></p>
+      <?php if (!empty($p['Presentaciones'])): ?>
+        <div class="presentaciones-lista">
+          <?php foreach ($p['Presentaciones'] as $index => $pres): ?>
+        <button type="button" 
+          class="btn-presentacion <?= $index === 0 ? 'active' : '' ?>"
+          data-precio="<?= $pres['Precio'] ?>"
+          data-peso="<?= htmlspecialchars($pres['Peso']) ?>"
+          data-idpres="<?= $pres['ID_Presentacion'] ?>">
+          <?= htmlspecialchars($pres['Peso']) ?>
+        </button>
+          <?php endforeach; ?>
         </div>
-        <?php endforeach; ?>
+      <?php endif; ?>
+      <span class="precio-actual">
+        $<?php echo number_format($p['Presentaciones'][0]['Precio'] ?? $precio, 0, ',', '.'); ?>
+      </span>
+      <div class="acciones-producto">
+        <?php if ($stock > 0): ?>
+          <div class="cantidad-comprar">
+            <button onclick="cambiarCantidad(this,-1)">−</button>
+            <input type="number" value="1" min="1" max="25" readonly>
+            <button onclick="cambiarCantidad(this,1)">+</button>
+          </div>
+          <form method="POST" class="form-compra">
+            <input type="hidden" name="nombre" value="<?php echo $nombre; ?>">
+            <input type="hidden" name="precio" value="<?php echo $p['Presentaciones'][0]['Precio'] ?? $precio; ?>" class="input-precio">
+            <input type="hidden" name="presentacion" value="<?php echo htmlspecialchars($p['Presentaciones'][0]['Peso'] ?? ''); ?>" class="input-presentacion">
+            <input type="hidden" name="cantidad" value="1" class="input-cantidad">
+            <input type="hidden" name="imagen" value="<?php echo $imagen; ?>">
+            <button type="submit" class="btn-comprar">Comprar</button>
+          </form>
+        <?php else: ?>
+          <p class="agotado">Agotado</p>
+        <?php endif; ?>
       </div>
-    </main>
+    </div>
   </div>
+<?php endforeach; ?>
+</div>
 
   <!-- ... El resto del HTML permanece igual ... -->
 
@@ -565,7 +866,7 @@ letter-spacing: 0.6px;
       </form>
     </div>
   </div>
-
+</div>
   <footer>
     <div class="footer-content">
       <h3>Síguenos</h3>
@@ -613,64 +914,78 @@ letter-spacing: 0.6px;
       const btnCont = document.getElementById('continuar-comprando');
       const btnEdit = document.getElementById('editar-carrito');
 
-      btns.forEach(boton => {
-        boton.addEventListener('click', e => {
-          e.preventDefault();
-          const form = boton.closest('form');
-          const card = boton.closest('.producto-card');
-          const img  = card.querySelector('img');
-          const rect = img.getBoundingClientRect();
-          const cartIcon = document.getElementById('icono-carrito').getBoundingClientRect();
+btns.forEach(boton => {
+  boton.addEventListener('click', e => {
+    e.preventDefault();
+    const form = boton.closest('form');
+    const card = boton.closest('.producto-card');
+    const img  = card.querySelector('img');
+    const rect = img.getBoundingClientRect();
+    const cartIcon = document.getElementById('icono-carrito').getBoundingClientRect();
 
-          const clone = img.cloneNode();
-          clone.classList.add('carrito-animado');
-          clone.style.top  = rect.top + 'px';
-          clone.style.left = rect.left + 'px';
-          document.body.appendChild(clone);
-          requestAnimationFrame(()=>{
-            clone.style.transform =
-              `translate(${cartIcon.left-rect.left}px,${cartIcon.top-rect.top}px) scale(0.2)`;
-            clone.style.opacity = '0';
-          });
-          setTimeout(()=>clone.remove(),800);
+    // --- ANIMACIÓN IMAGEN AL CARRITO ---
+    const clone = img.cloneNode();
+    clone.classList.add('carrito-animado');
+    clone.style.top  = rect.top + 'px';
+    clone.style.left = rect.left + 'px';
+    clone.style.width = rect.width + 'px';
+    clone.style.height = rect.height + 'px';
+    document.body.appendChild(clone);
+    // Forzar reflow
+    void clone.offsetWidth;
+    // Animar hasta el ícono del carrito
+    clone.style.transform =
+      `translate(${cartIcon.left-rect.left}px,${cartIcon.top-rect.top}px) scale(0.2)`;
+    clone.style.opacity = '0';
+    setTimeout(()=>clone.remove(), 700);
+    // --- FIN ANIMACIÓN ---
 
-          const dataPost = new FormData(form);
-          const qtyCard  = parseInt(card.querySelector('input[type="number"]').value,10) || 1;
-          dataPost.set('cantidad', qtyCard);
+    // Todo lo demás igual...
+    const dataPost = new FormData(form);
+    const qtyCard  = parseInt(card.querySelector('input[type="number"]').value,10) || 1;
+    dataPost.set('cantidad', qtyCard);
 
-          fetch('Productos.php', { method: 'POST', body: dataPost })
-            .then(()=>{
-              modal.style.display = 'block';
-              let count = parseInt(cont.textContent.replace(/\D/g,''),10) || 0;
-              count += qtyCard;
-              cont.textContent = `(${count})`;
+  fetch('Productos.php', { method: 'POST', body: dataPost })
+    .then(()=>{
+      modal.style.display = 'block';
+      let count = parseInt(cont.textContent.replace(/\D/g,''),10) || 0;
+      count += qtyCard;
+      cont.textContent = count;
+      const contMovil = document.getElementById('contador-carrito-movil');
+      if (contMovil) contMovil.textContent = count;
 
-              const name  = form.nombre.value;
-              const price = parseFloat(form.precio.value);
-              const src   = form.imagen.value;
-              tabla.innerHTML = '';
-              const tr = document.createElement('tr');
-            tr.innerHTML = `
-              <td class="celda-producto">
-                <img src="${src}" alt="${name}" class="img-modal">
-                <span class="nombre-producto-modal">${name}</span>
-              </td>
-              <td>$${price.toLocaleString('es-CO')}</td>
-              <td>
-                <input type="number"
-                      class="cantidad-input"
-                      data-price="${price}"
-                      min="1" max="25"
-                      value="${qtyCard}"
-                      onchange="actualizarSubtotalModal(this)">
-              </td>
-              <td class="subtotal-cell">$${(price*qtyCard).toLocaleString('es-CO')}</td>
-            `;
+      const name  = form.nombre.value;
+      const price = parseFloat(form.precio.value);
+      const src   = form.imagen.value;
+      const pres  = form.presentacion.value;
+      tabla.innerHTML = '';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="celda-producto">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <img src="${src}" alt="${name}" class="img-modal" style="width:48px;height:48px;object-fit:contain;border-radius:6px;flex-shrink:0;">
+<span style="font-weight:700;font-size:1.13em;line-height:1.1;color:#222;font-family:'Roboto',Arial,sans-serif;">
+  ${name}${pres ? ' ('+pres+')' : ''}
+</span>
 
-              tabla.appendChild(tr);
-            });
-        });
-      });
+          </div>
+        </td>
+        <td>$${price.toLocaleString('es-CO')}</td>
+        <td>
+          <input type="number"
+                class="cantidad-input"
+                data-price="${price}"
+                min="1" max="25"
+                value="${qtyCard}"
+                onchange="actualizarSubtotalModal(this)">
+        </td>
+        <td class="subtotal-cell">$${(price*qtyCard).toLocaleString('es-CO')}</td>
+      `;
+      tabla.appendChild(tr);
+    });
+  });
+});
+
 
       btnCont.onclick = ()=> modal.style.display = 'none';
       btnEdit.onclick = ()=> window.location = 'carrito.php';
@@ -713,6 +1028,29 @@ letter-spacing: 0.6px;
         card.style.display = ((edades.length===0||edades.includes(ed)) && pr>=min&&pr<=max)?'flex':'none';
       });
     }
+
+    // Actualizar precio y presentación al hacer clic en botones
+    document.querySelectorAll('.producto-card').forEach(card => {
+      const botones = card.querySelectorAll('.btn-presentacion');
+      const precioSpan = card.querySelector('.precio-actual');
+      const inputPrecio = card.querySelector('.input-precio');
+      const inputPresentacion = card.querySelector('.input-presentacion');
+
+      botones.forEach(boton => {
+        boton.addEventListener('click', () => {
+          // Quitar active a todos
+          botones.forEach(b => b.classList.remove('active'));
+          // Poner active al clickeado
+          boton.classList.add('active');
+          // Actualizar precio visible
+          const nuevoPrecio = boton.dataset.precio;
+          precioSpan.textContent = '$' + parseInt(nuevoPrecio).toLocaleString('es-CO');
+          // Actualizar inputs ocultos
+          inputPrecio.value = nuevoPrecio;
+          inputPresentacion.value = boton.dataset.peso.trim();
+        });
+      });
+    });
   </script>
   <script>
   document.querySelectorAll('.faq-item').forEach(item => {

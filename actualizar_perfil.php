@@ -17,7 +17,6 @@ $nueva_contrasena = trim($_POST['nueva_contrasena']);
 // Actualización básica
 $sql = "UPDATE usuario SET Nombre = :nombre, Correo = :correo, Telefono = :telefono, Direccion = :direccion";
 
-// Añadir contraseña si se ingresó
 $params = [
     'nombre' => $nombre,
     'correo' => $correo,
@@ -37,8 +36,15 @@ $stmt = $pdo->prepare($sql);
 $success = $stmt->execute($params);
 
 if ($success) {
-    echo "✅ Perfil actualizado con éxito. <a href='mi_cuenta.php'>Volver</a>";
+    // Mostramos alerta y redirigimos a mi_cuenta.php
+    echo "<script>
+        alert('✅ Perfil actualizado con éxito');
+        window.location.href = 'mi_cuenta.php';
+    </script>";
 } else {
-    echo "❌ Error al actualizar.";
+    echo "<script>
+        alert('❌ Error al actualizar');
+        window.location.href = 'mi_cuenta.php';
+    </script>";
 }
 ?>

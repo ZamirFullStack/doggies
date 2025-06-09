@@ -1,0 +1,12 @@
+Array
+(
+    [0] => Array
+        (
+            [nombre] => Dog Chow Adulto
+            [precio] => 60000
+            [cantidad] => 20
+            [imagen] => img/Productos/producto1.jpg
+            [presentacion] => 17
+        )
+
+)

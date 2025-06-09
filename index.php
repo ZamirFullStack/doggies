@@ -10,8 +10,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="icon" type="image/jpeg" href="img/fondo.jpg" />
   <style>
-
-
     .menu {
       list-style: none;
       display: flex;
@@ -40,9 +38,19 @@
       align-items: center;
     }
 
+    /* ----------- Mi Cuenta - VERSIÓN ESCRITORIO ----------- */
     .submenu > a {
       text-align: center;
       white-space: nowrap;
+      padding: 0 4px;
+      font-size: 1em;
+    }
+    .submenu > a .escritorio-micuenta {
+      display: inline;
+      font-size: 1em;
+    }
+    .submenu > a .movil-micuenta {
+      display: none;
     }
 
     .submenu-opciones {
@@ -79,53 +87,92 @@
       background-color: #f4f4f4;
     }
 
+    /* LOGO - SIEMPRE CIRCULAR Y RESPONSIVO */
     .logo img.logo-img {
       height: 60px;
+      width: 60px;
+      object-fit: cover;
       border-radius: 50%;
+      border: 2.5px solid #fff;
+      box-shadow: 0 1px 8px #bbb;
+      background: #fff;
+      display: block;
+      margin: 0 auto;
+      transition: height 0.2s, width 0.2s;
     }
 
-    .nosotros-link {
-      display: inline-block;
-      margin-top: 30px;
-      background-color: #4caf50;
-      color: white;
-      padding: 12px 24px;
-      border-radius: 12px;
-      text-decoration: none;
-      font-weight: bold;
-      font-size: 1.2rem;
-      animation: fadeInUp 1.5s ease-in-out 1s forwards;
-      opacity: 0;
-      transition: background-color 0.3s ease;
+    @media (max-width: 800px) {
+      .menu {
+        gap: 16px;
+        padding: 1em 0.5em;
+      }
     }
-
-    .nosotros-link:hover {
-      background-color: #388e3c;
-    }
-
     @media (max-width: 600px) {
       .menu {
-        gap: 10px;
+        gap: 7px;
+        padding: 1em 0.1em;
       }
-
       .menu li a {
-        font-size: 0.9rem;
+        font-size: 0.98rem;
         line-height: 1.2;
       }
 
-      .submenu > a span.mi-parte {
+      /* --------- Mi Cuenta RESPONSIVO --------- */
+      .submenu > a .escritorio-micuenta {
+        display: none;
+      }
+      .submenu > a .movil-micuenta {
+        display: block;
+        font-size: 1em;
+        text-align: center;
+      }
+      .movil-micuenta .mi-parte {
         display: inline-block;
       }
-
-      .submenu > a span.cuenta-parte {
+      .movil-micuenta .cuenta-parte {
         display: block;
         margin-top: 2px;
       }
 
-      .submenu > a i {
-        margin-left: 2px;
+      /* Logo más pequeño pero siempre circular */
+      .logo img.logo-img {
+        height: 38px;
+        width: 38px;
+        border-radius: 50%;
       }
     }
+    
+    .nosotros-link {
+      display: inline-block;
+      margin-top: 30px;
+      background-color: #4caf50;
+      color: white !important;
+      padding: 12px 24px;
+      border-radius: 12px;
+      text-decoration: none !important;
+      font-weight: bold;
+      font-size: 1.2rem;
+      box-shadow: 0 4px 18px 0 rgba(0,0,0,0.13);
+      border: none;
+      outline: none;
+      cursor: pointer;
+      opacity: 0;
+      /* Usa fadeInUp igual que el subtítulo, pero con un delay mayor */
+      animation: fadeInUp 1.5s ease-in-out 1.5s forwards;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    }
+
+    .nosotros-link:hover,
+    .nosotros-link:focus {
+      background-color: #388e3c;
+      color: #fff !important;
+      box-shadow: 0 2px 12px 0 rgba(76,175,80,0.23);
+      text-decoration: none;
+    }
+
+
+
+
   </style>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -138,7 +185,7 @@
     });
   </script>
 </head>
-<body>
+<body style="background: url('img/fondo.jpg') center/cover no-repeat fixed;">
   <header>
     <nav>
       <ul class="menu">
@@ -150,8 +197,15 @@
         <?php if (isset($_SESSION['usuario'])): ?>
           <li class="submenu">
             <a href="cuenta">
-              <span class="mi-parte">Mi <i class="fas fa-user"></i></span>
-              <span class="cuenta-parte">Cuenta</span>
+              <!-- VERSIÓN ESCRITORIO -->
+              <span class="escritorio-micuenta">
+                Mi Cuenta <i class="fas fa-user-group"></i>
+              </span>
+              <!-- VERSIÓN MÓVIL -->
+              <span class="movil-micuenta">
+                <span class="mi-parte">Mi <i class="fas fa-user-group"></i></span>
+                <span class="cuenta-parte">Cuenta</span>
+              </span>
             </a>
             <ul class="submenu-opciones">
               <li><a href="mi_cuenta.php">Mi perfil</a></li>
@@ -170,6 +224,7 @@
     </nav>
   </header>
 
+  <!-- El resto igual que tu código -->
   <section class="hero">
     <img src="img/hueso.png" class="huesito h1" alt="Hueso decorativo" />
     <img src="img/hueso.png" class="huesito h2" alt="Hueso decorativo" />
