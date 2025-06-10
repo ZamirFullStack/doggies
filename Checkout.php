@@ -326,62 +326,108 @@ $tiposDocumento = obtenerValoresEnum($pdo, 'usuario', 'Tipo_Documento');
 
   </style>
   <script>
-    let departamentosData = [];
+    let coberturaEnvia = [];
     let ultimoEnvioCotizado = null;
 
-    async function cargarDepartamentos() {
-      const response = await fetch('departamentos.json');
-      departamentosData = await response.json();
-      const departamentoSelect = document.getElementById('departamento');
-      departamentosData.forEach(depto => {
-        const option = document.createElement('option');
-        option.value = depto.departamento;
-        option.textContent = depto.departamento;
-        departamentoSelect.appendChild(option);
-      });
-    }
-
-    function actualizarCiudades() {
-      const departamento = document.getElementById('departamento').value;
-      const ciudadSelect = document.getElementById('ciudad');
-      ciudadSelect.innerHTML = '';
-      const depto = departamentosData.find(d => d.departamento === departamento);
-      if (depto) {
-        depto.ciudades.forEach(ciudad => {
-          const option = document.createElement('option');
-          option.value = ciudad;
-          option.textContent = ciudad;
-          ciudadSelect.appendChild(option);
+    async function cargarCoberturaEnvia() {
+        const resp = await fetch('envia_cobertura.json');
+        coberturaEnvia = await resp.json();
+        const deptoSelect = document.getElementById('departamento');
+        deptoSelect.innerHTML = '<option value="">Seleccione</option>';
+        coberturaEnvia.forEach(depto => {
+            let opt = document.createElement('option');
+            opt.value = depto.departamento;
+            opt.textContent = depto.departamento;
+            deptoSelect.appendChild(opt);
         });
-      }
-      ciudadSelect.dispatchEvent(new Event('change'));
     }
-
-    async function cotizarEnvio() {
-      const departamento = document.getElementById('departamento').value;
-      const ciudad = document.getElementById('ciudad').value;
-      if (!departamento || !ciudad) return;
-
-      document.getElementById('envio-mensaje').textContent = 'Calculando envío...';
-      const resp = await fetch('cotizar_envio.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          departamento_destino: departamento,
-          ciudad_destino: ciudad
-        })
-      });
-      const data = await resp.json();
-      if (data.ok) {
-        ultimoEnvioCotizado = data.precio;
-        document.getElementById('envio-mensaje').textContent = 'Envío: $' + data.precio.toLocaleString('es-CO');
-        actualizarResumen();
-      } else {
-        ultimoEnvioCotizado = 0;
-        document.getElementById('envio-mensaje').textContent = data.error || 'Error al cotizar envío';
-        actualizarResumen();
-      }
+    function actualizarCiudadesEnvia() {
+        const deptoSelect = document.getElementById('departamento');
+        const ciudadSelect = document.getElementById('ciudad');
+        ciudadSelect.innerHTML = '<option value="">Seleccione</option>';
+        const depto = coberturaEnvia.find(d => d.departamento === deptoSelect.value);
+        if (depto) {
+            depto.ciudades.forEach(ciudad => {
+                let opt = document.createElement('option');
+                opt.value = ciudad;
+                opt.textContent = ciudad;
+                ciudadSelect.appendChild(opt);
+            });
+        }
     }
+    document.addEventListener('DOMContentLoaded', () => {
+        cargarCoberturaEnvia();
+        document.getElementById('departamento').addEventListener('change', actualizarCiudadesEnvia);
+        document.getElementById('ciudad').addEventListener('change', cotizarEnvio);
+
+        setTimeout(actualizarResumen, 800);
+
+        // Vincula evento de cambio a todos los inputs de cantidad para AJAX + actualización del resumen y envío
+        document.querySelectorAll('#resumen-pedido .cantidad').forEach((input, idx) => {
+          input.setAttribute('data-index', idx); // Asegura que cada input tenga su índice de carrito
+          input.addEventListener('input', function () {
+            let valor = parseInt(this.value);
+            if (isNaN(valor) || valor < 1) {
+              alert("La cantidad mínima permitida es 1.");
+              this.value = 1;
+            } else if (valor > 25) {
+              alert("La cantidad máxima permitida es 25.");
+              this.value = 25;
+            }
+            // AJAX para actualizar cantidad en la sesión PHP
+            fetch('actualizar_cantidad.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: 'index=' + encodeURIComponent(this.dataset.index) + '&cantidad=' + encodeURIComponent(this.value)
+            }).then(() => {
+              actualizarResumen();
+              cotizarEnvio();
+            });
+          });
+        });
+    });
+async function cotizarEnvio() {
+  const departamento = document.getElementById('departamento').value;
+  const ciudad = document.getElementById('ciudad').value;
+  // Suma peso y calcula dimensiones totales del carrito
+  let peso = 0, largo = 0, ancho = 0, alto = 0;
+  document.querySelectorAll('#resumen-pedido tbody tr').forEach(row => {
+    const cantidad = parseInt(row.querySelector('.cantidad').value);
+    const productoPeso = parseFloat(row.querySelector('.cantidad').dataset.peso || 1);
+    const productoLargo = parseFloat(row.querySelector('.cantidad').dataset.largo || 20);
+    const productoAncho = parseFloat(row.querySelector('.cantidad').dataset.ancho || 20);
+    const productoAlto = parseFloat(row.querySelector('.cantidad').dataset.alto || 20);
+    peso += productoPeso * cantidad;
+    largo = Math.max(largo, productoLargo);
+    ancho = Math.max(ancho, productoAncho);
+    alto += productoAlto * cantidad; // ejemplo apilando alto
+  });
+
+  document.getElementById('envio-mensaje').textContent = 'Calculando envío...';
+  const resp = await fetch('cotizar_envio.php', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      departamento_destino: departamento,
+      ciudad_destino: ciudad,
+      peso: peso,
+      largo: largo,
+      ancho: ancho,
+      alto: alto
+    })
+  });
+  const data = await resp.json();
+  if (data.ok) {
+    ultimoEnvioCotizado = data.precio;
+    document.getElementById('envio-mensaje').textContent = 'Envío: $' + data.precio.toLocaleString('es-CO');
+    actualizarResumen();
+  } else {
+    ultimoEnvioCotizado = 0;
+    document.getElementById('envio-mensaje').textContent = data.error || 'Error al cotizar envío';
+    actualizarResumen();
+  }
+}
+
 
     function actualizarResumen() {
       let total = 0;
@@ -424,39 +470,6 @@ $tiposDocumento = obtenerValoresEnum($pdo, 'usuario', 'Tipo_Documento');
         </tr>
       `;
 }
-
-
-    document.addEventListener('DOMContentLoaded', () => {
-      cargarDepartamentos();
-      document.getElementById('departamento').addEventListener('change', actualizarCiudades);
-      document.getElementById('ciudad').addEventListener('change', cotizarEnvio);
-
-      setTimeout(actualizarResumen, 800);
-
-      // Vincula evento de cambio a todos los inputs de cantidad para AJAX + actualización del resumen y envío
-      document.querySelectorAll('#resumen-pedido .cantidad').forEach((input, idx) => {
-        input.setAttribute('data-index', idx); // Asegura que cada input tenga su índice de carrito
-        input.addEventListener('input', function () {
-          let valor = parseInt(this.value);
-          if (isNaN(valor) || valor < 1) {
-            alert("La cantidad mínima permitida es 1.");
-            this.value = 1;
-          } else if (valor > 25) {
-            alert("La cantidad máxima permitida es 25.");
-            this.value = 25;
-          }
-          // AJAX para actualizar cantidad en la sesión PHP
-          fetch('actualizar_cantidad.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'index=' + encodeURIComponent(this.dataset.index) + '&cantidad=' + encodeURIComponent(this.value)
-          }).then(() => {
-            actualizarResumen();
-            cotizarEnvio();
-          });
-        });
-      });
-    });
   </script>
 </head>
 <body class="login-page">
@@ -543,7 +556,16 @@ $tiposDocumento = obtenerValoresEnum($pdo, 'usuario', 'Tipo_Documento');
               <span><?= $nombreCompleto ?></span>
             </td>
             <td data-label="Cantidad">
-              <input type="number" class="cantidad" name="cantidades[<?= $index ?>]" value="<?= $producto['cantidad'] ?>" min="1" max="25" data-precio="<?= $producto['precio'] ?>" data-index="<?= $index ?>">
+              <input type="number" class="cantidad"
+              name="cantidades[<?= $index ?>]"
+              value="<?= $producto['cantidad'] ?>" min="1" max="25"
+              data-precio="<?= $producto['precio'] ?>"
+              data-index="<?= $index ?>"
+              data-peso="<?= $producto['peso'] ?? 1 ?>"
+              data-largo="<?= $producto['largo'] ?? 20 ?>"
+              data-ancho="<?= $producto['ancho'] ?? 20 ?>"
+              data-alto="<?= $producto['alto'] ?? 20 ?>"
+            >
             </td>
             <td data-label="Precio">
               $<?= number_format($producto['precio'], 0, ',', '.') ?>

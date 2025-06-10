@@ -119,7 +119,7 @@ if (!$producto) die("Producto no encontrado.");
 $stmt = $pdo->prepare("SELECT AVG(Estrellas) as promedio, COUNT(*) as cantidad FROM opinion WHERE ID_Producto = ?");
 $stmt->execute([$id]);
 $calif = $stmt->fetch(PDO::FETCH_ASSOC);
-$promedio = round($calif['promedio'], 1);
+$promedio = round($calif['promedio'] ?? 0, 1);
 $cantidad = $calif['cantidad'];
 
 $stmtOpiniones = $pdo->prepare("SELECT Usuario AS usuario, Comentario AS comentario, Estrellas AS estrellas, Fecha AS fecha FROM opinion WHERE ID_Producto = ? ORDER BY Fecha DESC, ID_Opinion DESC");

@@ -22,6 +22,13 @@ if (
 $departamento_destino = $data['departamento_destino'];
 $ciudad_destino = $data['ciudad_destino'];
 
+if (isset($fix_departamentos[$departamento_destino])) {
+    $departamento_destino = $fix_departamentos[$departamento_destino];
+}
+if (isset($fix_ciudades[$ciudad_destino])) {
+    $ciudad_destino = $fix_ciudades[$ciudad_destino];
+}
+
 // =============== CONECTA A LA BD ===============
 $url = 'mysql://root:AaynZNNKYegnXoInEgQefHggDxoRieEL@centerbeam.proxy.rlwy.net:58462/railway';
 $dbparts = parse_url($url);

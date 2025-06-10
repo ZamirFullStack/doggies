@@ -165,6 +165,23 @@ $pedidos = $stmt_pedidos->fetchAll(PDO::FETCH_ASSOC);
       transform: translateY(-50%);
       cursor: pointer;
     }
+
+    .compras-scroll {
+    max-height: 420px;      /* Ajusta el alto como quieras (420px ~ 3-4 pedidos en desktop) */
+    overflow-y: auto;
+    margin-bottom: 1.5em;
+    padding-right: 5px;     /* Espacio para scrollbar */
+  }
+  .compras-scroll::-webkit-scrollbar {
+    width: 8px;
+    background: #f2f2f2;
+    border-radius: 6px;
+  }
+  .compras-scroll::-webkit-scrollbar-thumb {
+    background: #ddd;
+    border-radius: 6px;
+  }
+
   </style>
 </head>
 <body class="login-page">
@@ -206,33 +223,36 @@ $pedidos = $stmt_pedidos->fetchAll(PDO::FETCH_ASSOC);
         <button type="submit" class="auth-btn">Actualizar perfil</button>
       </form>
 
-      <h2 style="margin-top: 2em;">Historial de Compras</h2>
-      <?php if (count($pedidos) > 0): ?>
-        <?php foreach ($pedidos as $pedido): ?>
-          <div class="pedido-box">
-            <img src="<?= !empty($pedido['Imagen_URL']) ? htmlspecialchars($pedido['Imagen_URL']) : 'img/Productos/default.jpg' ?>" alt="<?= htmlspecialchars($pedido['Nombre_Producto']) ?>">
-            <div class="pedido-info">
-              <h4><?= htmlspecialchars($pedido['Nombre_Producto']) ?></h4>
-              <p>Fecha: <?= formatearFecha($pedido['Fecha_Pedido']) ?></p>
-              <p>Cantidad: <?= $pedido['Cantidad'] ?> - Precio: $<?= number_format($pedido['Precio_Unitario'], 0, ',', '.') ?></p>
-              <p>Total: $<?= number_format($pedido['Precio_Unitario'] * $pedido['Cantidad'], 0, ',', '.') ?></p>
-              <p>Forma de pago: <?= $pedido['Metodo_Pago'] ?></p>
-            </div>
-            <?php if (isset($pedido['Stock']) && $pedido['Stock'] > 0): ?>
-              <form method="POST" action="agregar_carrito.php">
-                <input type="hidden" name="nombre" value="<?= htmlspecialchars($pedido['Nombre_Producto']) ?>">
-                <input type="hidden" name="precio" value="<?= $pedido['Precio_Unitario'] ?>">
-                <input type="hidden" name="cantidad" value="1">
-                <button type="submit">Volver a comprar</button>
-              </form>
-            <?php else: ?>
-              <span class="agotado">Producto no disponible</span>
-            <?php endif; ?>
-          </div>
-        <?php endforeach; ?>
-      <?php else: ?>
-        <p>No hay pedidos registrados aún.</p>
-      <?php endif; ?>
+<h2 style="margin-top: 2em;">Historial de Compras</h2>
+<?php if (count($pedidos) > 0): ?>
+  <div class="compras-scroll">
+    <?php foreach ($pedidos as $pedido): ?>
+      <div class="pedido-box">
+        <img src="<?= !empty($pedido['Imagen_URL']) ? htmlspecialchars($pedido['Imagen_URL']) : 'img/Productos/default.jpg' ?>" alt="<?= htmlspecialchars($pedido['Nombre_Producto']) ?>">
+        <div class="pedido-info">
+          <h4><?= htmlspecialchars($pedido['Nombre_Producto']) ?></h4>
+          <p>Fecha: <?= formatearFecha($pedido['Fecha_Pedido']) ?></p>
+          <p>Cantidad: <?= $pedido['Cantidad'] ?> - Precio: $<?= number_format($pedido['Precio_Unitario'], 0, ',', '.') ?></p>
+          <p>Total: $<?= number_format($pedido['Precio_Unitario'] * $pedido['Cantidad'], 0, ',', '.') ?></p>
+          <p>Forma de pago: <?= $pedido['Metodo_Pago'] ?></p>
+        </div>
+        <?php if (isset($pedido['Stock']) && $pedido['Stock'] > 0): ?>
+          <form method="POST" action="agregar_carrito.php">
+            <input type="hidden" name="nombre" value="<?= htmlspecialchars($pedido['Nombre_Producto']) ?>">
+            <input type="hidden" name="precio" value="<?= $pedido['Precio_Unitario'] ?>">
+            <input type="hidden" name="cantidad" value="1">
+            <button type="submit">Volver a comprar</button>
+          </form>
+        <?php else: ?>
+          <span class="agotado">Producto no disponible</span>
+        <?php endif; ?>
+      </div>
+    <?php endforeach; ?>
+  </div>
+<?php else: ?>
+  <p>No hay pedidos registrados aún.</p>
+<?php endif; ?>
+
     </div>
   </main>
 
