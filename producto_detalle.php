@@ -781,11 +781,19 @@ footer p { margin-top: 15px; font-size: 0.9rem; }
   <a href="Servicios.php" class="nav-link"><i class="fas fa-concierge-bell"></i> Servicios</a>
   <a href="index.php" class="logo-box"><img src="img/fondo.jpg" alt="Doggies" class="logo-img"></a>
   <form method="get" action="Productos.php" style="flex:1 1 300px; max-width:450px; display:flex;">
-    <input name="busqueda" id="buscador-producto" type="text" placeholder="Buscar productos..." autocomplete="off" style="flex:1; padding:8px 12px; border: 2px solid #28a745; border-right:none; border-radius:6px 0 0 6px; font-size:1rem; outline:none;">
+    <input 
+      name="busqueda" 
+      id="buscador-producto" 
+      type="text" 
+      placeholder="Buscar productos..." 
+      autocomplete="off" 
+      value="<?php echo isset($_GET['busqueda']) ? htmlspecialchars($_GET['busqueda']) : ''; ?>"
+      style="flex:1; padding:8px 12px; border: 2px solid #28a745; border-right:none; border-radius:6px 0 0 6px; font-size:1rem; outline:none;">
     <button type="submit" style="background:#28a745; border:none; color:white; padding:0 15px; cursor:pointer; border-radius:0 6px 6px 0; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">
       <i class="fas fa-search"></i>
     </button>
   </form>
+
 
 <a href="carrito.php" class="nav-link">
   <i class="fas fa-cart-shopping" id="icono-carrito"></i>

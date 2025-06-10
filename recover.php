@@ -108,9 +108,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       padding: 0 20px;
       list-style: none;
     }
-    .menu li {
-      flex: 1;
-      text-align: center;
+    .menu a:hover {
+      background-color: #28a745; /* verde */
+      color: white !important;
+      border-radius: 6px;
+      padding: 8px 12px; /* para que el fondo abarque bien */
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .menu a:hover i {
+      color: white !important;
+    }
+
+    .menu li a:hover {
+  background-color: #28a745; /* verde */
+  color: white !important;
+    }
+
+    .menu li a:hover i {
+      color: white !important;
+    }
+
+    .menu li.logo a:hover {
+      background-color: transparent !important;
+      color: inherit !important;
+      padding: 0 !important;
     }
     .menu li.logo a {
       display: block;
@@ -129,6 +151,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       font-weight: bold;
       font-size: 1rem;
     }
+
+    
+
     main {
       flex: 1;
       display: flex;
@@ -183,6 +208,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .auth-btn:hover {
       background-color: #43a047;
     }
+
     footer {
       background-color: rgba(51, 51, 51, 0.95);
       color: #fff;

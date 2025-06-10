@@ -234,18 +234,20 @@ $pedidos = $pdo->query("SELECT p.*, u.Nombre AS Nombre_Usuario FROM pedido p LEF
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 80px;
+      gap: 60px; /* opcional, menos separación */
       list-style: none;
       background: #fff;
-      padding: 18px 7px;
+      padding: 12px 7px; /* reduce padding vertical */
       margin-bottom: 2em;
     }
+
     header nav .menu li {
-      padding-top: 1.5rem;
+      padding-top: 1.5rem; /* elimina el padding extra arriba */
       display: flex;
       align-items: center;
       justify-content: center;
     }
+
     header nav .menu .logo {
       padding-top: 0.8rem;
       height: 54px;

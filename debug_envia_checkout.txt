@@ -1,0 +1,8 @@
+{
+    "meta": "error",
+    "error": {
+        "code": 400,
+        "description": "Invalid Option",
+        "message": "Required property missing: carrier, data: {\"type\":1} at #->properties:shipment"
+    }
+}

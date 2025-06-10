@@ -90,8 +90,6 @@ try {
   <link rel="icon" type="image/jpeg" href="img/fondo.jpg" />
   <style>
 /* ==== RESETEO GENERAL ==== */
-
-
 * {
   margin: 0;
   padding: 0;
@@ -107,9 +105,9 @@ body {
 }
 
 .logo-img {
-  height: 55px;         /* Antes: 44px */
+  height: 55px;         
   width: auto;
-  max-width: 140px;     /* Antes: 110px */
+  max-width: 140px;     
   object-fit: contain;
   border-radius: 10px;
   display: block;
@@ -119,11 +117,10 @@ body {
 
 @media (max-width: 700px) {
   .logo-img {
-    height: 42px;        /* Antes: 28px */
-    max-width: 33vw;     /* Antes: 25vw */
+    height: 42px;        
+    max-width: 33vw;     
   }
 }
-
 
 /* ==== HEADER NUEVO ==== */
 header {
@@ -201,6 +198,7 @@ h2 {
   margin: 1.5rem 0 1rem 0;
   color: #333;
 }
+
 /* ==== CARD EMPTY CARRITO ==== */
 .carrito-card-empty {
   max-width: 450px;
@@ -327,7 +325,8 @@ h2 {
   background: #fafafa;
   padding: 3px;
 }
-/* ==== BOTON COMPRAR ==== */
+
+/* ==== BOTÓN COMPRAR ==== */
 .boton-comprar {
   background-color: #28a745;
   color: white;
@@ -359,11 +358,12 @@ h2 {
   }
   .resumen-footer { text-align: center; }
 }
-/* ==== ELIMINAR BUTTON ==== */
+
+/* ==== BOTÓN ELIMINAR ==== */
 .delete-form button {
-  background: #f44336;
-  color: #fff;
-  border: none;
+  background-color: #f44336 !important;
+  color: #fff !important;
+  border: none !important;
   border-radius: 7px;
   padding: 8px 18px;
   font-size: 1rem;
@@ -372,16 +372,9 @@ h2 {
   transition: background 0.16s;
 }
 .delete-form button:hover {
-  background: #d32f2f;
+  background-color: #d32f2f !important;
 }
-@media (max-width: 520px) {
-  .delete-form button {
-    font-size: 0.94rem;
-    padding: 7px 14px;
-    width: 100%;
-    min-width: 70px;
-  }
-}
+
 /* ==== RESPONSIVE TABLA ==== */
 @media (max-width: 700px) {
   .carrito-wrapper { padding: 1vw 1vw; }
@@ -390,13 +383,86 @@ h2 {
   .carrito-img { width: 34px; height: 34px; }
   .carrito-table th, .carrito-table td { padding: 8px 4px; font-size: 0.94rem; }
 }
-@media (max-width: 500px) {
-  .carrito-wrapper { padding: 2vw 0vw; border-radius: 0; box-shadow: none;}
-  .carrito-table th, .carrito-table td { padding: 5px 1px; font-size: 0.86rem; }
-  .carrito-table th { font-size: 0.91rem;}
-  .boton-comprar { font-size: 1rem; }
-  .menu-link { font-size: 0.91rem; }
+
+/* ==== RESPONSIVE PARA IPHONE SE Y TELÉFONOS MUY PEQUEÑOS ==== */
+@media (max-width: 520px) {
+  /* Ocultar tabla para móviles pequeños */
+  .carrito-wrapper table.carrito-table {
+    display: none;
+  }
+
+  /* Mostrar lista tipo tarjetas */
+  .carrito-lista-movil {
+    display: flex !important;
+    flex-direction: column;
+    gap: 15px;
+    padding: 0 8px;
+  }
+
+  .carrito-item-movil {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .carrito-item-header {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .carrito-img {
+    width: 50px !important;
+    height: 50px !important;
+    border-radius: 8px;
+    object-fit: cover;
+  }
+
+  .carrito-nombre {
+    font-weight: 700;
+    font-size: 1.05rem;
+    flex: 1 1 auto;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .carrito-detalles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 0.92rem;
+    color: #555;
+    align-items: center;
+  }
+
+  .carrito-detalles span {
+    min-width: 48%;
+  }
+
+  .carrito-acciones {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .cantidad-form input.cantidad-input {
+    width: 65px;
+  }
+
+  .delete-form button {
+    flex: 1 1 auto;
+    min-width: 100px;
+    width: 100% !important;
+    padding: 10px 0 !important;
+    font-size: 1rem !important;
+  }
 }
+
 /* ==== FOOTER ==== */
 footer {
   background-color: #333;
@@ -420,6 +486,7 @@ footer {
 .social-links a:hover {
   color: #ffd700;
 }
+
 footer::after {
   content: "© 2025 Doggies. Todos los derechos reservados.";
   display: block;
@@ -427,6 +494,7 @@ footer::after {
   font-size: 0.9rem;
   color: #ccc;
 }
+
 /* ==== FOOTER SIEMPRE ABAJO EN RESPONSIVE ==== */
 @media (max-width: 700px) {
   body {
@@ -445,7 +513,25 @@ footer::after {
   }
 }
 
-  </style>
+
+.menu-side a.menu-link {
+  color: #222;
+  font-weight: bold;
+  font-size: 1.04rem;
+  text-decoration: none;
+  padding: 0.5em 0.6em;
+  transition: color 0.2s, background-color 0.3s ease;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.menu-side a.menu-link:hover {
+  color: white;
+  background-color: #28a745;
+}
+
+
+</style>
 </head>
 <body>
 <header>
@@ -495,6 +581,55 @@ footer::after {
           </tr>
         </thead>
         <tbody>
+          <div class="carrito-lista-movil" style="display:none;">
+<?php foreach ($carrito as $index => $producto):
+    $stmt = $pdo->prepare("SELECT Imagen_URL FROM producto WHERE Nombre = ?");
+    $stmt->execute([$producto['nombre']]);
+    $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    $imgFile = trim($fila['Imagen_URL'] ?? '');
+    $imgFile = ltrim($imgFile, '/');
+    if (!$imgFile) {
+        $imgRuta = "https://doggies-production.up.railway.app/img/default.jpg";
+    } else if (filter_var($imgFile, FILTER_VALIDATE_URL)) {
+        $imgRuta = $imgFile;
+    } else if (strpos($imgFile, 'img/') === 0) {
+        $imgRuta = "https://doggies-production.up.railway.app/" . $imgFile;
+    } else {
+        $imgRuta = "https://doggies-production.up.railway.app/img/" . $imgFile;
+    }
+
+    $subtotal = $producto['precio'] * $producto['cantidad'];
+?>
+  <div class="carrito-item-movil">
+    <div class="carrito-item-header">
+      <img src="<?= htmlspecialchars($imgRuta) ?>" alt="<?= htmlspecialchars($producto['nombre']) ?>" class="carrito-img" />
+      <div class="carrito-nombre"><?= htmlspecialchars($producto['nombre'] . ' - ' . $producto['presentacion']) ?></div>
+    </div>
+    <div class="carrito-detalles">
+      <span>Precio: $<?= number_format($producto['precio'],0,',','.') ?></span>
+      <span>Subtotal: $<?= number_format($subtotal,0,',','.') ?></span>
+      <span>Cantidad:</span>
+      <form method="POST" action="carrito.php" class="cantidad-form" style="flex-grow:1;">
+        <input type="hidden" name="update_index" value="<?= $index ?>">
+        <input type="number"
+               name="cantidad"
+               value="<?= $producto['cantidad'] ?>"
+               min="1" max="25"
+               class="cantidad-input"
+               onchange="this.form.submit()">
+      </form>
+    </div>
+    <div class="carrito-acciones">
+      <form method="POST" action="carrito.php" class="delete-form" onsubmit="return confirm('¿Eliminar este producto?');" style="flex-grow:1;">
+        <input type="hidden" name="delete_index" value="<?= $index ?>">
+        <button type="submit"><i class="fas fa-trash"></i> Eliminar</button>
+      </form>
+    </div>
+  </div>
+<?php endforeach; ?>
+</div>
+
           <?php foreach ($carrito as $index => $producto):
     // Obtiene la imagen del producto
     $stmt = $pdo->prepare("SELECT Imagen_URL FROM producto WHERE Nombre = ?");

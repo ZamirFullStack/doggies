@@ -355,41 +355,45 @@ $tiposDocumento = obtenerValoresEnum($pdo, 'usuario', 'Tipo_Documento');
             });
         }
     }
-    document.addEventListener('DOMContentLoaded', () => {
-        cargarCoberturaEnvia();
-        document.getElementById('departamento').addEventListener('change', actualizarCiudadesEnvia);
-        document.getElementById('ciudad').addEventListener('change', cotizarEnvio);
+document.addEventListener('DOMContentLoaded', () => {
+    cargarCoberturaEnvia();
+    document.getElementById('departamento').addEventListener('change', actualizarCiudadesEnvia);
+    document.getElementById('ciudad').addEventListener('change', cotizarEnvio);
+    document.getElementById('direccion').addEventListener('input', cotizarEnvio);
+    document.getElementById('barrio').addEventListener('input', cotizarEnvio);
 
-        setTimeout(actualizarResumen, 800);
+    setTimeout(actualizarResumen, 800);
 
-        // Vincula evento de cambio a todos los inputs de cantidad para AJAX + actualización del resumen y envío
-        document.querySelectorAll('#resumen-pedido .cantidad').forEach((input, idx) => {
-          input.setAttribute('data-index', idx); // Asegura que cada input tenga su índice de carrito
-          input.addEventListener('input', function () {
-            let valor = parseInt(this.value);
-            if (isNaN(valor) || valor < 1) {
-              alert("La cantidad mínima permitida es 1.");
-              this.value = 1;
-            } else if (valor > 25) {
-              alert("La cantidad máxima permitida es 25.");
-              this.value = 25;
-            }
-            // AJAX para actualizar cantidad en la sesión PHP
-            fetch('actualizar_cantidad.php', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-              body: 'index=' + encodeURIComponent(this.dataset.index) + '&cantidad=' + encodeURIComponent(this.value)
-            }).then(() => {
-              actualizarResumen();
-              cotizarEnvio();
-            });
-          });
+    document.querySelectorAll('#resumen-pedido .cantidad').forEach((input, idx) => {
+      input.setAttribute('data-index', idx);
+      input.addEventListener('input', function () {
+        let valor = parseInt(this.value);
+        if (isNaN(valor) || valor < 1) {
+          alert("La cantidad mínima permitida es 1.");
+          this.value = 1;
+        } else if (valor > 25) {
+          alert("La cantidad máxima permitida es 25.");
+          this.value = 25;
+        }
+        fetch('actualizar_cantidad.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: 'index=' + encodeURIComponent(this.dataset.index) + '&cantidad=' + encodeURIComponent(this.value)
+        }).then(() => {
+          actualizarResumen();
+          cotizarEnvio();
         });
+      });
     });
+});
+
 async function cotizarEnvio() {
   const departamento = document.getElementById('departamento').value;
   const ciudad = document.getElementById('ciudad').value;
-  // Suma peso y calcula dimensiones totales del carrito
+  const direccion = document.querySelector('[name="direccion"]').value;
+  const barrio = document.querySelector('[name="barrio"]').value;
+
+  // Cálculo de peso, dimensiones...
   let peso = 0, largo = 0, ancho = 0, alto = 0;
   document.querySelectorAll('#resumen-pedido tbody tr').forEach(row => {
     const cantidad = parseInt(row.querySelector('.cantidad').value);
@@ -400,7 +404,7 @@ async function cotizarEnvio() {
     peso += productoPeso * cantidad;
     largo = Math.max(largo, productoLargo);
     ancho = Math.max(ancho, productoAncho);
-    alto += productoAlto * cantidad; // ejemplo apilando alto
+    alto += productoAlto * cantidad;
   });
 
   document.getElementById('envio-mensaje').textContent = 'Calculando envío...';
@@ -410,6 +414,8 @@ async function cotizarEnvio() {
     body: JSON.stringify({
       departamento_destino: departamento,
       ciudad_destino: ciudad,
+      direccion: direccion,
+      barrio: barrio,
       peso: peso,
       largo: largo,
       ancho: ancho,
@@ -427,50 +433,7 @@ async function cotizarEnvio() {
     actualizarResumen();
   }
 }
-
-
-    function actualizarResumen() {
-      let total = 0;
-      document.querySelectorAll('#resumen-pedido tbody tr').forEach(row => {
-        const cantidadInput = row.querySelector('.cantidad');
-        const precio = parseFloat(cantidadInput.dataset.precio);
-        let cantidad = parseInt(cantidadInput.value);
-        if (isNaN(cantidad) || cantidad < 1) cantidad = 1;
-        else if (cantidad > 25) cantidad = 25;
-        const subtotal = precio * cantidad;
-        row.querySelector('.subtotal').textContent = '$' + subtotal.toLocaleString('es-CO');
-        total += subtotal;
-      });
-      const iva = total * 0.05;
-      const envio = ultimoEnvioCotizado !== null ? ultimoEnvioCotizado : 0;
-      const totalConTodo = total + iva + envio;
-
-      // Aquí actualizas los inputs ocultos:
-      document.getElementById('campo_subtotal').value = total.toFixed(2);
-      document.getElementById('campo_iva').value = iva.toFixed(2);
-      document.getElementById('campo_envio').value = envio.toFixed(2);
-      document.getElementById('campo_total').value = totalConTodo.toFixed(2);
-
-      document.getElementById('totales').innerHTML = `
-        <tr>
-          <td colspan="3">Subtotal (sin IVA):</td>
-          <td style="text-align:right;">$${total.toLocaleString('es-CO')}</td>
-        </tr>
-        <tr>
-          <td colspan="3">IVA (5%):</td>
-          <td style="text-align:right;">$${iva.toLocaleString('es-CO')}</td>
-        </tr>
-        <tr>
-          <td colspan="3">Envío:</td>
-          <td style="text-align:right;">${envio > 0 ? '$' + envio.toLocaleString('es-CO') : ''}</td>
-        </tr>
-        <tr>
-          <td colspan="3"><strong>Total de tu compra:</strong></td>
-          <td style="text-align:right;"><strong>$${totalConTodo.toLocaleString('es-CO')}</strong></td>
-        </tr>
-      `;
-}
-  </script>
+</script>
 </head>
 <body class="login-page">
   <header>

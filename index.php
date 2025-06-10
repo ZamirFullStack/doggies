@@ -170,7 +170,25 @@
       text-decoration: none;
     }
 
+    .menu li a:hover {
+      background-color: #28a745; /* verde */
+      color: white !important;
+      border-radius: 6px;
+      padding: 8px 12px; /* un poco de padding para que el fondo abarque bien */
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
 
+    .menu li a:hover i {
+      color: white !important;
+    }
+
+    /* EXCLUIMOS EL LOGO PARA QUE NO TENGA HOVER */
+    .menu li.logo a:hover {
+      background-color: transparent !important;
+      color: inherit !important;
+      padding: 0 !important;
+      cursor: default;
+    }
 
 
   </style>
@@ -192,7 +210,9 @@
         <li><a href="Productos.php"><i class="fas fa-dog"></i><br>Productos</a></li>
         <li><a href="Servicios.php"><i class="fas fa-concierge-bell"></i><br>Servicios</a></li>
         <li class="logo">
-          <img src="img/fondo.jpg" alt="Logo Doggies" class="logo-img">
+          <a href="index.php">
+            <img src="img/fondo.jpg" alt="Logo Doggies" class="logo-img" />
+          </a>
         </li>
         <?php if (isset($_SESSION['usuario'])): ?>
           <li class="submenu">

@@ -126,6 +126,30 @@
       text-decoration: underline;
     }
 
+  .menu li a {
+    display: inline-block;
+    text-align: center;
+    line-height: 1;
+    font-weight: bold;
+    color: #000;
+    text-decoration: none;
+    border-radius: 6px;
+    padding: 0.5em 0.6em; /* igual que carrito */
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  .menu li a:hover {
+    background-color: #28a745; /* verde */
+    color: white !important;
+  }
+
+
+  .menu li.logo a:hover {
+    background-color: transparent !important;
+    color: inherit !important;
+    padding: 0 !important;
+  }
+
     footer {
       background-color: rgba(51, 51, 51, 0.95);
       color: #fff;

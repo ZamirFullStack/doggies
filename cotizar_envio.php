@@ -2,10 +2,9 @@
 session_start();
 header('Content-Type: application/json');
 
-// =============== AJUSTA TU TOKEN DE ENVIA ===============
 define('ENVIA_TOKEN', '360e0f5db868461617b52260fd2b45ced6ffee5f65f3795254ce89764ea06cb5');
 
-// =============== VERIFICAR CARRITO ===============
+// --- Validación básica de carrito y datos ---
 if (empty($_SESSION['carrito'])) {
     echo json_encode(['ok'=>false, 'error'=>'Carrito vacío']);
     exit;
@@ -19,9 +18,11 @@ if (
     echo json_encode(['ok'=>false, 'error'=>'Departamento o ciudad no recibidos']);
     exit;
 }
+
 $departamento_destino = $data['departamento_destino'];
 $ciudad_destino = $data['ciudad_destino'];
 
+// --- (Opcional) Mapeo de nombres de ciudad/depto si lo usas
 if (isset($fix_departamentos[$departamento_destino])) {
     $departamento_destino = $fix_departamentos[$departamento_destino];
 }
@@ -29,7 +30,7 @@ if (isset($fix_ciudades[$ciudad_destino])) {
     $ciudad_destino = $fix_ciudades[$ciudad_destino];
 }
 
-// =============== CONECTA A LA BD ===============
+// --- Conexión a BD ---
 $url = 'mysql://root:AaynZNNKYegnXoInEgQefHggDxoRieEL@centerbeam.proxy.rlwy.net:58462/railway';
 $dbparts = parse_url($url);
 $host = $dbparts['host'];
@@ -46,14 +47,13 @@ try {
     exit;
 }
 
-// =============== OBTENER PESO Y DIMENSIONES DE TODOS LOS PRODUCTOS ===============
+// --- Armar paquetes desde el carrito ---
 $peso_total = 0;
 $alto_max = $ancho_max = $largo_max = 0;
 $productos_envio = [];
 
 foreach ($_SESSION['carrito'] as $item) {
     if (empty($item['presentacion'])) continue;
-    // Consultar datos de la presentación
     $stmt = $pdo->prepare(
         "SELECT p.Nombre, p.alto_cm AS Alto, p.ancho_cm AS Ancho, p.largo_cm AS Largo, pr.Peso
          FROM producto p
@@ -70,7 +70,6 @@ foreach ($_SESSION['carrito'] as $item) {
     $largo    = floatval($prod['Largo']);
     $cantidad = intval($item['cantidad']);
 
-    // Datos para el paquete de la API
     $productos_envio[] = [
         "height" => $alto,
         "width"  => $ancho,
@@ -80,7 +79,6 @@ foreach ($_SESSION['carrito'] as $item) {
         "description" => $prod['Nombre']
     ];
 
-    // Para totalizar y fallback
     $peso_total += $peso * $cantidad;
     $alto_max   = max($alto_max, $alto);
     $ancho_max  = max($ancho_max, $ancho);
@@ -92,7 +90,7 @@ if ($peso_total == 0 || empty($productos_envio)) {
     exit;
 }
 
-// =============== CONSULTAR ENVIA API ===============
+// --- Empaquetar para la API ---
 $paquetes = [];
 foreach ($productos_envio as $prod) {
     for ($i = 0; $i < $prod['quantity']; $i++) {
@@ -107,27 +105,26 @@ foreach ($productos_envio as $prod) {
         ];
     }
 }
-
-// ---- DATOS CORRECTOS PARA ORIGEN Y DESTINO ----
+$direccion = !empty($data['direccion']) ? $data['direccion'] : $ciudad_destino;
 $payload = [
     "origin" => [
-        "country"   => "CO",
-        "state"     => "Cundinamarca",
-        "city"      => "Bogotá",
-        "address"   => "Carrera 80 2-51, Corabastos, Bodega 16, Local 4, Bogotá, Cundinamarca"
+        "country" => "CO",
+        "state" => "Cundinamarca",
+        "city" => "Bogotá",
+        "address" => "Carrera 80 2-51, Corabastos, Bodega 16, Local 4, Bogotá, Cundinamarca"
     ],
     "destination" => [
-        "country"   => "CO",
-        "state"     => $departamento_destino,
-        "city"      => $ciudad_destino,
-        "address"   => $ciudad_destino // puedes reemplazar por dirección real si la tienes
+        "country" => "CO",
+        "state" => $departamento_destino,
+        "city" => $ciudad_destino,
+        "address" => $direccion
     ],
     "packages" => $paquetes
 ];
 
-// =============== ENVIAR SOLICITUD ===============
+// --- Enviar solicitud a Envía ---
 $token = ENVIA_TOKEN;
-$ch = curl_init('https://api.envia.com/ship/rate');
+$ch = curl_init('https://api.envia.com/ship/rate/');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
     'Authorization: Bearer ' . $token,
@@ -135,46 +132,39 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
 ]);
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-curl_setopt($ch, CURLOPT_TIMEOUT, 30); // Agrega timeout por si acaso
+curl_setopt($ch, CURLOPT_TIMEOUT, 30);
 
 $response = curl_exec($ch);
-$httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-// ==== LOG DETALLADO DEL INTENTO Y RESPUESTA ====
-file_put_contents(
-    "debug_envia.txt",
-    json_encode([
-        'fecha'      => date('Y-m-d H:i:s'),
-        'payload'    => $payload,
-        'http_code'  => $httpcode,
-        'response'   => $response,
-        'curl_error' => curl_error($ch),
-    ], JSON_PRETTY_PRINT) . "\n========================\n",
-    FILE_APPEND
-);
-
 if ($response === false) {
     echo json_encode(['ok'=>false, 'error'=>'No se pudo conectar a la API de Envía']);
     exit;
 }
+
 curl_close($ch);
 
 $res = json_decode($response, true);
 
-// Buscar el primer carrier que devuelva tarifa
+// --- Procesar respuesta buscando interrapidisimo ---
 $precio_envio = null;
 $carrier = null;
+$delivery = '';
 if (!empty($res['data']) && is_array($res['data'])) {
     foreach ($res['data'] as $servicio) {
-        if (isset($servicio['price'])) {
-            $precio_envio = floatval($servicio['price']);
-            $carrier = $servicio['carrier'] ?? 'unknown';
+        if (
+            isset($servicio['carrier']) && strtolower($servicio['carrier']) === 'interrapidisimo'
+            && isset($servicio['totalPrice'])
+        ) {
+            $precio_envio = floatval($servicio['totalPrice']);
+            $carrier = $servicio['carrierDescription'] ?? $servicio['carrier'];
+            $delivery = $servicio['deliveryEstimate'] ?? '';
             break;
         }
     }
 }
+
+file_put_contents('debug_envia_checkout.txt', json_encode($res, JSON_PRETTY_PRINT));
+
 if (!$precio_envio) {
-    // Para debugging adicional, muestra los datos devueltos por la API
     echo json_encode([
         'ok'=>false,
         'error'=>'No se obtuvo precio de ningún carrier',
@@ -183,11 +173,12 @@ if (!$precio_envio) {
     exit;
 }
 
-// =============== RESPONDER CON EL PRECIO ===============
+// --- Responder al frontend ---
 echo json_encode([
     'ok'      => true,
     'precio'  => intval(round($precio_envio)),
     'carrier' => $carrier,
+    'delivery' => $delivery,
     'peso'    => $peso_total,
     'ciudad'  => $ciudad_destino,
     'departamento' => $departamento_destino

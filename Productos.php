@@ -1,10 +1,23 @@
 <?php
 session_start();
+require 'conexion.php'; // Solo una vez, aquí
 
 if (!isset($_SESSION['carrito'])) {
     $_SESSION['carrito'] = [];
 }
 
+$busqueda = isset($_GET['busqueda']) ? trim($_GET['busqueda']) : '';
+
+if ($busqueda !== '') {
+    $stmt = $pdo->prepare("SELECT * FROM producto WHERE Nombre LIKE ? OR Descripcion LIKE ?");
+    $param = '%' . $busqueda . '%';
+    $stmt->execute([$param, $param]);
+    $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} else {
+    $productos = $pdo->query("SELECT * FROM producto")->fetchAll(PDO::FETCH_ASSOC);
+}
+
+$presentaciones = $pdo->query("SELECT * FROM presentacion")->fetchAll(PDO::FETCH_ASSOC);
 
 // Actualizar cantidad del último producto agregado
 if (
@@ -31,7 +44,6 @@ if (
     $imagen   = $_POST['imagen'];
     $presentacion = $_POST['presentacion']; // <<--- AGREGA ESTO
 
-    $encontrado = false;
     
 // Estandarizar la presentación para evitar duplicados "2kg" vs "2 kg" vs "2KG"
 $presentacion = strtolower(trim($_POST['presentacion']));
@@ -65,22 +77,6 @@ if (!$encontrado) {
 
 }
 
-require 'conexion.php';
-
-$productos = $pdo->query("SELECT * FROM producto")->fetchAll(PDO::FETCH_ASSOC);
-$presentaciones = $pdo->query("SELECT * FROM presentacion")->fetchAll(PDO::FETCH_ASSOC);
-
-$productosOrganizados = [];
-
-foreach ($productos as $producto) {
-    $producto['Presentaciones'] = [];
-    foreach ($presentaciones as $pres) {
-        if ($pres['ID_Producto'] == $producto['ID_Producto']) {
-            $producto['Presentaciones'][] = $pres;
-        }
-    }
-    $productosOrganizados[] = $producto;
-}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -257,7 +253,7 @@ body {
   font-weight: 600;
   border-radius: 7px;
   padding: 7px 11px;
-  text-decoratio
+  text-decoration: none;
 }
 
 a, a:visited, a:focus, a:active, a:hover {
@@ -699,12 +695,14 @@ footer::after {
   <a href="index.php" class="logo-box" id="nav-logo">
     <img src="img/fondo.jpg" alt="Doggies" class="logo-img" />
   </a>
-  <form class="search-box" id="form-busqueda" onsubmit="event.preventDefault(); filtrarPorNombre();">
-    <input type="text" id="buscador-producto" placeholder="Buscar.." autocomplete="off"/>
-    <button type="button" class="icono-lupa" onclick="filtrarPorNombre()">
+  <form class="search-box" method="GET" action="Productos.php">
+    <input type="text" id="buscador-producto" name="busqueda" placeholder="Buscar.." autocomplete="off" 
+          value="<?php echo htmlspecialchars($busqueda ?? '') ?>">
+    <button type="submit" class="icono-lupa">
       <i class="fas fa-search"></i>
     </button>
   </form>
+
 <a href="carrito.php" id="icono-carrito" class="nav-link nav-carrito">
   <i class="fas fa-cart-shopping"></i>
   <span class="texto-desktop">
@@ -790,8 +788,20 @@ footer::after {
     </aside>
 
     <main class="productos-page">
-      <div class="productos-grid">
-<?php foreach ($productosOrganizados as $p): 
+    <div class="productos-grid">   
+<?php 
+
+$productosOrganizados = [];
+foreach ($productos as $producto) {
+    $producto['Presentaciones'] = [];
+    foreach ($presentaciones as $pres) {
+        if ($pres['ID_Producto'] == $producto['ID_Producto']) {
+            $producto['Presentaciones'][] = $pres;
+        }
+    }
+    $productosOrganizados[] = $producto;
+}
+    foreach ($productosOrganizados as $p): 
     $nombre      = htmlspecialchars($p['Nombre']);
     $imagen      = $p['Imagen_URL'] ?: 'img/default.jpg';
     $descripcion = htmlspecialchars($p['Descripcion']);
@@ -1072,12 +1082,6 @@ function filtrarPorNombre() {
     ) ? 'flex' : 'none';
   });
 }
-
-// Buscador en vivo
-document.getElementById('buscador-producto').addEventListener('input', filtrarPorNombre);
-
-// Opcional: Cuando se haga click en el botón, también filtra
-document.getElementById('form-busqueda').addEventListener('submit', filtrarPorNombre);
 </script>
 
 </body>

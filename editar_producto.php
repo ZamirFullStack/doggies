@@ -196,7 +196,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     gap: 4px;
     transition: background .16s, color .16s;
   }
-  .menu a:hover { background: #e5f4ec; color: #229157; }
+  
+  .menu a:hover {
+  background-color: #28a745; /* verde */
+  color: white !important;
+  border-radius: 6px;
+  padding: 8px 12px; /* para que el fondo abarque bien */
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+  .menu a:hover i {
+    color: white !important;
+  }
+
+  /* Eliminar hover verde en el logo */
+.menu li.logo a:hover,
+.menu li.logo a:hover i {
+  background-color: transparent !important;
+  color: inherit !important;
+  padding: 7px 7px !important; /* Igual que el padding normal para no cambiar tamaño */
+  border-radius: 0 !important;
+  transition: none !important;
+}
+
 
   /* --- FORMULARIO --- */
   .form-container {
@@ -246,7 +268,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     box-sizing: border-box;
     transition: border-color 0.19s;
   }
-  input:focus, textarea:focus, select:focus { border-color: #229157; }
+  input:focus, textarea:focus, select:focus { border-color: #28a745; }
 
   textarea { resize: vertical; min-height: 38px; }
 
