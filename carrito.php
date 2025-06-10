@@ -359,21 +359,56 @@ h2 {
   .resumen-footer { text-align: center; }
 }
 
-/* ==== BOTÓN ELIMINAR ==== */
+/* Estilo general del botón eliminar */
 .delete-form button {
   background-color: #f44336 !important;
   color: #fff !important;
   border: none !important;
-  border-radius: 7px;
-  padding: 8px 18px;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.16s;
+  border-radius: 7px !important;
+  padding: 8px 18px !important;
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: background-color 0.16s ease !important;
+  width: auto !important;
+  display: inline-block !important;
+  text-align: center !important;
 }
+
 .delete-form button:hover {
   background-color: #d32f2f !important;
 }
+
+@media (max-width: 520px) {
+  .delete-form button {
+    flex: none !important;          /* Quitar flex-grow */
+    min-width: auto !important;     /* No mínimo fijo */
+    width: auto !important;         /* Ancho automático, no 100% */
+    padding: 6px 14px !important;   /* Padding un poco más pequeño */
+    font-size: 0.95rem !important;  /* Fuente ligeramente más pequeña */
+    background-color: #f44336 !important; /* Mantener rojo */
+    color: #fff !important;               /* Mantener texto blanco */
+  }
+  .delete-form button:hover {
+    background-color: #d32f2f !important;
+  }
+}
+
+
+/* Ajuste en móvil para tamaño compacto manteniendo colores y bordes */
+@media (max-width: 520px) {
+  .delete-form button {
+    width: auto !important;          /* que no sea full width */
+    padding: 6px 12px !important;    /* padding más compacto */
+    font-size: 0.95rem !important;   /* tamaño un poco menor */
+    background-color: #f44336 !important;
+    color: #fff !important;
+  }
+  .delete-form button:hover {
+    background-color: #d32f2f !important;
+  }
+}
+
 
 /* ==== RESPONSIVE TABLA ==== */
 @media (max-width: 700px) {
