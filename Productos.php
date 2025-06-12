@@ -45,10 +45,8 @@ if (
     $presentacion = $_POST['presentacion']; // <<--- AGREGA ESTO
 
     
-// Estandarizar la presentación para evitar duplicados "2kg" vs "2 kg" vs "2KG"
-$presentacion = strtolower(trim($_POST['presentacion']));
-// ...lo demás igual...
-
+$presentacion = $_POST['presentacion'];
+ 
 $encontrado = false;
 foreach ($_SESSION['carrito'] as &$item) {
     if (
@@ -56,7 +54,7 @@ foreach ($_SESSION['carrito'] as &$item) {
         $item['precio'] == $precio &&
         $item['imagen'] === $imagen &&
         isset($item['presentacion']) &&
-        strtolower(trim($item['presentacion'])) === $presentacion
+        $item['presentacion'] == $presentacion // ← ¡Comparación de ID!
     ) {
         $item['cantidad'] = min(25, $item['cantidad'] + $cantidad);
         $encontrado = true;
@@ -65,15 +63,32 @@ foreach ($_SESSION['carrito'] as &$item) {
 }
 unset($item);
 
+
 if (!$encontrado) {
+    // Consulta la BD por el ID de presentación para obtener dimensiones
+    $stmtPres = $pdo->prepare("SELECT * FROM presentacion WHERE ID_Presentacion = ?");
+    $stmtPres->execute([$presentacion]);
+    $presData = $stmtPres->fetch(PDO::FETCH_ASSOC);
+
+    // Seguridad: Si no existe, no agregues nada
+    if (!$presData) {
+        // Podrías mostrar un error aquí si lo prefieres
+        exit;
+    }
+
     $_SESSION['carrito'][] = [
         'nombre'   => $nombre,
         'precio'   => $precio,
         'cantidad' => $cantidad,
         'imagen'   => $imagen,
-        'presentacion' => $presentacion
+        'presentacion' => $presentacion, // ID_Presentacion
+        'peso'     => $presData['Peso'],
+        'alto'     => $presData['Alto'],
+        'ancho'    => $presData['Ancho'],
+        'largo'    => $presData['Largo']
     ];
 }
+
 
 }
 
@@ -843,9 +858,10 @@ foreach ($productos as $producto) {
           <form method="POST" class="form-compra">
             <input type="hidden" name="nombre" value="<?php echo $nombre; ?>">
             <input type="hidden" name="precio" value="<?php echo $p['Presentaciones'][0]['Precio'] ?? $precio; ?>" class="input-precio">
-            <input type="hidden" name="presentacion" value="<?php echo htmlspecialchars($p['Presentaciones'][0]['Peso'] ?? ''); ?>" class="input-presentacion">
+            <input type="hidden" name="presentacion" value="<?php echo htmlspecialchars($p['Presentaciones'][0]['ID_Presentacion'] ?? ''); ?>" class="input-presentacion">
             <input type="hidden" name="cantidad" value="1" class="input-cantidad">
             <input type="hidden" name="imagen" value="<?php echo $imagen; ?>">
+            <input type="hidden" name="peso" value="<?php echo htmlspecialchars($p['Presentaciones'][0]['Peso'] ?? ''); ?>" class="input-peso">
             <button type="submit" class="btn-comprar">Comprar</button>
           </form>
         <?php else: ?>
@@ -963,35 +979,34 @@ btns.forEach(boton => {
       cont.textContent = count;
       const contMovil = document.getElementById('contador-carrito-movil');
       if (contMovil) contMovil.textContent = count;
+    const name  = form.nombre.value;
+    const price = parseFloat(form.precio.value);
+    const src   = form.imagen.value;
+    const peso  = form.peso ? form.peso.value : '';
+    tabla.innerHTML = '';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="celda-producto">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <img src="${src}" alt="${name}" class="img-modal" style="width:48px;height:48px;object-fit:contain;border-radius:6px;flex-shrink:0;">
+          <span style="font-weight:700;font-size:1.13em;line-height:1.1;color:#222;font-family:'Roboto',Arial,sans-serif;">
+            ${name}${peso ? ' ('+peso+')' : ''}
+          </span>
+        </div>
+      </td>
+      <td>$${price.toLocaleString('es-CO')}</td>
+      <td>
+        <input type="number"
+              class="cantidad-input"
+              data-price="${price}"
+              min="1" max="25"
+              value="${qtyCard}"
+              onchange="actualizarSubtotalModal(this)">
+      </td>
+      <td class="subtotal-cell">$${(price*qtyCard).toLocaleString('es-CO')}</td>
+    `;
+    tabla.appendChild(tr);
 
-      const name  = form.nombre.value;
-      const price = parseFloat(form.precio.value);
-      const src   = form.imagen.value;
-      const pres  = form.presentacion.value;
-      tabla.innerHTML = '';
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td class="celda-producto">
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <img src="${src}" alt="${name}" class="img-modal" style="width:48px;height:48px;object-fit:contain;border-radius:6px;flex-shrink:0;">
-<span style="font-weight:700;font-size:1.13em;line-height:1.1;color:#222;font-family:'Roboto',Arial,sans-serif;">
-  ${name}${pres ? ' ('+pres+')' : ''}
-</span>
-
-          </div>
-        </td>
-        <td>$${price.toLocaleString('es-CO')}</td>
-        <td>
-          <input type="number"
-                class="cantidad-input"
-                data-price="${price}"
-                min="1" max="25"
-                value="${qtyCard}"
-                onchange="actualizarSubtotalModal(this)">
-        </td>
-        <td class="subtotal-cell">$${(price*qtyCard).toLocaleString('es-CO')}</td>
-      `;
-      tabla.appendChild(tr);
     });
   });
 });
@@ -1046,18 +1061,16 @@ btns.forEach(boton => {
       const inputPrecio = card.querySelector('.input-precio');
       const inputPresentacion = card.querySelector('.input-presentacion');
 
+      const inputPeso = card.querySelector('.input-peso');
       botones.forEach(boton => {
         boton.addEventListener('click', () => {
-          // Quitar active a todos
           botones.forEach(b => b.classList.remove('active'));
-          // Poner active al clickeado
           boton.classList.add('active');
-          // Actualizar precio visible
           const nuevoPrecio = boton.dataset.precio;
           precioSpan.textContent = '$' + parseInt(nuevoPrecio).toLocaleString('es-CO');
-          // Actualizar inputs ocultos
           inputPrecio.value = nuevoPrecio;
-          inputPresentacion.value = boton.dataset.peso.trim();
+          inputPresentacion.value = boton.dataset.idpres;
+          if(inputPeso) inputPeso.value = boton.dataset.peso; // <--- Aquí actualizas el peso
         });
       });
     });

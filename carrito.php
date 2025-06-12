@@ -1,69 +1,12 @@
 <?php
 session_start();
 
+file_put_contents('debug_carrito_view.log', print_r($_SESSION['carrito'] ?? [], true));
+
+
 if (!isset($_SESSION['carrito'])) {
     $_SESSION['carrito'] = [];
 }
-
-if (
-  $_SERVER['REQUEST_METHOD'] === 'POST' &&
-  isset($_POST['nombre'], $_POST['precio'], $_POST['cantidad'], $_POST['imagen'], $_POST['presentacion'])
-) {
-    $nombre = $_POST['nombre'];
-    $precio = floatval($_POST['precio']);
-    $cantidad = max(1, min(25, intval($_POST['cantidad'])));
-    $imagen = $_POST['imagen'];
-    $presentacion = strtolower(trim($_POST['presentacion'])); // Normaliza el peso para evitar duplicados tipo "2KG" vs "2kg"
-
-    $encontrado = false;
-    foreach ($_SESSION['carrito'] as &$item) {
-        if (
-            $item['nombre'] === $nombre &&
-            $item['precio'] == $precio &&
-            $item['imagen'] === $imagen &&
-            strtolower(trim($item['presentacion'])) === $presentacion
-        ) {
-            $item['cantidad'] = min(25, $item['cantidad'] + $cantidad);
-            $encontrado = true;
-            break;
-        }
-    }
-    unset($item); // rompe referencia
-    if (!$encontrado) {
-        $_SESSION['carrito'][] = [
-            'nombre' => $nombre,
-            'precio' => $precio,
-            'cantidad' => $cantidad,
-            'imagen' => $imagen,
-            'presentacion' => $presentacion,
-        ];
-    }
-    exit;
-}
-
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_index'])) {
-    $idx = intval($_POST['delete_index']);
-    if (isset($_SESSION['carrito'][$idx])) {
-        unset($_SESSION['carrito'][$idx]);
-        $_SESSION['carrito'] = array_values($_SESSION['carrito']);
-    }
-    header('Location: carrito.php');
-    exit;
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_index'], $_POST['cantidad'])) {
-    $idx = intval($_POST['update_index']);
-    $qty = max(1, min(25, intval($_POST['cantidad'])));
-    if (isset($_SESSION['carrito'][$idx])) {
-        $_SESSION['carrito'][$idx]['cantidad'] = $qty;
-    }
-    header('Location: carrito.php');
-    exit;
-}
-
-$carrito = $_SESSION['carrito'];
-$total = 0;
 
 $url = 'mysql://root:AaynZNNKYegnXoInEgQefHggDxoRieEL@centerbeam.proxy.rlwy.net:58462/railway';
 $dbparts = parse_url($url);
@@ -79,6 +22,96 @@ try {
 } catch (PDOException $e) {
     die('❌ Error de conexión: ' . $e->getMessage());
 }
+
+if (
+  $_SERVER['REQUEST_METHOD'] === 'POST' &&
+  isset($_POST['nombre'], $_POST['precio'], $_POST['cantidad'], $_POST['imagen'], $_POST['presentacion'])
+) {
+    $nombre = $_POST['nombre'];
+    $precio = floatval($_POST['precio']);
+    $cantidad = max(1, min(25, intval($_POST['cantidad'])));
+    $imagen = $_POST['imagen'];
+    $id_presentacion = intval($_POST['presentacion']);
+
+    // CONSULTA la presentación exacta en la BD
+    $stmt = $pdo->prepare("SELECT Peso, Largo, Ancho, Alto FROM presentacion WHERE ID_Presentacion = ?");
+    $stmt->execute([$id_presentacion]);
+    $present = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$present) {
+        http_response_code(400);
+        exit('Error: presentación inválida');
+    }
+
+    $peso = $present['Peso'];
+    $largo = $present['Largo'];
+    $ancho = $present['Ancho'];
+    $alto  = $present['Alto'];
+
+    $encontrado = false;
+    foreach ($_SESSION['carrito'] as &$item) {
+        if (
+            $item['nombre'] === $nombre &&
+            $item['precio'] == $precio &&
+            $item['imagen'] === $imagen &&
+            intval($item['presentacion']) === $id_presentacion
+        ) {
+            $item['cantidad'] = min(25, $item['cantidad'] + $cantidad);
+            $encontrado = true;
+            break;
+        }
+    }
+    unset($item);
+
+if (!$encontrado) {
+    // Consulta la BD por el ID de presentación para obtener dimensiones y peso
+    $stmtPres = $pdo->prepare("SELECT * FROM presentacion WHERE ID_Presentacion = ?");
+    $stmtPres->execute([$id_presentacion]);  // <-- CORRECCIÓN aquí
+    $presData = $stmtPres->fetch(PDO::FETCH_ASSOC);
+
+    if (!$presData) {
+        exit('Error: presentación no encontrada');
+    }
+
+    // Función para limpiar número
+    function limpiar_numero($valor) {
+        $limpio = preg_replace('/[^\d.]/', '', $valor);
+        return is_numeric($limpio) ? floatval($limpio) : 0;
+    }
+
+    $peso = limpiar_numero($presData['Peso'] ?? '0');
+
+    // Obtener dimensiones del producto asociado
+    $stmtProd = $pdo->prepare("SELECT Alto_cm, Largo_cm, Ancho_cm FROM producto WHERE ID_Producto = ?");
+    $stmtProd->execute([$presData['ID_Producto']]);
+    $producto_dim = $stmtProd->fetch(PDO::FETCH_ASSOC);
+
+    $alto  = limpiar_numero($producto_dim['Alto_cm'] ?? '0');
+    $largo = limpiar_numero($producto_dim['Largo_cm'] ?? '0');
+    $ancho = limpiar_numero($producto_dim['Ancho_cm'] ?? '0');
+
+    $_SESSION['carrito'][] = [
+        'nombre'       => $nombre,
+        'precio'       => $precio,
+        'cantidad'     => $cantidad,
+        'imagen'       => $imagen,
+        'presentacion' => $id_presentacion,  // <-- CORRECCIÓN aquí
+        'peso'         => $peso,
+        'largo'        => $largo,
+        'ancho'        => $ancho,
+        'alto'         => $alto,
+    ];
+
+    // Opcional: redireccionar para evitar resubmits o mostrar el carrito
+    header('Location: carrito.php');
+    exit;
+  }
+}
+
+
+$carrito = $_SESSION['carrito'];
+$total = 0;
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -88,7 +121,7 @@ try {
   <title>Mi Carrito - Doggies</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="icon" type="image/jpeg" href="img/fondo.jpg" />
-  <style>
+<style>
 /* ==== RESETEO GENERAL ==== */
 * {
   margin: 0;
@@ -114,7 +147,6 @@ body {
   margin: 0 6px;
   transition: transform 0.3s ease;
 }
-
 @media (max-width: 700px) {
   .logo-img {
     height: 42px;        
@@ -122,7 +154,7 @@ body {
   }
 }
 
-/* ==== HEADER NUEVO ==== */
+/* ==== HEADER ==== */
 header {
   background-color: #fff;
   box-shadow: 0 2px 4px rgba(0,0,0,0.06);
@@ -158,7 +190,6 @@ header {
   justify-content: center;
   align-items: center;
 }
-
 .menu-link {
   color: #222;
   font-weight: bold;
@@ -180,7 +211,6 @@ header {
     padding: 0 2px;
     max-width: 98vw;
   }
-
   .menu-link { font-size: 0.97rem; padding: 0.25em 0.3em; }
 }
 
@@ -269,7 +299,7 @@ h2 {
   color: #fff;
 }
 
-/* ==== CARRITO ==== */
+/* ==== CARRITO WRAPPER ==== */
 .carrito-wrapper {
   background: #fff;
   border-radius: 12px;
@@ -279,6 +309,7 @@ h2 {
   overflow-x: auto;
 }
 
+/* ==== TABLA DESKTOP ==== */
 .carrito-table {
   width: 100%;
   min-width: 600px;
@@ -326,89 +357,135 @@ h2 {
   padding: 3px;
 }
 
-/* ==== BOTÓN COMPRAR ==== */
+/* ==== MOBILE CARD STYLE ==== */
+.carrito-lista-movil {
+  display: none;
+}
+@media (max-width: 520px) {
+  .carrito-wrapper table.carrito-table { display: none; }
+  .carrito-lista-movil {
+    display: flex !important;
+    flex-direction: column;
+    gap: 15px;
+    padding: 0 8px;
+  }
+  .carrito-item-movil {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    padding: 14px 16px 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 0.5em;
+    position: relative;
+  }
+  .carrito-item-header {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .carrito-img {
+    width: 50px !important;
+    height: 50px !important;
+    border-radius: 8px;
+    object-fit: cover;
+  }
+  .carrito-nombre {
+    font-weight: 700;
+    font-size: 1.08rem;
+    flex: 1 1 auto;
+    white-space: normal;
+    word-break: break-word;
+  }
+  .carrito-row-detalles {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 6px;
+  }
+  .carrito-detalles {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    flex: 1 1 auto;
+  }
+  .carrito-acciones {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+}
+
+/* ==== BOTÓN ELIMINAR ==== */
+.delete-form button {
+  background-color: #f44336 !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 7px 14px !important;
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: background-color 0.16s ease !important;
+  min-width: 84px;
+  text-align: center !important;
+  margin-left: 12px;
+}
+.delete-form button:hover {
+  background-color: #d32f2f !important;
+}
+@media (max-width: 520px) {
+  .delete-form button {
+    min-width: 64px;
+    width: auto !important;
+    padding: 7px 12px !important;
+    font-size: 0.98rem !important;
+    margin-top: 4px;
+    margin-left: 12px;
+  }
+}
+
+/* ==== BOTÓN COMPRAR CENTRADO ==== */
+.resumen-footer {
+  text-align: center;
+  margin-top: 1.2rem;
+}
 .boton-comprar {
   background-color: #28a745;
   color: white;
-  padding: 12px 32px;
+  padding: 12px 38px;
   border: none;
   border-radius: 7px;
   text-decoration: none;
   font-weight: bold;
-  font-size: 1.15rem;
+  font-size: 1.13rem;
   margin-top: 1em;
   cursor: pointer;
   transition: background-color 0.19s;
   box-shadow: 0 1px 3px rgba(40,167,69,0.10);
   display: inline-block;
+  min-width: 210px;
+  max-width: 90vw;
 }
 .boton-comprar:hover {
   background-color: #218838;
 }
-.resumen-footer {
-  text-align: right;
-  margin-top: 1.5rem;
-}
 @media (max-width: 520px) {
   .boton-comprar {
-    width: 100%;
-    margin-top: 10px;
+    width: auto;
+    min-width: 55vw;
+    max-width: 95vw;
+    margin: 0 auto;
     font-size: 1.05rem;
-    padding: 12px 0;
+    padding: 13px 0;
+    display: inline-block;
   }
   .resumen-footer { text-align: center; }
 }
-
-/* Estilo general del botón eliminar */
-.delete-form button {
-  background-color: #f44336 !important;
-  color: #fff !important;
-  border: none !important;
-  border-radius: 7px !important;
-  padding: 8px 18px !important;
-  font-size: 1rem !important;
-  font-weight: 500 !important;
-  cursor: pointer !important;
-  transition: background-color 0.16s ease !important;
-  width: auto !important;
-  display: inline-block !important;
-  text-align: center !important;
-}
-
-.delete-form button:hover {
-  background-color: #d32f2f !important;
-}
-
-@media (max-width: 520px) {
-  .delete-form button {
-    flex: none !important;          /* Quitar flex-grow */
-    min-width: auto !important;     /* No mínimo fijo */
-    width: auto !important;         /* Ancho automático, no 100% */
-    padding: 6px 14px !important;   /* Padding un poco más pequeño */
-    font-size: 0.95rem !important;  /* Fuente ligeramente más pequeña */
-    background-color: #f44336 !important; /* Mantener rojo */
-    color: #fff !important;               /* Mantener texto blanco */
-  }
-  .delete-form button:hover {
-    background-color: #d32f2f !important;
-  }
-}
-
-
-/* Ajuste en móvil para tamaño compacto manteniendo colores y bordes */
-@media (max-width: 520px) {
-  .delete-form button {
-    width: auto !important;          /* que no sea full width */
-    padding: 6px 12px !important;    /* padding más compacto */
-    font-size: 0.95rem !important;   /* tamaño un poco menor */
-    background-color: #f44336 !important;
-    color: #fff !important;
-  }
-  .delete-form button:hover {
-    background-color: #d32f2f !important;
-  }
-}
-
 
 /* ==== RESPONSIVE TABLA ==== */
 @media (max-width: 700px) {
@@ -419,85 +496,7 @@ h2 {
   .carrito-table th, .carrito-table td { padding: 8px 4px; font-size: 0.94rem; }
 }
 
-/* ==== RESPONSIVE PARA IPHONE SE Y TELÉFONOS MUY PEQUEÑOS ==== */
-@media (max-width: 520px) {
-  /* Ocultar tabla para móviles pequeños */
-  .carrito-wrapper table.carrito-table {
-    display: none;
-  }
-
-  /* Mostrar lista tipo tarjetas */
-  .carrito-lista-movil {
-    display: flex !important;
-    flex-direction: column;
-    gap: 15px;
-    padding: 0 8px;
-  }
-
-  .carrito-item-movil {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    padding: 12px 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .carrito-item-header {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-  }
-
-  .carrito-img {
-    width: 50px !important;
-    height: 50px !important;
-    border-radius: 8px;
-    object-fit: cover;
-  }
-
-  .carrito-nombre {
-    font-weight: 700;
-    font-size: 1.05rem;
-    flex: 1 1 auto;
-    white-space: normal;
-    word-break: break-word;
-  }
-
-  .carrito-detalles {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    font-size: 0.92rem;
-    color: #555;
-    align-items: center;
-  }
-
-  .carrito-detalles span {
-    min-width: 48%;
-  }
-
-  .carrito-acciones {
-    margin-top: 10px;
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-
-  .cantidad-form input.cantidad-input {
-    width: 65px;
-  }
-
-  .delete-form button {
-    flex: 1 1 auto;
-    min-width: 100px;
-    width: 100% !important;
-    padding: 10px 0 !important;
-    font-size: 1rem !important;
-  }
-}
-
+/* ==== FOOTER: NO TOCAR SEGÚN INSTRUCCIÓN ==== */
 /* ==== FOOTER ==== */
 footer {
   background-color: #333;
@@ -521,7 +520,6 @@ footer {
 .social-links a:hover {
   color: #ffd700;
 }
-
 footer::after {
   content: "© 2025 Doggies. Todos los derechos reservados.";
   display: block;
@@ -529,8 +527,6 @@ footer::after {
   font-size: 0.9rem;
   color: #ccc;
 }
-
-/* ==== FOOTER SIEMPRE ABAJO EN RESPONSIVE ==== */
 @media (max-width: 700px) {
   body {
     min-height: 100vh;
@@ -548,7 +544,7 @@ footer::after {
   }
 }
 
-
+/* ==== MENÚ ==== */
 .menu-side a.menu-link {
   color: #222;
   font-weight: bold;
@@ -559,12 +555,10 @@ footer::after {
   border-radius: 6px;
   white-space: nowrap;
 }
-
 .menu-side a.menu-link:hover {
   color: white;
   background-color: #28a745;
 }
-
 
 </style>
 </head>
@@ -605,6 +599,7 @@ footer::after {
     </div>
   <?php else: ?>
     <div class="carrito-wrapper">
+      <!-- VERSIÓN DESKTOP (TABLA) -->
       <table class="carrito-table">
         <thead>
           <tr>
@@ -616,123 +611,75 @@ footer::after {
           </tr>
         </thead>
         <tbody>
-          <div class="carrito-lista-movil" style="display:none;">
-<?php foreach ($carrito as $index => $producto):
-    $stmt = $pdo->prepare("SELECT Imagen_URL FROM producto WHERE Nombre = ?");
-    $stmt->execute([$producto['nombre']]);
-    $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+        <?php
+        $total = 0;
+        foreach ($carrito as $index => $producto):
+          // Obtener imagen del producto
+          $stmt = $pdo->prepare("SELECT Imagen_URL FROM producto WHERE Nombre = ?");
+          $stmt->execute([$producto['nombre']]);
+          $fila = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    $imgFile = trim($fila['Imagen_URL'] ?? '');
-    $imgFile = ltrim($imgFile, '/');
-    if (!$imgFile) {
-        $imgRuta = "https://doggies-production.up.railway.app/img/default.jpg";
-    } else if (filter_var($imgFile, FILTER_VALIDATE_URL)) {
-        $imgRuta = $imgFile;
-    } else if (strpos($imgFile, 'img/') === 0) {
-        $imgRuta = "https://doggies-production.up.railway.app/" . $imgFile;
-    } else {
-        $imgRuta = "https://doggies-production.up.railway.app/img/" . $imgFile;
-    }
+          $imgFile = trim($fila['Imagen_URL'] ?? '');
+          $imgFile = ltrim($imgFile, '/');
+          if (!$imgFile) {
+              $imgRuta = "https://doggies-production.up.railway.app/img/default.jpg";
+          } else if (filter_var($imgFile, FILTER_VALIDATE_URL)) {
+              $imgRuta = $imgFile;
+          } else if (strpos($imgFile, 'img/') === 0) {
+              $imgRuta = "https://doggies-production.up.railway.app/" . $imgFile;
+          } else {
+              $imgRuta = "https://doggies-production.up.railway.app/img/" . $imgFile;
+          }
 
-    $subtotal = $producto['precio'] * $producto['cantidad'];
-?>
-  <div class="carrito-item-movil">
-    <div class="carrito-item-header">
-      <img src="<?= htmlspecialchars($imgRuta) ?>" alt="<?= htmlspecialchars($producto['nombre']) ?>" class="carrito-img" />
-      <div class="carrito-nombre"><?= htmlspecialchars($producto['nombre'] . ' - ' . $producto['presentacion']) ?></div>
-    </div>
-    <div class="carrito-detalles">
-      <span>Precio: $<?= number_format($producto['precio'],0,',','.') ?></span>
-      <span>Subtotal: $<?= number_format($subtotal,0,',','.') ?></span>
-      <span>Cantidad:</span>
-      <form method="POST" action="carrito.php" class="cantidad-form" style="flex-grow:1;">
-        <input type="hidden" name="update_index" value="<?= $index ?>">
-        <input type="number"
-               name="cantidad"
-               value="<?= $producto['cantidad'] ?>"
-               min="1" max="25"
-               class="cantidad-input"
-               onchange="this.form.submit()">
-      </form>
-    </div>
-    <div class="carrito-acciones">
-      <form method="POST" action="carrito.php" class="delete-form" onsubmit="return confirm('¿Eliminar este producto?');" style="flex-grow:1;">
-        <input type="hidden" name="delete_index" value="<?= $index ?>">
-        <button type="submit"><i class="fas fa-trash"></i> Eliminar</button>
-      </form>
-    </div>
-  </div>
-<?php endforeach; ?>
-</div>
+          // Obtener peso real
+          $peso = '';
+          if (!empty($producto['presentacion'])) {
+              $stmtPeso = $pdo->prepare("SELECT Peso FROM presentacion WHERE ID_Presentacion = ?");
+              $stmtPeso->execute([$producto['presentacion']]);
+              $filaPeso = $stmtPeso->fetch(PDO::FETCH_ASSOC);
+              if ($filaPeso) {
+                  $peso = $filaPeso['Peso'];
+              }
+          }
 
-          <?php foreach ($carrito as $index => $producto):
-    // Obtiene la imagen del producto
-    $stmt = $pdo->prepare("SELECT Imagen_URL FROM producto WHERE Nombre = ?");
-    $stmt->execute([$producto['nombre']]);
-    $fila = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    $imgFile = trim($fila['Imagen_URL'] ?? '');
-    $imgFile = ltrim($imgFile, '/');
-    if (!$imgFile) {
-        $imgRuta = "https://doggies-production.up.railway.app/img/default.jpg";
-    } else if (filter_var($imgFile, FILTER_VALIDATE_URL)) {
-        $imgRuta = $imgFile;
-    } else if (strpos($imgFile, 'img/') === 0) {
-        $imgRuta = "https://doggies-production.up.railway.app/" . $imgFile;
-    } else {
-        $imgRuta = "https://doggies-production.up.railway.app/img/" . $imgFile;
-    }
-
-    // NUEVO: Obtener el peso real de la presentación
-    $peso = '';
-    if (!empty($producto['presentacion'])) {
-        $stmtPeso = $pdo->prepare("SELECT Peso FROM presentacion WHERE ID_Presentacion = ?");
-        $stmtPeso->execute([$producto['presentacion']]);
-        $filaPeso = $stmtPeso->fetch(PDO::FETCH_ASSOC);
-        if ($filaPeso) {
-            $peso = $filaPeso['Peso'];
-        }
-    }
-
-    $subtotal = $producto['precio'] * $producto['cantidad'];
-    $total += $subtotal;
-    ?>
-    <tr>
-        <td>
+          $subtotal = $producto['precio'] * $producto['cantidad'];
+          $total += $subtotal;
+        ?>
+        <tr>
+          <td>
             <div class="producto-detalle" style="justify-content:flex-start;gap:16px;">
-                <img 
-                    src="<?= htmlspecialchars($imgRuta) ?>" 
-                    alt="<?= htmlspecialchars($producto['nombre']) ?>" 
-                    class="carrito-img"
-                    style="min-width:50px;min-height:50px;"
-                    onerror="this.onerror=null;this.src='https://doggies-production.up.railway.app/img/default.jpg';" >
-                <span style="font-size:1.08rem;">
-                <?= htmlspecialchars($producto['nombre'] . ' - ' . $producto['presentacion']) ?>
-                </span>
+              <img 
+                src="<?= htmlspecialchars($imgRuta) ?>" 
+                alt="<?= htmlspecialchars($producto['nombre']) ?>" 
+                class="carrito-img"
+                style="min-width:50px;min-height:50px;"
+                onerror="this.onerror=null;this.src='https://doggies-production.up.railway.app/img/default.jpg';" >
+              <span style="font-size:1.08rem;">
+                <?= htmlspecialchars($producto['nombre'] . ($peso ? ' (' . $peso . ')' : '')) ?>
+              </span>
             </div>
-        </td>
-        <td>$<?= number_format($producto['precio'],0,',','.') ?></td>
-        <td>
+          </td>
+          <td>$<?= number_format($producto['precio'],0,',','.') ?></td>
+          <td>
             <form method="POST" action="carrito.php" class="cantidad-form">
-                <input type="hidden" name="update_index" value="<?= $index ?>">
-                <input type="number"
-                    name="cantidad"
-                    value="<?= $producto['cantidad'] ?>"
-                    min="1" max="25"
-                    class="cantidad-input"
-                    onchange="this.form.submit()">
+              <input type="hidden" name="update_index" value="<?= $index ?>">
+              <input type="number"
+                  name="cantidad"
+                  value="<?= $producto['cantidad'] ?>"
+                  min="1" max="25"
+                  class="cantidad-input"
+                  onchange="this.form.submit()">
             </form>
-        </td>
-        <td>$<?= number_format($subtotal,0,',','.') ?></td>
-        <td>
+          </td>
+          <td>$<?= number_format($subtotal,0,',','.') ?></td>
+          <td>
             <form method="POST" action="carrito.php" class="delete-form" onsubmit="return confirm('¿Eliminar este producto?');">
-                <input type="hidden" name="delete_index" value="<?= $index ?>">
-                <button type="submit"><i class="fas fa-trash"></i> Eliminar</button>
+              <input type="hidden" name="delete_index" value="<?= $index ?>">
+              <button type="submit"><i class="fas fa-trash"></i> Eliminar</button>
             </form>
-        </td>
-    </tr>
-    <?php endforeach; ?>
-
+          </td>
+        </tr>
+        <?php endforeach; ?>
         </tbody>
         <tfoot>
           <tr>
@@ -741,6 +688,67 @@ footer::after {
           </tr>
         </tfoot>
       </table>
+      <!-- VERSIÓN MÓVIL (CARDS) -->
+      <div class="carrito-lista-movil" style="display:none;">
+        <?php foreach ($carrito as $index => $producto):
+            // Obtener imagen
+            $stmt = $pdo->prepare("SELECT Imagen_URL FROM producto WHERE Nombre = ?");
+            $stmt->execute([$producto['nombre']]);
+            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            $imgFile = trim($fila['Imagen_URL'] ?? '');
+            $imgFile = ltrim($imgFile, '/');
+            if (!$imgFile) {
+                $imgRuta = "https://doggies-production.up.railway.app/img/default.jpg";
+            } else if (filter_var($imgFile, FILTER_VALIDATE_URL)) {
+                $imgRuta = $imgFile;
+            } else if (strpos($imgFile, 'img/') === 0) {
+                $imgRuta = "https://doggies-production.up.railway.app/" . $imgFile;
+            } else {
+                $imgRuta = "https://doggies-production.up.railway.app/img/" . $imgFile;
+            }
+
+            // Obtener peso real
+            $peso = '';
+            if (!empty($producto['presentacion'])) {
+                $stmtPeso = $pdo->prepare("SELECT Peso FROM presentacion WHERE ID_Presentacion = ?");
+                $stmtPeso->execute([$producto['presentacion']]);
+                $filaPeso = $stmtPeso->fetch(PDO::FETCH_ASSOC);
+                if ($filaPeso) {
+                    $peso = $filaPeso['Peso'];
+                }
+            }
+
+            $subtotal = $producto['precio'] * $producto['cantidad'];
+        ?>
+      <div class="carrito-item-movil">
+        <div class="carrito-item-header">
+          <img src="<?= htmlspecialchars($imgRuta) ?>" alt="<?= htmlspecialchars($producto['nombre']) ?>" class="carrito-img" />
+          <div class="carrito-nombre"><?= htmlspecialchars($producto['nombre'] . ($peso ? ' (' . $peso . ')' : '')) ?></div>
+        </div>
+        <div class="carrito-detalles">
+          <span>Precio: $<?= number_format($producto['precio'],0,',','.') ?></span>
+          <span>Subtotal: $<?= number_format($subtotal,0,',','.') ?></span>
+          <form method="POST" action="carrito.php" class="cantidad-form" style="flex-shrink:0;">
+            <label style="margin-right:3px;">Cantidad:</label>
+            <input type="hidden" name="update_index" value="<?= $index ?>">
+            <input type="number"
+                  name="cantidad"
+                  value="<?= $producto['cantidad'] ?>"
+                  min="1" max="25"
+                  class="cantidad-input"
+                  onchange="this.form.submit()">
+            </form>
+          </div>
+          <div class="carrito-acciones">
+            <form method="POST" action="carrito.php" class="delete-form" onsubmit="return confirm('¿Eliminar este producto?');">
+              <input type="hidden" name="delete_index" value="<?= $index ?>">
+              <button type="submit"><i class="fas fa-trash"></i> Eliminar</button>
+            </form>
+          </div>
+        </div>
+        <?php endforeach; ?>
+      </div>
     </div>
     <div class="resumen-footer">
       <a href="Checkout.php" class="boton-comprar">Finalizar compra</a>

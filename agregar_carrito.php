@@ -12,8 +12,15 @@ $cantidad = max(1, intval($_POST['cantidad'])); // mínimo 1
 $item = [
     'nombre' => $nombre,
     'precio' => $precio,
-    'cantidad' => $cantidad
+    'cantidad' => $cantidad,
+    'imagen' => $imagen,
+    'presentacion' => $presentacion,
+    'peso' => $_POST['peso'] ?? '',
+    'alto' => $alto,
+    'ancho' => $ancho,
+    'largo' => $largo,
 ];
+
 
 if (!isset($_SESSION['carrito'])) {
     $_SESSION['carrito'] = [];

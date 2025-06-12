@@ -1,49 +1,131 @@
 <?php
 session_start();
 
-if (empty($_SESSION['carrito'])) {
-    echo "<h3>Tu carrito está vacío.</h3>";
-    exit;
-}
+// --- Descomenta la siguiente línea SOLO si quieres limpiar el carrito manualmente y después vuelve a comentarla ---
+// unset($_SESSION['carrito']);
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cantidades']) && is_array($_POST['cantidades'])) {
-    foreach ($_POST['cantidades'] as $idx => $cantidad) {
-        $idx = intval($idx);
-        $cantidad = max(1, min(25, intval($cantidad)));
-        if (isset($_SESSION['carrito'][$idx])) {
-            $_SESSION['carrito'][$idx]['cantidad'] = $cantidad;
-        }
-    }
-    header("Location: pagar_carrito.php");
-    exit;
+if (!isset($_SESSION['carrito'])) {
+    $_SESSION['carrito'] = [];
 }
-
-$carrito = $_SESSION['carrito'];
 
 $url = 'mysql://root:AaynZNNKYegnXoInEgQefHggDxoRieEL@centerbeam.proxy.rlwy.net:58462/railway';
 $dbparts = parse_url($url);
-$host = $dbparts["host"];
-$port = $dbparts["port"];
-$user = $dbparts["user"];
-$pass = $dbparts["pass"];
-$db   = ltrim($dbparts["path"], '/');
+$host = $dbparts['host'];
+$port = $dbparts['port'];
+$user = $dbparts['user'];
+$pass = $dbparts['pass'];
+$db   = ltrim($dbparts['path'], '/');
+
 try {
     $pdo = new PDO("mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4", $user, $pass);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
-    die("❌ Error de conexión: " . $e->getMessage());
+    die('❌ Error de conexión: ' . $e->getMessage());
 }
 
-function obtenerValoresEnum(PDO $pdo, string $tabla, string $columna): array {
-    $stmt = $pdo->query("SHOW COLUMNS FROM `$tabla` LIKE '$columna'");
-    $fila = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($fila && preg_match("/^enum\((.*)\)\$/", $fila['Type'], $matches)) {
-        return str_getcsv($matches[1], ',', "'");
+// --- AGREGAR AL CARRITO ---
+if (
+  $_SERVER['REQUEST_METHOD'] === 'POST' &&
+  isset($_POST['nombre'], $_POST['precio'], $_POST['cantidad'], $_POST['imagen'], $_POST['presentacion'])
+) {
+    $nombre = $_POST['nombre'];
+    $precio = floatval($_POST['precio']);
+    $cantidad = max(1, min(25, intval($_POST['cantidad'])));
+    $imagen = $_POST['imagen'];
+    $id_presentacion = intval($_POST['presentacion']); // ID de la presentación
+
+    // 1. Trae la presentación (para el peso y el ID_Producto)
+    $stmt = $pdo->prepare("SELECT Peso, ID_Producto FROM presentacion WHERE ID_Presentacion = ?");
+    $stmt->execute([$id_presentacion]);
+    $present = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // Extrae solo el número del peso (puede ser con o sin decimales)
+    $peso = preg_replace('/[^\d.]/', '', $present['Peso']);
+    if ($peso === '' || !is_numeric($peso)) {
+        http_response_code(400);
+        exit('Error: El campo Peso debe contener un número válido.');
     }
-    return [];
+    $peso = floatval($peso); // Ahora siempre es numérico (en kilos)
+
+    // Toma el ID de producto asociado a la presentación
+    $id_producto = $present['ID_Producto'];
+
+    // 2. Trae las dimensiones del producto asociado a la presentación
+    $stmtProd = $pdo->prepare("SELECT Alto_cm, Largo_cm, Ancho_cm FROM producto WHERE ID_Producto = ?");
+    $stmtProd->execute([$id_producto]);
+    $producto_dim = $stmtProd->fetch(PDO::FETCH_ASSOC);
+
+    if (
+        !$producto_dim ||
+        empty($producto_dim['Alto_cm']) || empty($producto_dim['Largo_cm']) || empty($producto_dim['Ancho_cm']) ||
+        !is_numeric($producto_dim['Alto_cm']) || !is_numeric($producto_dim['Largo_cm']) || !is_numeric($producto_dim['Ancho_cm'])
+    ) {
+        http_response_code(400);
+        exit('Error: Faltan dimensiones (alto, largo, ancho) en el producto.');
+    }
+
+    $alto  = $producto_dim['Alto_cm'];
+    $largo = $producto_dim['Largo_cm'];
+    $ancho = $producto_dim['Ancho_cm'];
+
+    $encontrado = false;
+    foreach ($_SESSION['carrito'] as &$item) {
+        if (
+            $item['nombre'] === $nombre &&
+            $item['precio'] == $precio &&
+            $item['imagen'] === $imagen &&
+            intval($item['presentacion']) === $id_presentacion
+        ) {
+            $item['cantidad'] = min(25, $item['cantidad'] + $cantidad);
+            $encontrado = true;
+            break;
+        }
+    }
+    unset($item);
+
+    if (!$encontrado) {
+        $_SESSION['carrito'][] = [
+            'nombre'        => $nombre,
+            'precio'        => $precio,
+            'cantidad'      => $cantidad,
+            'imagen'        => $imagen,
+            'presentacion'  => $id_presentacion,
+            'peso'          => $peso,
+            'largo'         => $largo,
+            'ancho'         => $ancho,
+            'alto'          => $alto,
+        ];
+    }
+    exit;
 }
-$tiposDocumento = obtenerValoresEnum($pdo, 'usuario', 'Tipo_Documento');
+
+
+// --- ELIMINAR DEL CARRITO ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_index'])) {
+    $idx = intval($_POST['delete_index']);
+    if (isset($_SESSION['carrito'][$idx])) {
+        unset($_SESSION['carrito'][$idx]);
+        $_SESSION['carrito'] = array_values($_SESSION['carrito']);
+    }
+    header('Location: carrito.php');
+    exit;
+}
+
+// --- ACTUALIZAR CANTIDAD ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_index'], $_POST['cantidad'])) {
+    $idx = intval($_POST['update_index']);
+    $qty = max(1, min(25, intval($_POST['cantidad'])));
+    if (isset($_SESSION['carrito'][$idx])) {
+        $_SESSION['carrito'][$idx]['cantidad'] = $qty;
+    }
+    header('Location: carrito.php');
+    exit;
+}
+
+$carrito = $_SESSION['carrito'];
+$total = 0;
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -185,6 +267,56 @@ $tiposDocumento = obtenerValoresEnum($pdo, 'usuario', 'Tipo_Documento');
     color: #222;
   }
 
+
+#totales {
+  border-top: 1.5px solid #d9d9d9;
+}
+#totales tr td {
+  font-size: 1.08rem;
+  padding: 0.45rem 0 0.45rem 0;
+  color: #222;
+  vertical-align: middle;
+}
+#totales tr:not(:last-child) td {
+  font-weight: 500;
+}
+#totales tr:last-child td {
+  font-size: 1.24rem;
+  font-weight: 800;
+  color: #222;
+  border-top: 2px solid #d3d3d3;
+  padding-top: 1em;
+}
+#totales td:first-child {
+  text-align: left;
+  padding-right: 0.8em;
+  white-space: nowrap;
+}
+#totales td:last-child {
+  text-align: right;
+  white-space: nowrap;
+  padding-left: 0.8em;
+}
+.summary-box {
+  min-width: unset !important;  /* Elimina el min-width que genera el scroll raro */
+  max-width: 600px;
+  width: 100%;
+  overflow-x: visible;
+  margin-bottom: 1rem;
+}
+@media (max-width: 650px) {
+  .summary-box {
+    max-width: 98vw;
+    min-width: unset !important;
+    overflow-x: visible !important;
+  }
+  #totales td {
+    font-size: 1rem;
+  }
+}
+
+
+
   /* ----------- MOBILE ADAPTACIÓN ----------- */
   @media (max-width: 650px) {
     .summary-box {
@@ -324,88 +456,136 @@ $tiposDocumento = obtenerValoresEnum($pdo, 'usuario', 'Tipo_Documento');
     color: #ffd700;
   }
 
+.resumen-totales {
+  margin: 1.1em 0 0.6em 0;
+  padding: 1.1em 0 0 0;
+  border-top: 1.5px solid #d9d9d9;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15em;
+}
+
+.resumen-totales .linea-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.10rem;
+  font-weight: 500;
+  padding: 0.26em 0;
+  color: #222;
+}
+
+.resumen-totales .total-pagar {
+  font-size: 1.27rem;
+  font-weight: bold;
+  margin-top: 0.65em;
+  color: #1b1b1b;
+  border-top: 2px solid #d3d3d3;
+  padding-top: 0.6em;
+}
+
+@media (max-width: 650px) {
+  .resumen-totales {
+    font-size: 1em;
+    padding: 0.7em 0 0 0;
+  }
+  .resumen-totales .total-pagar {
+    font-size: 1.08rem;
+    padding-top: 0.3em;
+  }
+}
+
+
   </style>
-  <script>
-    let coberturaEnvia = [];
-    let ultimoEnvioCotizado = null;
+<script>
+let zipcodes = [];
+let ultimoEnvioCotizado = 0;
+let estimadoEntrega = "";
 
-    async function cargarCoberturaEnvia() {
-        const resp = await fetch('envia_cobertura.json');
-        coberturaEnvia = await resp.json();
-        const deptoSelect = document.getElementById('departamento');
-        deptoSelect.innerHTML = '<option value="">Seleccione</option>';
-        coberturaEnvia.forEach(depto => {
-            let opt = document.createElement('option');
-            opt.value = depto.departamento;
-            opt.textContent = depto.departamento;
-            deptoSelect.appendChild(opt);
-        });
-    }
-    function actualizarCiudadesEnvia() {
-        const deptoSelect = document.getElementById('departamento');
-        const ciudadSelect = document.getElementById('ciudad');
-        ciudadSelect.innerHTML = '<option value="">Seleccione</option>';
-        const depto = coberturaEnvia.find(d => d.departamento === deptoSelect.value);
-        if (depto) {
-            depto.ciudades.forEach(ciudad => {
-                let opt = document.createElement('option');
-                opt.value = ciudad;
-                opt.textContent = ciudad;
-                ciudadSelect.appendChild(opt);
-            });
-        }
-    }
-document.addEventListener('DOMContentLoaded', () => {
-    cargarCoberturaEnvia();
-    document.getElementById('departamento').addEventListener('change', actualizarCiudadesEnvia);
-    document.getElementById('ciudad').addEventListener('change', cotizarEnvio);
-    document.getElementById('direccion').addEventListener('input', cotizarEnvio);
-    document.getElementById('barrio').addEventListener('input', cotizarEnvio);
-
-    setTimeout(actualizarResumen, 800);
-
-    document.querySelectorAll('#resumen-pedido .cantidad').forEach((input, idx) => {
-      input.setAttribute('data-index', idx);
-      input.addEventListener('input', function () {
-        let valor = parseInt(this.value);
-        if (isNaN(valor) || valor < 1) {
-          alert("La cantidad mínima permitida es 1.");
-          this.value = 1;
-        } else if (valor > 25) {
-          alert("La cantidad máxima permitida es 25.");
-          this.value = 25;
-        }
-        fetch('actualizar_cantidad.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: 'index=' + encodeURIComponent(this.dataset.index) + '&cantidad=' + encodeURIComponent(this.value)
-        }).then(() => {
-          actualizarResumen();
-          cotizarEnvio();
-        });
-      });
+async function cargarDepartamentosZipcodes() {
+    const resp = await fetch('zipcodes.co.json');
+    zipcodes = await resp.json();
+    const departamentosUnicos = [...new Set(zipcodes.map(item => item.state))].sort();
+    const deptoSelect = document.getElementById('departamento');
+    deptoSelect.innerHTML = '<option value="">Seleccione</option>';
+    departamentosUnicos.forEach(depto => {
+        let opt = document.createElement('option');
+        opt.value = depto;
+        opt.textContent = depto;
+        deptoSelect.appendChild(opt);
     });
-});
+}
 
+function actualizarCiudadesZipcodes() {
+    const deptoSelect = document.getElementById('departamento');
+    const ciudadSelect = document.getElementById('ciudad');
+    ciudadSelect.innerHTML = '<option value="">Seleccione</option>';
+    if (!deptoSelect.value) return;
+    const ciudadesUnicas = [
+        ...new Set(
+            zipcodes
+                .filter(item => item.state === deptoSelect.value)
+                .map(item => item.place)
+        )
+    ].sort();
+    ciudadesUnicas.forEach(ciudad => {
+        let opt = document.createElement('option');
+        opt.value = ciudad;
+        opt.textContent = ciudad;
+        ciudadSelect.appendChild(opt);
+    });
+}
+
+// Calcula totales, IVA, y suma envío
+function actualizarResumen() {
+    const filas = document.querySelectorAll('#resumen-pedido tbody tr');
+    let subtotal = 0;
+    filas.forEach(fila => {
+        const cantidad = parseInt(fila.querySelector('.cantidad').value) || 1;
+        const precio = parseFloat(fila.querySelector('.cantidad').dataset.precio) || 0;
+        subtotal += cantidad * precio;
+        // Actualiza el subtotal de cada fila (por si el usuario cambia la cantidad)
+        fila.querySelector('.subtotal').textContent = '$' + (cantidad * precio).toLocaleString('es-CO');
+    });
+
+    // Calculo IVA 19%
+    let iva = Math.round(subtotal * 0.19);
+    let subtotalSinIva = subtotal;
+    let total = subtotalSinIva + iva + (ultimoEnvioCotizado || 0);
+
+    // Mostrar el resumen de totales fuera de la tabla
+    const resumenDiv = document.getElementById('resumen-totales');
+    resumenDiv.innerHTML = `
+      <div class="linea-total"><span>Subtotal (sin IVA)</span><span>$${subtotalSinIva.toLocaleString('es-CO')}</span></div>
+      <div class="linea-total"><span>IVA (19%)</span><span>$${iva.toLocaleString('es-CO')}</span></div>
+      <div class="linea-total"><span>Envío</span><span>${ultimoEnvioCotizado ? '$' + ultimoEnvioCotizado.toLocaleString('es-CO') : 'Por calcular...'}</span></div>
+      <div class="linea-total total-pagar"><span>Total</span><span>$${total.toLocaleString('es-CO')}</span></div>
+    `;
+    // Setear a los inputs ocultos
+    document.getElementById('campo_subtotal').value = subtotalSinIva;
+    document.getElementById('campo_iva').value = iva;
+    document.getElementById('campo_envio').value = ultimoEnvioCotizado;
+    document.getElementById('campo_total').value = total;
+}
+
+
+
+// Cotiza envío en tiempo real y muestra estimado de llegada
 async function cotizarEnvio() {
   const departamento = document.getElementById('departamento').value;
   const ciudad = document.getElementById('ciudad').value;
   const direccion = document.querySelector('[name="direccion"]').value;
   const barrio = document.querySelector('[name="barrio"]').value;
+  const nombre = document.querySelector('[name="nombre"]').value || "Cliente";
 
-  // Cálculo de peso, dimensiones...
-  let peso = 0, largo = 0, ancho = 0, alto = 0;
-  document.querySelectorAll('#resumen-pedido tbody tr').forEach(row => {
-    const cantidad = parseInt(row.querySelector('.cantidad').value);
-    const productoPeso = parseFloat(row.querySelector('.cantidad').dataset.peso || 1);
-    const productoLargo = parseFloat(row.querySelector('.cantidad').dataset.largo || 20);
-    const productoAncho = parseFloat(row.querySelector('.cantidad').dataset.ancho || 20);
-    const productoAlto = parseFloat(row.querySelector('.cantidad').dataset.alto || 20);
-    peso += productoPeso * cantidad;
-    largo = Math.max(largo, productoLargo);
-    ancho = Math.max(ancho, productoAncho);
-    alto += productoAlto * cantidad;
-  });
+  // Prevenir si falta dato clave
+  if (!departamento || !ciudad || !direccion || !barrio) {
+    document.getElementById('envio-mensaje').textContent = 'Completa datos de envío para cotizar.';
+    ultimoEnvioCotizado = 0; estimadoEntrega = "";
+    actualizarResumen();
+    return;
+  }
 
   document.getElementById('envio-mensaje').textContent = 'Calculando envío...';
   const resp = await fetch('cotizar_envio.php', {
@@ -416,23 +596,60 @@ async function cotizarEnvio() {
       ciudad_destino: ciudad,
       direccion: direccion,
       barrio: barrio,
-      peso: peso,
-      largo: largo,
-      ancho: ancho,
-      alto: alto
+      nombre: nombre
     })
   });
   const data = await resp.json();
   if (data.ok) {
-    ultimoEnvioCotizado = data.precio;
-    document.getElementById('envio-mensaje').textContent = 'Envío: $' + data.precio.toLocaleString('es-CO');
-    actualizarResumen();
+    // Toma solo el primer carrier cotizado (Interrapidisimo)
+    let servicio = data.data && data.data.length > 0 ? data.data[0] : null;
+    ultimoEnvioCotizado = servicio ? Math.round(servicio.totalPrice || 0) : (data.precio || 0);
+    estimadoEntrega = servicio && servicio.deliveryEstimate ? servicio.deliveryEstimate : '';
+    document.getElementById('envio-mensaje').textContent = 
+        'Envío: $' + ultimoEnvioCotizado.toLocaleString('es-CO') + 
+        (estimadoEntrega ? ' | Estimado de entrega: ' + estimadoEntrega : '');
   } else {
     ultimoEnvioCotizado = 0;
+    estimadoEntrega = '';
     document.getElementById('envio-mensaje').textContent = data.error || 'Error al cotizar envío';
-    actualizarResumen();
   }
+  actualizarResumen();
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    cargarDepartamentosZipcodes();
+    document.getElementById('departamento').addEventListener('change', actualizarCiudadesZipcodes);
+    document.getElementById('ciudad').addEventListener('change', cotizarEnvio);
+    document.getElementById('direccion').addEventListener('input', cotizarEnvio);
+    document.getElementById('barrio').addEventListener('input', cotizarEnvio);
+    document.getElementById('nombre')?.addEventListener('input', cotizarEnvio);
+
+    setTimeout(actualizarResumen, 800);
+
+document.querySelectorAll('#resumen-pedido .cantidad').forEach((input, idx) => {
+    input.setAttribute('data-index', idx);
+    input.addEventListener('input', function () {
+        let valor = parseInt(this.value);
+        if (isNaN(valor) || valor < 1) {
+            alert("La cantidad mínima permitida es 1.");
+            this.value = 1;
+        } else if (valor > 25) {
+            alert("La cantidad máxima permitida es 25.");
+            this.value = 25;
+        }
+        fetch('actualizar_cantidad.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'index=' + encodeURIComponent(this.dataset.index) + '&cantidad=' + encodeURIComponent(this.value)
+        }).then(() => {
+            // PRIMERO actualiza el resumen, luego cotiza envío
+            actualizarResumen();
+            cotizarEnvio();
+        });
+    });
+});
+
+});
 </script>
 </head>
 <body class="login-page">
@@ -463,16 +680,16 @@ async function cotizarEnvio() {
         </div>
         <div class="input-group">
           <label for="direccion">Dirección exacta</label>
-          <input type="text" name="direccion" required />
+          <input type="text" name="direccion" id="direccion" required />
         </div>
         <div class="input-group">
           <label for="barrio">Barrio</label>
-          <input type="text" name="barrio" required />
+          <input type="text" name="barrio" id="barrio" required />
         </div>
         <h3>2. Datos personales</h3>
         <div class="input-group">
           <label>Nombre</label>
-          <input type="text" name="nombre" required />
+          <input type="text" name="nombre" id="nombre" required />
         </div>
         <div class="input-group">
           <label>Apellidos</label>
@@ -503,7 +720,7 @@ async function cotizarEnvio() {
             <tr><th>Producto</th><th>Cantidad</th><th>Precio</th><th>Subtotal</th></tr>
           </thead>
           <tbody>
-          <?php foreach ($carrito as $index => $producto): 
+          <?php foreach ($carrito as $index => $producto):
               $imgStmt = $pdo->prepare("SELECT Imagen_URL FROM producto WHERE Nombre = ?");
               $imgStmt->execute([$producto['nombre']]);
               $imgFila = $imgStmt->fetch(PDO::FETCH_ASSOC);
@@ -539,10 +756,9 @@ async function cotizarEnvio() {
           </tr>
           <?php endforeach; ?>
           </tbody>
-          <tfoot id="totales"></tfoot>
         </table>
+        <div class="resumen-totales" id="resumen-totales"></div>
         <div id="envio-mensaje" style="margin-top:10px; font-weight:700; color:#227a38;"></div>
-      <!-- Checkboxes y botón de pedido al final del resumen -->
       <div class="checkboxes" style="margin-top: 1.2em;">
         <label><input type="checkbox" name="info" /> Deseo recibir información relevante</label>
         <label><input type="checkbox" name="terminos" required /> Acepto los términos y condiciones</label>
@@ -552,7 +768,7 @@ async function cotizarEnvio() {
       <input type="hidden" id="campo_envio" name="envio" value="">
       <input type="hidden" id="campo_total" name="total" value="">
       <button type="submit" class="btn-primary" style="margin-top: 1em;">Realizar pedido</button>
-      </div>
+      </div> 
     </form>
   </div>
   <footer>
