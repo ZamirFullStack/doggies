@@ -24,11 +24,12 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 $id = intval($_GET['id']);
 
 // --------------------------
+// --------------------------
 // AGREGAR AL CARRITO (AJAX o POST)
 // --------------------------
 if (
     $_SERVER['REQUEST_METHOD'] === 'POST' &&
-    isset($_POST['id_presentacion'], $_POST['nombre'], $_POST['precio'], $_POST['cantidad'], $_POST['imagen'], $_POST['presentacion']) &&
+    isset($_POST['id_presentacion'], $_POST['nombre'], $_POST['precio'], $_POST['cantidad'], $_POST['imagen']) &&
     !isset($_POST['agregar_opinion'])
 ) {
     $idPresentacion = intval($_POST['id_presentacion']);
@@ -36,14 +37,13 @@ if (
     $precio   = floatval($_POST['precio']);
     $cantidad = max(1, min(25, intval($_POST['cantidad'])));
     $imagen   = $_POST['imagen'];
-    $presentacion = strtolower(trim($_POST['presentacion']));
 
     $encontrado = false;
     foreach ($_SESSION['carrito'] as &$item) {
         if (
             isset($item['id_producto'], $item['id_presentacion']) &&
-            $item['id_producto'] === $id &&
-            $item['id_presentacion'] === $idPresentacion
+            $item['id_producto'] == $id &&
+            $item['id_presentacion'] == $idPresentacion
         ) {
             $item['cantidad'] = min(25, $item['cantidad'] + $cantidad);
             $encontrado = true;
@@ -53,18 +53,43 @@ if (
     unset($item);
 
     if (!$encontrado) {
+        // Obtener peso y dimensiones desde BD
+        $stmtPres = $pdo->prepare("SELECT Peso, ID_Producto FROM presentacion WHERE ID_Presentacion = ?");
+        $stmtPres->execute([$idPresentacion]);
+        $presData = $stmtPres->fetch(PDO::FETCH_ASSOC);
+
+        if (!$presData) {
+            http_response_code(400);
+            exit('Error: Presentación no encontrada.');
+        }
+
+        $pesoNum = floatval(preg_replace('/[^\d.]/', '', $presData['Peso']));
+
+        $stmtProd = $pdo->prepare("SELECT alto_cm, ancho_cm, largo_cm FROM producto WHERE ID_Producto = ?");
+        $stmtProd->execute([$presData['ID_Producto']]);
+        $prodDims = $stmtProd->fetch(PDO::FETCH_ASSOC);
+
+        if (!$prodDims) {
+            http_response_code(400);
+            exit('Error: Producto no encontrado para dimensiones.');
+        }
+
         $_SESSION['carrito'][] = [
-            'id_producto' => $id,  // Aquí sí usamos el ID correcto
+            'id_producto' => $id,
             'id_presentacion' => $idPresentacion,
-            'nombre'   => $nombre,
-            'precio'   => $precio,
+            'nombre' => $nombre,
+            'precio' => $precio,
             'cantidad' => $cantidad,
-            'imagen'   => $imagen,
-            'presentacion' => $presentacion
+            'imagen' => $imagen,
+            'presentacion' => $idPresentacion, // Guardar el ID numérico en "presentacion"
+            'peso' => $pesoNum,
+            'alto' => $prodDims['alto_cm'],
+            'ancho' => $prodDims['ancho_cm'],
+            'largo' => $prodDims['largo_cm']
         ];
     }
 
-    // SIEMPRE RESPONDE JSON SI ES POST DESDE AJAX
+    // Respuesta JSON para AJAX
     if (
         isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
         strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
@@ -78,10 +103,11 @@ if (
         exit;
     }
 
-    // POST NO AJAX: redirige al detalle del producto
     header('Location: producto_detalle.php?id=' . $id);
     exit;
 }
+
+
 
 // --------------------------
 // ACTUALIZAR CANTIDAD (AJAX)
@@ -857,9 +883,9 @@ footer p { margin-top: 15px; font-size: 0.9rem; }
 
   <input type="hidden" name="nombre" value="<?php echo $nombre; ?>">
   <input type="hidden" name="precio" id="input-precio" value="<?php echo $precioInicial; ?>">
-  <input type="hidden" name="presentacion" id="input-presentacion" value="<?php echo $pesoInicial; ?>" class="input-presentacion">
   <input type="hidden" name="imagen" id="input-imagen" value="<?php echo $imagenPrincipal; ?>">
   <input type="hidden" name="id_presentacion" id="input-id-presentacion" value="<?php echo $presentaciones[0]['ID_Presentacion'] ?? ''; ?>">
+  <input type="hidden" name="presentacion" id="input-presentacion" value="<?php echo $presentaciones[0]['ID_Presentacion'] ?? ''; ?>" class="input-presentacion">
 
 
   <label>Cantidad:</label>
@@ -1022,7 +1048,8 @@ document.addEventListener('DOMContentLoaded', function() {
             b.classList.add('activa');
             document.getElementById('precio-mostrado').textContent = '$' + parseInt(b.dataset.precio).toLocaleString('es-CO');
             document.getElementById('input-precio').value = b.dataset.precio;
-            document.getElementById('input-presentacion').value = b.textContent.trim();
+            // Cambiar aquí para usar id_presentacion (numérico)
+            document.getElementById('input-presentacion').value = b.dataset.id;
             document.getElementById('input-id-presentacion').value = b.dataset.id;
         });
     });

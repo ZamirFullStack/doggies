@@ -33,7 +33,7 @@ if (
     $precio = floatval($_POST['precio']);
     $cantidad = max(1, min(25, intval($_POST['cantidad'])));
     $imagen = $_POST['imagen'];
-    $id_presentacion = intval($_POST['presentacion']); // ID de la presentación
+    $id_presentacion = intval($_POST['id_presentacion']); // El id_presentacion viene desde POST
 
     // 1. Trae la presentación (para el peso y el ID_Producto)
     $stmt = $pdo->prepare("SELECT Peso, ID_Producto FROM presentacion WHERE ID_Presentacion = ?");
@@ -85,17 +85,18 @@ if (
     unset($item);
 
     if (!$encontrado) {
-        $_SESSION['carrito'][] = [
-            'nombre'        => $nombre,
-            'precio'        => $precio,
-            'cantidad'      => $cantidad,
-            'imagen'        => $imagen,
-            'presentacion'  => $id_presentacion,
-            'peso'          => $peso,
-            'largo'         => $largo,
-            'ancho'         => $ancho,
-            'alto'          => $alto,
-        ];
+    $_SESSION['carrito'][] = [
+        'id_producto'   => $id_producto,       // agregado para que esté disponible
+        'presentacion'  => $id_presentacion,   // id presentación, tal cual
+        'nombre'        => $nombre,
+        'precio'        => $precio,
+        'cantidad'      => $cantidad,
+        'imagen'        => $imagen,
+        'peso'          => $peso,
+        'largo'         => $largo,
+        'ancho'         => $ancho,
+        'alto'          => $alto,
+    ];
     }
     exit;
 }
@@ -789,7 +790,7 @@ document.querySelectorAll('#resumen-pedido .cantidad').forEach((input, idx) => {
     <!-- Aquí agregamos los inputs ocultos para las dimensiones e IDs -->
     <?php foreach ($_SESSION['carrito'] as $index => $item): ?>
       <input type="hidden" name="carrito[<?= $index ?>][id_producto]" value="<?= htmlspecialchars($item['id_producto'] ?? '') ?>">
-      <input type="hidden" name="carrito[<?= $index ?>][id_presentacion]" value="<?= htmlspecialchars($item['presentacion'] ?? '') ?>">
+      <input type="hidden" name="carrito[<?= $index ?>][presentacion]" value="<?= htmlspecialchars($item['presentacion'] ?? '') ?>">
       <input type="hidden" name="carrito[<?= $index ?>][alto]" value="<?= htmlspecialchars($item['alto'] ?? '') ?>">
       <input type="hidden" name="carrito[<?= $index ?>][ancho]" value="<?= htmlspecialchars($item['ancho'] ?? '') ?>">
       <input type="hidden" name="carrito[<?= $index ?>][largo]" value="<?= htmlspecialchars($item['largo'] ?? '') ?>">

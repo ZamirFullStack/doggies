@@ -140,11 +140,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_index'], $_POS
 $carrito = $_SESSION['carrito'];
 
 foreach ($carrito as $item) {
-    $peso = $item['peso'];
-    $alto = $item['alto'];
-    $ancho = $item['ancho'];
-    $largo = $item['largo'];
-    $cantidad = $item['cantidad'];
+  $peso = isset($item['peso']) ? $item['peso'] : '';
+  $alto = isset($item['alto']) ? $item['alto'] : '';
+  $ancho = isset($item['ancho']) ? $item['ancho'] : '';
+  $largo = isset($item['largo']) ? $item['largo'] : '';
+
     // Aquí puedes hacer el cálculo de la cotización con la API de Envia usando estos valores
 }
 
