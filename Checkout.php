@@ -26,8 +26,9 @@ try {
 // --- AGREGAR AL CARRITO ---
 if (
   $_SERVER['REQUEST_METHOD'] === 'POST' &&
-  isset($_POST['nombre'], $_POST['precio'], $_POST['cantidad'], $_POST['imagen'], $_POST['presentacion'])
+  isset($_POST['id_producto'], $_POST['id_presentacion'], $_POST['nombre'], $_POST['precio'], $_POST['cantidad'], $_POST['imagen'])
 ) {
+
     $nombre = $_POST['nombre'];
     $precio = floatval($_POST['precio']);
     $cantidad = max(1, min(25, intval($_POST['cantidad'])));
@@ -51,7 +52,7 @@ if (
     $id_producto = $present['ID_Producto'];
 
     // 2. Trae las dimensiones del producto asociado a la presentación
-    $stmtProd = $pdo->prepare("SELECT Alto_cm, Largo_cm, Ancho_cm FROM producto WHERE ID_Producto = ?");
+    $stmtProd = $pdo->prepare("SELECT alto_cm, largo_cm, ancho_cm FROM producto WHERE ID_Producto = ?");
     $stmtProd->execute([$id_producto]);
     $producto_dim = $stmtProd->fetch(PDO::FETCH_ASSOC);
 
@@ -124,6 +125,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_index'], $_POS
 
 $carrito = $_SESSION['carrito'];
 $total = 0;
+
+$tiposDocumento = ['Cédula de ciudadanía', 'Cédula de extranjería', 'Pasaporte', 'NIT', 'Tarjeta de identidad'];
+
+
 ?>
 
 <!DOCTYPE html>
@@ -664,79 +669,89 @@ document.querySelectorAll('#resumen-pedido .cantidad').forEach((input, idx) => {
   </header>
   <div class="checkout-container">
     <form class="checkout-form" method="POST" action="pagar_carrito.php" style="display: contents;">
-      <div>
-        <h3>1. Dirección de envío</h3>
-        <div class="input-group">
-          <label for="email">Correo electrónico</label>
-          <input type="email" name="email" required />
-        </div>
-        <div class="input-group">
-          <label for="departamento">Departamento</label>
-          <select name="departamento" id="departamento" required></select>
-        </div>
-        <div class="input-group">
-          <label for="ciudad">Ciudad</label>
-          <select name="ciudad" id="ciudad" required></select>
-        </div>
-        <div class="input-group">
-          <label for="direccion">Dirección exacta</label>
-          <input type="text" name="direccion" id="direccion" required />
-        </div>
-        <div class="input-group">
-          <label for="barrio">Barrio</label>
-          <input type="text" name="barrio" id="barrio" required />
-        </div>
-        <h3>2. Datos personales</h3>
-        <div class="input-group">
-          <label>Nombre</label>
-          <input type="text" name="nombre" id="nombre" required />
-        </div>
-        <div class="input-group">
-          <label>Apellidos</label>
-          <input type="text" name="apellidos" required />
-        </div>
-        <div class="input-group">
-          <label for="tipo_documento">Tipo de documento</label>
-          <select name="tipo_documento" id="tipo_documento" required>
-            <option value="">Seleccione</option>
-            <?php foreach ($tiposDocumento as $tipo): ?>
-              <option value="<?= htmlspecialchars($tipo) ?>"><?= htmlspecialchars($tipo) ?></option>
-            <?php endforeach; ?>
-          </select>
-        </div>
-        <div class="input-group">
-          <label>Número de documento</label>
-          <input type="text" name="numero_documento" required />
-        </div>
-        <div class="input-group">
-          <label>Teléfono</label>
-          <input type="text" name="telefono" required />
-        </div>
-      </div>
-      <div class="summary-box">
-        <h3>3. Resumen del pedido</h3>
-        <table id="resumen-pedido">
-          <thead>
-            <tr><th>Producto</th><th>Cantidad</th><th>Precio</th><th>Subtotal</th></tr>
-          </thead>
-          <tbody>
-          <?php foreach ($carrito as $index => $producto):
-              $imgStmt = $pdo->prepare("SELECT Imagen_URL FROM producto WHERE Nombre = ?");
-              $imgStmt->execute([$producto['nombre']]);
-              $imgFila = $imgStmt->fetch(PDO::FETCH_ASSOC);
-              $imgRuta = $imgFila ? $imgFila['Imagen_URL'] : 'img/Productos/default.jpg';
+  <div>
+    <h3>1. Dirección de envío</h3>
+    <div class="input-group">
+      <label for="email">Correo electrónico</label>
+      <input type="email" name="email" required />
+    </div>
+    <div class="input-group">
+      <label for="departamento">Departamento</label>
+      <select name="departamento" id="departamento" required></select>
+    </div>
+    <div class="input-group">
+      <label for="ciudad">Ciudad</label>
+      <select name="ciudad" id="ciudad" required></select>
+    </div>
+    <div class="input-group">
+      <label for="direccion">Dirección exacta</label>
+      <input type="text" name="direccion" id="direccion" required />
+    </div>
+    <div class="input-group">
+      <label for="barrio">Barrio</label>
+      <input type="text" name="barrio" id="barrio" required />
+    </div>
+    <h3>2. Datos personales</h3>
+    <div class="input-group">
+      <label>Nombre</label>
+      <input type="text" name="nombre" id="nombre" required />
+    </div>
+    <div class="input-group">
+      <label>Apellidos</label>
+      <input type="text" name="apellidos" required />
+    </div>
+    <div class="input-group">
+      <label for="tipo_documento">Tipo de documento</label>
+      <select name="tipo_documento" id="tipo_documento" required>
+        <option value="">Seleccione</option>
+        <?php foreach ($tiposDocumento as $tipo): ?>
+          <option value="<?= htmlspecialchars($tipo) ?>"><?= htmlspecialchars($tipo) ?></option>
+        <?php endforeach; ?>
+      </select>
+    </div>
+    <div class="input-group">
+      <label>Número de documento</label>
+      <input type="text" name="numero_documento" required />
+    </div>
+    <div class="input-group">
+      <label>Teléfono</label>
+      <input type="text" name="telefono" required />
+    </div>
+  </div>
+  
+  <div class="summary-box">
+    <h3>3. Resumen del pedido</h3>
+    <table id="resumen-pedido">
+      <thead>
+        <tr><th>Producto</th><th>Cantidad</th><th>Precio</th><th>Subtotal</th></tr>
+      </thead>
+      <tbody>
+        <?php foreach ($carrito as $index => $producto):
+          $imgStmt = $pdo->prepare("SELECT Imagen_URL FROM producto WHERE Nombre = ?");
+          $imgStmt->execute([$producto['nombre']]);
+          $imgFila = $imgStmt->fetch(PDO::FETCH_ASSOC);
+          $imgRuta = $imgFila ? $imgFila['Imagen_URL'] : 'img/Productos/default.jpg';
 
-              $nombre = htmlspecialchars($producto['nombre']);
-              $presentacion = isset($producto['presentacion']) ? htmlspecialchars($producto['presentacion']) : '';
-              $nombreCompleto = $nombre . ($presentacion ? " ({$presentacion})" : "");
-          ?>
-          <tr>
-            <td class="product-summary" data-label="Producto">
-              <img src="<?= htmlspecialchars($imgRuta) ?>" alt="<?= $nombreCompleto ?>">
-              <span><?= $nombreCompleto ?></span>
-            </td>
-            <td data-label="Cantidad">
-              <input type="number" class="cantidad"
+          $nombre = htmlspecialchars($producto['nombre']);
+          $presentacionNombre = '';
+          if (!empty($producto['presentacion'])) {
+            $stmtPres = $pdo->prepare("SELECT Peso FROM presentacion WHERE ID_Presentacion = ?");
+            $stmtPres->execute([$producto['presentacion']]);
+            $filaPres = $stmtPres->fetch(PDO::FETCH_ASSOC);
+            if ($filaPres) {
+              $presentacionNombre = $filaPres['Peso'];
+            }
+          }
+
+          $nombreCompleto = $nombre . ($presentacionNombre ? " ({$presentacionNombre})" : "");
+        ?>
+        <tr>
+          <td class="product-summary" data-label="Producto">
+            <img src="<?= htmlspecialchars($imgRuta) ?>" alt="<?= $nombreCompleto ?>">
+            <span><?= $nombreCompleto ?></span>
+          </td>
+          <td data-label="Cantidad">
+            <input type="number" class="cantidad"
               name="cantidades[<?= $index ?>]"
               value="<?= $producto['cantidad'] ?>" min="1" max="25"
               data-precio="<?= $producto['precio'] ?>"
@@ -746,30 +761,44 @@ document.querySelectorAll('#resumen-pedido .cantidad').forEach((input, idx) => {
               data-ancho="<?= $producto['ancho'] ?? 20 ?>"
               data-alto="<?= $producto['alto'] ?? 20 ?>"
             >
-            </td>
-            <td data-label="Precio">
-              $<?= number_format($producto['precio'], 0, ',', '.') ?>
-            </td>
-            <td class="subtotal" data-label="Subtotal">
-              $<?= number_format($producto['precio'] * $producto['cantidad'], 0, ',', '.') ?>
-            </td>
-          </tr>
-          <?php endforeach; ?>
-          </tbody>
-        </table>
-        <div class="resumen-totales" id="resumen-totales"></div>
-        <div id="envio-mensaje" style="margin-top:10px; font-weight:700; color:#227a38;"></div>
-      <div class="checkboxes" style="margin-top: 1.2em;">
-        <label><input type="checkbox" name="info" /> Deseo recibir información relevante</label>
-        <label><input type="checkbox" name="terminos" required /> Acepto los términos y condiciones</label>
-      </div>
-      <input type="hidden" id="campo_subtotal" name="subtotal" value="">
-      <input type="hidden" id="campo_iva" name="iva" value="">
-      <input type="hidden" id="campo_envio" name="envio" value="">
-      <input type="hidden" id="campo_total" name="total" value="">
-      <button type="submit" class="btn-primary" style="margin-top: 1em;">Realizar pedido</button>
-      </div> 
-    </form>
+          </td>
+          <td data-label="Precio">
+            $<?= number_format($producto['precio'], 0, ',', '.') ?>
+          </td>
+          <td class="subtotal" data-label="Subtotal">
+            $<?= number_format($producto['precio'] * $producto['cantidad'], 0, ',', '.') ?>
+          </td>
+        </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+
+    <div class="resumen-totales" id="resumen-totales"></div>
+    <div id="envio-mensaje" style="margin-top:10px; font-weight:700; color:#227a38;"></div>
+    
+    <div class="checkboxes" style="margin-top: 1.2em;">
+      <label><input type="checkbox" name="info" /> Deseo recibir información relevante</label>
+      <label><input type="checkbox" name="terminos" required /> Acepto los términos y condiciones</label>
+    </div>
+
+    <input type="hidden" id="campo_subtotal" name="subtotal" value="">
+    <input type="hidden" id="campo_iva" name="iva" value="">
+    <input type="hidden" id="campo_envio" name="envio" value="">
+    <input type="hidden" id="campo_total" name="total" value="">
+
+    <!-- Aquí agregamos los inputs ocultos para las dimensiones e IDs -->
+    <?php foreach ($_SESSION['carrito'] as $index => $item): ?>
+      <input type="hidden" name="carrito[<?= $index ?>][id_producto]" value="<?= htmlspecialchars($item['id_producto'] ?? '') ?>">
+      <input type="hidden" name="carrito[<?= $index ?>][id_presentacion]" value="<?= htmlspecialchars($item['presentacion'] ?? '') ?>">
+      <input type="hidden" name="carrito[<?= $index ?>][alto]" value="<?= htmlspecialchars($item['alto'] ?? '') ?>">
+      <input type="hidden" name="carrito[<?= $index ?>][ancho]" value="<?= htmlspecialchars($item['ancho'] ?? '') ?>">
+      <input type="hidden" name="carrito[<?= $index ?>][largo]" value="<?= htmlspecialchars($item['largo'] ?? '') ?>">
+    <?php endforeach; ?>
+
+    <button type="submit" class="btn-primary" style="margin-top: 1em;">Realizar pedido</button>
+  </div> 
+</form>
+
   </div>
   <footer>
     <div class="footer-content">

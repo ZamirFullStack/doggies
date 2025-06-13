@@ -1,13 +1,11 @@
 <?php
 session_start();
 
-file_put_contents('debug_carrito_view.log', print_r($_SESSION['carrito'] ?? [], true));
-
-
 if (!isset($_SESSION['carrito'])) {
     $_SESSION['carrito'] = [];
 }
 
+// Configuración conexión PDO (adaptar según tu servidor y credenciales)
 $url = 'mysql://root:AaynZNNKYegnXoInEgQefHggDxoRieEL@centerbeam.proxy.rlwy.net:58462/railway';
 $dbparts = parse_url($url);
 $host = $dbparts['host'];
@@ -23,94 +21,137 @@ try {
     die('❌ Error de conexión: ' . $e->getMessage());
 }
 
+foreach ($_SESSION['carrito'] as &$item) {
+    if (!isset($item['id_producto'])) $item['id_producto'] = 0;
+    if (!isset($item['id_presentacion'])) $item['id_presentacion'] = 0;
+    if (!isset($item['presentacion'])) $item['presentacion'] = '';
+    if (!isset($item['cantidad'])) $item['cantidad'] = 1;
+    if (!isset($item['precio'])) $item['precio'] = 0;
+    if (!isset($item['imagen'])) $item['imagen'] = 'img/default.jpg';
+}
+unset($item);
+
+$_SESSION['carrito'] = array_filter($_SESSION['carrito'], function($item) {
+    return isset($item['id_producto']) && isset($item['id_presentacion']);
+});
+$_SESSION['carrito'] = array_values($_SESSION['carrito']); // reindexa
+
+
+
+// Añadir producto al carrito desde POST
 if (
   $_SERVER['REQUEST_METHOD'] === 'POST' &&
-  isset($_POST['nombre'], $_POST['precio'], $_POST['cantidad'], $_POST['imagen'], $_POST['presentacion'])
+  isset($_POST['id_producto'], $_POST['id_presentacion'], $_POST['nombre'], $_POST['precio'], $_POST['cantidad'], $_POST['imagen'])
 ) {
-    $nombre = $_POST['nombre'];
+    $idProducto = intval($_POST['id_producto']);
+    $idPresentacion = intval($_POST['id_presentacion']);
+    $nombre = trim($_POST['nombre']);
     $precio = floatval($_POST['precio']);
     $cantidad = max(1, min(25, intval($_POST['cantidad'])));
-    $imagen = $_POST['imagen'];
-    $id_presentacion = intval($_POST['presentacion']);
+    $imagen = trim($_POST['imagen']);
 
-    // CONSULTA la presentación exacta en la BD
-    $stmt = $pdo->prepare("SELECT Peso, Largo, Ancho, Alto FROM presentacion WHERE ID_Presentacion = ?");
-    $stmt->execute([$id_presentacion]);
-    $present = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Obtener dimensiones desde DB
+    $stmtDim = $pdo->prepare("
+        SELECT p.Peso, pr.alto_cm AS Alto, pr.ancho_cm AS Ancho, pr.largo_cm AS Largo
+        FROM presentacion p
+        JOIN producto pr ON p.ID_Producto = pr.ID_Producto
+        WHERE p.ID_Presentacion = ?
+    ");
+    $stmtDim->execute([$idPresentacion]);
+    $dimensiones = $stmtDim->fetch(PDO::FETCH_ASSOC);
 
-    if (!$present) {
-        http_response_code(400);
-        exit('Error: presentación inválida');
-    }
+    $peso = $dimensiones['Peso'] ?? 0;
+    $alto = $dimensiones['Alto'] ?? 0;
+    $ancho = $dimensiones['Ancho'] ?? 0;
+    $largo = $dimensiones['Largo'] ?? 0;
 
-    $peso = $present['Peso'];
-    $largo = $present['Largo'];
-    $ancho = $present['Ancho'];
-    $alto  = $present['Alto'];
 
     $encontrado = false;
+
     foreach ($_SESSION['carrito'] as &$item) {
         if (
-            $item['nombre'] === $nombre &&
-            $item['precio'] == $precio &&
-            $item['imagen'] === $imagen &&
-            intval($item['presentacion']) === $id_presentacion
+            isset($item['id_producto'], $item['id_presentacion']) &&
+            $item['id_producto'] == $idProducto &&
+            $item['id_presentacion'] == $idPresentacion
         ) {
             $item['cantidad'] = min(25, $item['cantidad'] + $cantidad);
             $encontrado = true;
             break;
         }
     }
+
     unset($item);
 
-if (!$encontrado) {
-    // Consulta la BD por el ID de presentación para obtener dimensiones y peso
-    $stmtPres = $pdo->prepare("SELECT * FROM presentacion WHERE ID_Presentacion = ?");
-    $stmtPres->execute([$id_presentacion]);  // <-- CORRECCIÓN aquí
-    $presData = $stmtPres->fetch(PDO::FETCH_ASSOC);
-
-    if (!$presData) {
-        exit('Error: presentación no encontrada');
-    }
-
-    // Función para limpiar número
-    function limpiar_numero($valor) {
-        $limpio = preg_replace('/[^\d.]/', '', $valor);
-        return is_numeric($limpio) ? floatval($limpio) : 0;
-    }
-
-    $peso = limpiar_numero($presData['Peso'] ?? '0');
-
-    // Obtener dimensiones del producto asociado
-    $stmtProd = $pdo->prepare("SELECT Alto_cm, Largo_cm, Ancho_cm FROM producto WHERE ID_Producto = ?");
-    $stmtProd->execute([$presData['ID_Producto']]);
+    // Ejemplo: obtener dimensiones y asignar
+    $stmtProd = $pdo->prepare("SELECT alto_cm, largo_cm, ancho_cm FROM producto WHERE ID_Producto = ?");
+    $stmtProd->execute([$idProducto]);  // Aquí usas $idProducto correcto
     $producto_dim = $stmtProd->fetch(PDO::FETCH_ASSOC);
 
-    $alto  = limpiar_numero($producto_dim['Alto_cm'] ?? '0');
-    $largo = limpiar_numero($producto_dim['Largo_cm'] ?? '0');
-    $ancho = limpiar_numero($producto_dim['Ancho_cm'] ?? '0');
+    $alto  = floatval($producto_dim['alto_cm'] ?? 0);
+    $largo = floatval($producto_dim['largo_cm'] ?? 0);
+    $ancho = floatval($producto_dim['ancho_cm'] ?? 0);
 
-    $_SESSION['carrito'][] = [
-        'nombre'       => $nombre,
-        'precio'       => $precio,
-        'cantidad'     => $cantidad,
-        'imagen'       => $imagen,
-        'presentacion' => $id_presentacion,  // <-- CORRECCIÓN aquí
-        'peso'         => $peso,
-        'largo'        => $largo,
-        'ancho'        => $ancho,
-        'alto'         => $alto,
-    ];
 
-    // Opcional: redireccionar para evitar resubmits o mostrar el carrito
-    header('Location: carrito.php');
+    if (!$encontrado) {
+        $_SESSION['carrito'][] = [
+            'id_producto'    => $idProducto,
+            'id_presentacion'=> $idPresentacion,
+            'nombre'         => $nombre,
+            'precio'         => $precio,
+            'cantidad'       => $cantidad,
+            'imagen'         => $imagen,
+            'peso'           => $peso,
+            'alto'           => $alto,
+            'ancho'          => $ancho,
+            'largo'          => $largo,
+        ];
+    }
+
+    // Guardar log con dimensiones
+    file_put_contents('debug_variables.log', date('Y-m-d H:i:s') . " - idProducto: $idProducto, idPresentacion: $idPresentacion, alto: $alto, ancho: $ancho, largo: $largo\n", FILE_APPEND);
+
     exit;
-  }
 }
 
 
+// Eliminar producto del carrito
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_index'])) {
+    $idx = intval($_POST['delete_index']);
+    if (isset($_SESSION['carrito'][$idx])) {
+        unset($_SESSION['carrito'][$idx]);
+        $_SESSION['carrito'] = array_values($_SESSION['carrito']); // Reindexar
+    }
+    header('Location: carrito.php');
+    exit;
+}
+
+// Actualizar cantidad de producto en carrito
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_index'], $_POST['cantidad'])) {
+    $idx = intval($_POST['update_index']);
+    $qty = max(1, min(25, intval($_POST['cantidad'])));
+    if (isset($_SESSION['carrito'][$idx])) {
+        $_SESSION['carrito'][$idx]['cantidad'] = $qty;
+    }
+    header('Location: carrito.php');
+    exit;
+}
+
+// Obtener carrito para mostrar en HTML
 $carrito = $_SESSION['carrito'];
+
+foreach ($carrito as $item) {
+    $peso = $item['peso'];
+    $alto = $item['alto'];
+    $ancho = $item['ancho'];
+    $largo = $item['largo'];
+    $cantidad = $item['cantidad'];
+    // Aquí puedes hacer el cálculo de la cotización con la API de Envia usando estos valores
+}
+
 $total = 0;
+
+file_put_contents('debug_carrito.log', date('Y-m-d H:i:s') . " - Carrito actual:\n" . print_r($carrito, true) . "\n\n", FILE_APPEND);
+
 
 ?>
 <!DOCTYPE html>
@@ -641,6 +682,7 @@ footer::after {
                   $peso = $filaPeso['Peso'];
               }
           }
+
 
           $subtotal = $producto['precio'] * $producto['cantidad'];
           $total += $subtotal;

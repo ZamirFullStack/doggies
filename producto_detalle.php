@@ -28,9 +28,10 @@ $id = intval($_GET['id']);
 // --------------------------
 if (
     $_SERVER['REQUEST_METHOD'] === 'POST' &&
-    isset($_POST['nombre'], $_POST['precio'], $_POST['cantidad'], $_POST['imagen'], $_POST['presentacion']) &&
+    isset($_POST['id_presentacion'], $_POST['nombre'], $_POST['precio'], $_POST['cantidad'], $_POST['imagen'], $_POST['presentacion']) &&
     !isset($_POST['agregar_opinion'])
 ) {
+    $idPresentacion = intval($_POST['id_presentacion']);
     $nombre   = $_POST['nombre'];
     $precio   = floatval($_POST['precio']);
     $cantidad = max(1, min(25, intval($_POST['cantidad'])));
@@ -40,11 +41,9 @@ if (
     $encontrado = false;
     foreach ($_SESSION['carrito'] as &$item) {
         if (
-            $item['nombre'] === $nombre &&
-            $item['precio'] == $precio &&
-            $item['imagen'] === $imagen &&
-            isset($item['presentacion']) &&
-            strtolower(trim($item['presentacion'])) === $presentacion
+            isset($item['id_producto'], $item['id_presentacion']) &&
+            $item['id_producto'] === $id &&
+            $item['id_presentacion'] === $idPresentacion
         ) {
             $item['cantidad'] = min(25, $item['cantidad'] + $cantidad);
             $encontrado = true;
@@ -55,6 +54,8 @@ if (
 
     if (!$encontrado) {
         $_SESSION['carrito'][] = [
+            'id_producto' => $id,  // Aquí sí usamos el ID correcto
+            'id_presentacion' => $idPresentacion,
             'nombre'   => $nombre,
             'precio'   => $precio,
             'cantidad' => $cantidad,
@@ -68,7 +69,6 @@ if (
         isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
         strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
     ) {
-        // FORZAR SIEMPRE JSON Y EXIT, NO HTML JAMÁS
         header('Content-Type: application/json');
         echo json_encode([
             'ok' => true,
@@ -78,27 +78,29 @@ if (
         exit;
     }
 
-    // En el caso MUY raro que POST no sea AJAX (usuario con forms antiguos, etc.)
-    // Solo ahí, redirige.
-    header('Location: producto_detalle.php?id=' . intval($_GET['id']));
+    // POST NO AJAX: redirige al detalle del producto
+    header('Location: producto_detalle.php?id=' . $id);
     exit;
 }
 
-
 // --------------------------
-// (OPCIONAL) ACTUALIZAR CANTIDAD (si lo necesitas por AJAX)
+// ACTUALIZAR CANTIDAD (AJAX)
 // --------------------------
 if (
     $_SERVER['REQUEST_METHOD'] === 'POST' &&
-    isset($_POST['update'], $_POST['cantidad']) &&
+    isset($_POST['update'], $_POST['cantidad'], $_POST['id_presentacion']) &&
     isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
     strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
 ) {
     $qty = max(1, min(25, intval($_POST['cantidad'])));
-    $last = count($_SESSION['carrito']) - 1;
-    if ($last >= 0) {
-        $_SESSION['carrito'][$last]['cantidad'] = $qty;
+    $idPres = intval($_POST['id_presentacion']);
+    foreach ($_SESSION['carrito'] as &$item) {
+        if (isset($item['id_presentacion']) && $item['id_presentacion'] == $idPres) {
+            $item['cantidad'] = $qty;
+            break;
+        }
     }
+    unset($item);
     header('Content-Type: application/json');
     echo json_encode([
         'ok' => true,
@@ -108,8 +110,9 @@ if (
     exit;
 }
 
-
-// 4. CONSULTAS PRODUCTO Y RESTO DE VARIABLES
+// --------------------------
+// CONSULTAS PRODUCTO Y VARIABLES PARA HTML
+// --------------------------
 $stmt = $pdo->prepare("SELECT * FROM producto WHERE ID_Producto = ?");
 $stmt->execute([$id]);
 $producto = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -136,7 +139,6 @@ $stmt = $pdo->prepare("SELECT * FROM presentacion WHERE ID_Producto = ? ORDER BY
 $stmt->execute([$id]);
 $presentaciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// -- AQUI INICIALIZA SEGUN PRESENTACIONES --
 if (count($presentaciones) > 0) {
     $presInicial = $presentaciones[0];
     $precioInicial = floatval($presInicial['Precio']);
@@ -159,14 +161,12 @@ $usuarioLogueado = isset($_SESSION['usuario']);
 $usuarioActual = $usuarioLogueado ? $_SESSION['usuario'] : null;
 $recomendados = $pdo->query("SELECT * FROM producto WHERE ID_Producto != $id ORDER BY RAND() LIMIT 4")->fetchAll(PDO::FETCH_ASSOC);
 
-// --- CONTROL: Solo opina quien compró y no haya opinado antes ---
 $puedeOpinar = false;
 $yaOpino = false;
 
 if ($usuarioLogueado && isset($_SESSION['id_usuario'])) {
     $idUsuario = $_SESSION['id_usuario'];
 
-    // ¿Ha comprado el producto? (busca en pedidos PAGADOS)
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM pedido p
         INNER JOIN pedido_productos pp ON p.ID_Pedido = pp.ID_Pedido
         WHERE p.ID_Usuario = ? AND pp.ID_Producto = ? AND p.Estado = 'pagado'");
@@ -174,11 +174,11 @@ if ($usuarioLogueado && isset($_SESSION['id_usuario'])) {
     $haComprado = $stmt->fetchColumn();
     $puedeOpinar = $haComprado > 0;
 
-    // ¿Ya dejó opinión para este producto?
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM opinion WHERE ID_Producto = ? AND Usuario = ?");
     $stmt->execute([$id, $idUsuario]);
     $yaOpino = $stmt->fetchColumn() > 0;
 }
+
 
 ?>
 <!DOCTYPE html>
@@ -833,14 +833,16 @@ footer p { margin-top: 15px; font-size: 0.9rem; }
     <label><strong>Presentación:</strong></label>
     <?php if (count($presentaciones) > 0): ?>
       <div class="presentacion-opciones" id="presentacion-opciones">
-      <?php foreach ($presentaciones as $index => $p): ?>
-        <button type="button"
-          class="<?php echo $index==0 ? 'activa' : ''; ?>"
-          data-precio="<?php echo floatval($p['Precio']); ?>"
-          data-peso="<?php echo htmlspecialchars($p['Peso']); ?>">
-          <?php echo htmlspecialchars($p['Peso']); ?>
-        </button>
-      <?php endforeach; ?>
+    <?php foreach ($presentaciones as $index => $p): ?>
+      <button type="button"
+        class="<?php echo $index==0 ? 'activa' : ''; ?>"
+        data-precio="<?php echo floatval($p['Precio']); ?>"
+        data-peso="<?php echo htmlspecialchars($p['Peso']); ?>"
+        data-id="<?php echo intval($p['ID_Presentacion']); ?>">
+        <?php echo htmlspecialchars($p['Peso']); ?>
+      </button>
+    <?php endforeach; ?>
+
       </div>
     <?php else: ?>
       <div style="padding: 7px 12px; background:#eaf2e4; color:#28a745; border-radius:8px; display:inline-block;">
@@ -857,6 +859,8 @@ footer p { margin-top: 15px; font-size: 0.9rem; }
   <input type="hidden" name="precio" id="input-precio" value="<?php echo $precioInicial; ?>">
   <input type="hidden" name="presentacion" id="input-presentacion" value="<?php echo $pesoInicial; ?>" class="input-presentacion">
   <input type="hidden" name="imagen" id="input-imagen" value="<?php echo $imagenPrincipal; ?>">
+  <input type="hidden" name="id_presentacion" id="input-id-presentacion" value="<?php echo $presentaciones[0]['ID_Presentacion'] ?? ''; ?>">
+
 
   <label>Cantidad:</label>
   <div class="cantidad-control">
@@ -1019,6 +1023,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('precio-mostrado').textContent = '$' + parseInt(b.dataset.precio).toLocaleString('es-CO');
             document.getElementById('input-precio').value = b.dataset.precio;
             document.getElementById('input-presentacion').value = b.textContent.trim();
+            document.getElementById('input-id-presentacion').value = b.dataset.id;
         });
     });
     window.cambiarCantidad = function(valor) {
@@ -1095,11 +1100,13 @@ if (formCarrito) {
           var precio = parseFloat(formCarrito.querySelector('input[name="precio"]').value);
           var presentacion = formCarrito.querySelector('input[name="presentacion"]').value.trim().toLowerCase();
 
+          var idPres = formCarrito.querySelector('#input-id-presentacion').value;
           var last = data.carrito.find(item =>
               item.nombre === nombre &&
               parseFloat(item.precio) === precio &&
-              (item.presentacion || '').trim().toLowerCase() === presentacion
+              item.id_presentacion == idPres
           );
+
           if (!last) last = data.carrito[data.carrito.length - 1];
 
             var nombreCompleto = last.nombre + ' - ' + last.presentacion;
@@ -1161,7 +1168,8 @@ document.getElementById('modal-cantidad').addEventListener('input', function() {
       'X-Requested-With': 'XMLHttpRequest',
       'Content-Type': 'application/x-www-form-urlencoded'
     },
-    body: 'update=1&cantidad=' + nuevaCantidad
+    body: 'update=1&cantidad=' + nuevaCantidad + '&id_presentacion=' + encodeURIComponent(last.id_presentacion)
+
   })
   .then(resp => resp.json())
   .then(data => {

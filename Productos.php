@@ -2,6 +2,12 @@
 session_start();
 require 'conexion.php'; // Solo una vez, aquí
 
+// Función para limpiar el peso y devolver un número float
+function limpiarPeso($peso_str) {
+    $limpio = preg_replace('/[^0-9.]/', '', $peso_str);
+    return is_numeric($limpio) ? floatval($limpio) : 0;
+}
+
 if (!isset($_SESSION['carrito'])) {
     $_SESSION['carrito'] = [];
 }
@@ -19,7 +25,7 @@ if ($busqueda !== '') {
 
 $presentaciones = $pdo->query("SELECT * FROM presentacion")->fetchAll(PDO::FETCH_ASSOC);
 
-// Actualizar cantidad del último producto agregado
+// Actualizar cantidad del último producto agregado (AJAX)
 if (
     $_SERVER['REQUEST_METHOD'] === 'POST' &&
     isset($_POST['update'], $_POST['cantidad'])
@@ -33,66 +39,80 @@ if (
 }
 
 // Agregar producto al carrito (SUMAR cantidad si ya existe)
+
 if (
     $_SERVER['REQUEST_METHOD'] === 'POST' &&
-    isset($_POST['nombre'], $_POST['precio'], $_POST['cantidad'], $_POST['imagen'], $_POST['presentacion']) &&
-    !isset($_POST['update'])
-) {
-    $nombre   = $_POST['nombre'];
-    $precio   = floatval($_POST['precio']);
-    $cantidad = max(1, min(25, intval($_POST['cantidad'])));
-    $imagen   = $_POST['imagen'];
-    $presentacion = $_POST['presentacion']; // <<--- AGREGA ESTO
+    isset($_POST['nombre'], $_POST['precio'], $_POST['cantidad'], $_POST['imagen'], $_POST['id_presentacion'], $_POST['id_producto'])
+) { 
+    $nombre       = $_POST['nombre'];
+    $precio       = floatval($_POST['precio']);
+    $cantidad     = max(1, min(25, intval($_POST['cantidad'])));
+    $imagen       = $_POST['imagen'];
+    $presentacion = $_POST['id_presentacion'];
+    $id_producto  = intval($_POST['id_producto']);
 
-    
-$presentacion = $_POST['presentacion'];
- 
-$encontrado = false;
-foreach ($_SESSION['carrito'] as &$item) {
-    if (
-        $item['nombre'] === $nombre &&
-        $item['precio'] == $precio &&
-        $item['imagen'] === $imagen &&
-        isset($item['presentacion']) &&
-        $item['presentacion'] == $presentacion // ← ¡Comparación de ID!
-    ) {
-        $item['cantidad'] = min(25, $item['cantidad'] + $cantidad);
-        $encontrado = true;
-        break;
+    $encontrado = false;
+    foreach ($_SESSION['carrito'] as &$item) {
+        if (
+            $item['nombre'] === $nombre &&
+            $item['precio'] == $precio &&
+            $item['imagen'] === $imagen &&
+            isset($item['presentacion']) &&
+            $item['presentacion'] == $presentacion
+        ) {
+            $item['cantidad'] = min(25, $item['cantidad'] + $cantidad);
+            $encontrado = true;
+            break;
+        }
     }
-}
-unset($item);
+    unset($item);
+
+    if (!$encontrado) {
+        // Consulta la BD por el ID de presentación para obtener dimensiones y peso
+        $stmtPres = $pdo->prepare("SELECT * FROM presentacion WHERE ID_Presentacion = ?");
+        $stmtPres->execute([$presentacion]);
+        $presData = $stmtPres->fetch(PDO::FETCH_ASSOC);
+
+        if (!$presData) {
+            // Si no existe la presentación, salimos
+            header('Content-Type: application/json');
+            echo json_encode(['status' => 'error', 'message' => 'Presentación no encontrada']);
+            exit;
+        }
+
+        // Consulta la BD por el ID de producto para obtener dimensiones de producto
+
+        $stmtProd = $pdo->prepare("SELECT alto_cm AS Alto, ancho_cm AS Ancho, largo_cm AS Largo FROM producto WHERE ID_Producto = ?");
+        $stmtProd->execute([$id_producto]);
+        $prodData = $stmtProd->fetch(PDO::FETCH_ASSOC);
 
 
-if (!$encontrado) {
-    // Consulta la BD por el ID de presentación para obtener dimensiones
-    $stmtPres = $pdo->prepare("SELECT * FROM presentacion WHERE ID_Presentacion = ?");
-    $stmtPres->execute([$presentacion]);
-    $presData = $stmtPres->fetch(PDO::FETCH_ASSOC);
+        $pesoLimpio = limpiarPeso($presData['Peso']);
 
-    // Seguridad: Si no existe, no agregues nada
-    if (!$presData) {
-        // Podrías mostrar un error aquí si lo prefieres
-        exit;
+        $_SESSION['carrito'][] = [
+            'nombre'          => $nombre,
+            'precio'          => $precio,
+            'cantidad'        => $cantidad,
+            'imagen'          => $imagen,
+            'presentacion'    => $presentacion,
+            'peso'            => $pesoLimpio,
+            'alto'            => floatval($prodData['Alto'] ?? 0),
+            'ancho'           => floatval($prodData['Ancho'] ?? 0),
+            'largo'           => floatval($prodData['Largo'] ?? 0),
+            'id_producto'     => $id_producto,
+            'id_presentacion' => intval($presentacion)
+        ];
     }
 
-    $_SESSION['carrito'][] = [
-        'nombre'   => $nombre,
-        'precio'   => $precio,
-        'cantidad' => $cantidad,
-        'imagen'   => $imagen,
-        'presentacion' => $presentacion, // ID_Presentacion
-        'peso'     => $presData['Peso'],
-        'alto'     => $presData['Alto'],
-        'ancho'    => $presData['Ancho'],
-        'largo'    => $presData['Largo']
-    ];
+    // Envía respuesta JSON con estado y nuevo conteo del carrito
+    header('Content-Type: application/json');
+    echo json_encode(['status' => 'ok', 'carrito_count' => count($_SESSION['carrito'])]);
+    exit;  // Termina la ejecución para no enviar el resto del HTML
 }
 
-
-}
 
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -855,10 +875,11 @@ foreach ($productos as $producto) {
             <input type="number" value="1" min="1" max="25" readonly>
             <button onclick="cambiarCantidad(this,1)">+</button>
           </div>
-          <form method="POST" class="form-compra">
+          <form method="POST" action="Productos.php" class="form-compra">
             <input type="hidden" name="nombre" value="<?php echo $nombre; ?>">
             <input type="hidden" name="precio" value="<?php echo $p['Presentaciones'][0]['Precio'] ?? $precio; ?>" class="input-precio">
-            <input type="hidden" name="presentacion" value="<?php echo htmlspecialchars($p['Presentaciones'][0]['ID_Presentacion'] ?? ''); ?>" class="input-presentacion">
+            <input type="hidden" name="id_producto" value="<?php echo intval($p['ID_Producto']); ?>">
+            <input type="hidden" name="id_presentacion" value="<?php echo htmlspecialchars($p['Presentaciones'][0]['ID_Presentacion'] ?? ''); ?>" class="input-presentacion">
             <input type="hidden" name="cantidad" value="1" class="input-cantidad">
             <input type="hidden" name="imagen" value="<?php echo $imagen; ?>">
             <input type="hidden" name="peso" value="<?php echo htmlspecialchars($p['Presentaciones'][0]['Peso'] ?? ''); ?>" class="input-peso">
@@ -927,95 +948,104 @@ foreach ($productos as $producto) {
         moverCarrusel(1);
       }, 6000);
     }
-    document.addEventListener('DOMContentLoaded', () => {
-      banners = document.querySelectorAll('.banner-item');
-      mostrarBanner(0);
-      reiniciarCarruselAuto();
+document.addEventListener('DOMContentLoaded', () => {
+  const modal = document.getElementById('modal-confirmacion');
+  const cont  = document.getElementById('contador-carrito');
+  const tabla = document.getElementById('tabla-productos');
+  const btnCont = document.getElementById('continuar-comprando');
+  const btnEdit = document.getElementById('editar-carrito');
 
-      // Modal compra
-      const btns = document.querySelectorAll('.btn-comprar');
-      const modal = document.getElementById('modal-confirmacion');
-      const cont  = document.getElementById('contador-carrito');
-      const tabla = document.getElementById('tabla-productos');
-      const btnCont = document.getElementById('continuar-comprando');
-      const btnEdit = document.getElementById('editar-carrito');
+  // Agregar listener submit a todos los formularios
+  const formsCompra = document.querySelectorAll('.form-compra');
+  formsCompra.forEach(form => {
+    form.addEventListener('submit', e => {
+      e.preventDefault();
 
-btns.forEach(boton => {
-  boton.addEventListener('click', e => {
-    e.preventDefault();
-    const form = boton.closest('form');
-    const card = boton.closest('.producto-card');
-    const img  = card.querySelector('img');
-    const rect = img.getBoundingClientRect();
-    const cartIcon = document.getElementById('icono-carrito').getBoundingClientRect();
+      const card = form.closest('.producto-card');
+      const img  = card.querySelector('img');
+      const rect = img.getBoundingClientRect();
+      const cartIcon = document.getElementById('icono-carrito').getBoundingClientRect();
 
-    // --- ANIMACIÓN IMAGEN AL CARRITO ---
-    const clone = img.cloneNode();
-    clone.classList.add('carrito-animado');
-    clone.style.top  = rect.top + 'px';
-    clone.style.left = rect.left + 'px';
-    clone.style.width = rect.width + 'px';
-    clone.style.height = rect.height + 'px';
-    document.body.appendChild(clone);
-    // Forzar reflow
-    void clone.offsetWidth;
-    // Animar hasta el ícono del carrito
-    clone.style.transform =
-      `translate(${cartIcon.left-rect.left}px,${cartIcon.top-rect.top}px) scale(0.2)`;
-    clone.style.opacity = '0';
-    setTimeout(()=>clone.remove(), 700);
-    // --- FIN ANIMACIÓN ---
+      // --- Animación imagen al carrito ---
+      const clone = img.cloneNode();
+      clone.classList.add('carrito-animado');
+      clone.style.top  = rect.top + 'px';
+      clone.style.left = rect.left + 'px';
+      clone.style.width = rect.width + 'px';
+      clone.style.height = rect.height + 'px';
+      document.body.appendChild(clone);
+      void clone.offsetWidth;
+      clone.style.transform = `translate(${cartIcon.left-rect.left}px,${cartIcon.top-rect.top}px) scale(0.2)`;
+      clone.style.opacity = '0';
+      setTimeout(() => clone.remove(), 700);
+      // --- Fin animación ---
 
-    // Todo lo demás igual...
-    const dataPost = new FormData(form);
-    const qtyCard  = parseInt(card.querySelector('input[type="number"]').value,10) || 1;
-    dataPost.set('cantidad', qtyCard);
+      // Obtener cantidad seleccionada
+      const qtyInput = card.querySelector('input[type="number"]');
+      const qty = parseInt(qtyInput.value, 10) || 1;
 
-  fetch('Productos.php', { method: 'POST', body: dataPost })
-    .then(()=>{
-      modal.style.display = 'block';
-      let count = parseInt(cont.textContent.replace(/\D/g,''),10) || 0;
-      count += qtyCard;
-      cont.textContent = count;
-      const contMovil = document.getElementById('contador-carrito-movil');
-      if (contMovil) contMovil.textContent = count;
-    const name  = form.nombre.value;
-    const price = parseFloat(form.precio.value);
-    const src   = form.imagen.value;
-    const peso  = form.peso ? form.peso.value : '';
-    tabla.innerHTML = '';
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td class="celda-producto">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <img src="${src}" alt="${name}" class="img-modal" style="width:48px;height:48px;object-fit:contain;border-radius:6px;flex-shrink:0;">
-          <span style="font-weight:700;font-size:1.13em;line-height:1.1;color:#222;font-family:'Roboto',Arial,sans-serif;">
-            ${name}${peso ? ' ('+peso+')' : ''}
-          </span>
-        </div>
-      </td>
-      <td>$${price.toLocaleString('es-CO')}</td>
-      <td>
-        <input type="number"
-              class="cantidad-input"
-              data-price="${price}"
-              min="1" max="25"
-              value="${qtyCard}"
-              onchange="actualizarSubtotalModal(this)">
-      </td>
-      <td class="subtotal-cell">$${(price*qtyCard).toLocaleString('es-CO')}</td>
-    `;
-    tabla.appendChild(tr);
+      const dataPost = new FormData(form);
+      dataPost.set('cantidad', qty);
 
+      fetch('Productos.php', { method: 'POST', body: dataPost })
+        .then(res => res.text())
+        .then(text => {
+          try {
+            const data = JSON.parse(text);
+            if (data.status === 'ok') {
+              modal.style.display = 'block';
+
+              cont.textContent = data.carrito_count;
+              const contMovil = document.getElementById('contador-carrito-movil');
+              if (contMovil) contMovil.textContent = data.carrito_count;
+
+              tabla.innerHTML = '';
+              const name  = form.nombre.value;
+              const price = parseFloat(form.precio.value);
+              const src   = form.imagen.value;
+              const peso  = form.peso ? form.peso.value : '';
+
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                <td class="celda-producto">
+                  <div style="display: flex; align-items: center; gap: 12px;">
+                    <img src="${src}" alt="${name}" style="width:48px;height:48px;object-fit:contain;border-radius:6px;flex-shrink:0;">
+                    <span style="font-weight:700;font-size:1.13em;line-height:1.1;color:#222;font-family:'Roboto',Arial,sans-serif;">
+                      ${name}${peso ? ' ('+peso+')' : ''}
+                    </span>
+                  </div>
+                </td>
+                <td>$${price.toLocaleString('es-CO')}</td>
+                <td>
+                  <input type="number"
+                        class="cantidad-input"
+                        data-price="${price}"
+                        min="1" max="25"
+                        value="${qty}"
+                        onchange="actualizarSubtotalModal(this)">
+                </td>
+                <td class="subtotal-cell">$${(price * qty).toLocaleString('es-CO')}</td>
+              `;
+              tabla.appendChild(tr);
+            } else {
+              alert('Error al agregar al carrito: ' + (data.message || ''));
+            }
+          } catch(e) {
+            alert('Respuesta inesperada del servidor: ' + text);
+            console.error('Error parseando JSON:', e);
+          }
+        })
+        .catch(err => {
+          alert('Error en la comunicación con el servidor.');
+          console.error(err);
+        });
     });
   });
+
+  btnCont.onclick = () => modal.style.display = 'none';
+  btnEdit.onclick = () => window.location = 'carrito.php';
+  window.onclick = e => { if(e.target === modal) modal.style.display = 'none'; };
 });
-
-
-      btnCont.onclick = ()=> modal.style.display = 'none';
-      btnEdit.onclick = ()=> window.location = 'carrito.php';
-      window.onclick = e=>{ if(e.target===modal) modal.style.display='none'; };
-    });
 
     function cambiarCantidad(btn, cambio) {
       const input = btn.parentNode.querySelector('input[type="number"]');
