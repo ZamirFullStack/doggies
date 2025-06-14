@@ -12,18 +12,60 @@ if (!isset($_SESSION['carrito'])) {
     $_SESSION['carrito'] = [];
 }
 
-$busqueda = isset($_GET['busqueda']) ? trim($_GET['busqueda']) : '';
+// Obtener filtros desde GET
+$precio_min = isset($_GET['precio_min']) && is_numeric($_GET['precio_min']) ? floatval($_GET['precio_min']) : 0;
+$precio_max = isset($_GET['precio_max']) && is_numeric($_GET['precio_max']) ? floatval($_GET['precio_max']) : 9999999999;
+$busqueda   = isset($_GET['busqueda']) ? trim($_GET['busqueda']) : '';
 
-if ($busqueda !== '') {
-    $stmt = $pdo->prepare("SELECT * FROM producto WHERE Nombre LIKE ? OR Descripcion LIKE ?");
-    $param = '%' . $busqueda . '%';
-    $stmt->execute([$param, $param]);
-    $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} else {
-    $productos = $pdo->query("SELECT * FROM producto")->fetchAll(PDO::FETCH_ASSOC);
+// Filtro de edades seleccionado por checkboxes (array de valores)
+$edades = isset($_GET['edad']) && is_array($_GET['edad']) ? $_GET['edad'] : [];
+
+// Construir consulta para productos filtrados por edad y búsqueda (si hay)
+$sqlProductos = "SELECT * FROM producto WHERE 1=1";
+$paramsProd = [];
+
+if (!empty($edades)) {
+    // Preparar placeholders y agregar parámetros
+    $placeholdersEdad = implode(',', array_fill(0, count($edades), '?'));
+    $sqlProductos .= " AND edad IN ($placeholdersEdad)";
+    $paramsProd = array_merge($paramsProd, $edades);
 }
 
-$presentaciones = $pdo->query("SELECT * FROM presentacion")->fetchAll(PDO::FETCH_ASSOC);
+
+// Ejecutar consulta productos
+$stmtProd = $pdo->prepare($sqlProductos);
+$stmtProd->execute($paramsProd);
+$productosFiltrados = $stmtProd->fetchAll(PDO::FETCH_ASSOC);
+
+// Obtener IDs de productos filtrados
+$idsProductos = array_column($productosFiltrados, 'ID_Producto');
+
+if (empty($idsProductos)) {
+    // No hay productos que cumplan edad/búsqueda, resultado vacío
+    $productos = [];
+    $presentaciones = [];
+} else {
+    // Construir consulta para presentaciones filtradas por precio y producto
+    $placeholdersProd = implode(',', array_fill(0, count($idsProductos), '?'));
+    $sqlPresentaciones = "SELECT * FROM presentacion WHERE Precio BETWEEN ? AND ? AND ID_Producto IN ($placeholdersProd)";
+    $paramsPres = array_merge([$precio_min, $precio_max], $idsProductos);
+
+    $stmtPres = $pdo->prepare($sqlPresentaciones);
+    $stmtPres->execute($paramsPres);
+    $presentacionesFiltradas = $stmtPres->fetchAll(PDO::FETCH_ASSOC);
+
+    // Obtener IDs de productos con presentaciones válidas
+    $idsProductosPresentacion = array_unique(array_column($presentacionesFiltradas, 'ID_Producto'));
+
+    // Finalmente, filtrar productos que tienen presentaciones dentro del rango
+  $productos = array_values(array_filter($productosFiltrados, function($p) use ($idsProductosPresentacion) {
+      return in_array($p['ID_Producto'], $idsProductosPresentacion);
+  }));
+
+
+    // También las presentaciones a mostrar serán las filtradas
+    $presentaciones = $presentacionesFiltradas;
+}
 
 // Actualizar cantidad del último producto agregado (AJAX)
 if (
@@ -769,19 +811,23 @@ footer::after {
   <div class="page-container">
     <aside class="filtro">
     <h2>Filtrar por edad</h2>
-      <label><input type="checkbox" class="filtro-edad" value="cachorro"> Cachorro</label>
-      <label><input type="checkbox" class="filtro-edad" value="adulto"> Adulto</label>
-      <label><input type="checkbox" class="filtro-edad" value="senior"> Senior</label>
+    <form method="GET" action="Productos.php" id="form-filtros">
+      <label><input type="checkbox" name="edad[]" value="cachorro" <?php if(in_array('cachorro', $_GET['edad'] ?? [])) echo 'checked'; ?>> Cachorro</label>
+      <label><input type="checkbox" name="edad[]" value="adulto" <?php if(in_array('adulto', $_GET['edad'] ?? [])) echo 'checked'; ?>> Adulto</label>
+      <label><input type="checkbox" name="edad[]" value="senior" <?php if(in_array('senior', $_GET['edad'] ?? [])) echo 'checked'; ?>> Senior</label>
+      <!-- Precio y búsqueda aquí también -->
       <h2>Precio</h2>
       <div class="filtro-precio-box">
-        <label for="precio-max">Max:
-          <input type="number" id="precio-max" placeholder="999999">
-        </label>
         <label for="precio-min">Min:
-          <input type="number" id="precio-min" placeholder="0">
+          <input type="number" id="precio-min" name="precio_min" placeholder="0" value="<?php echo htmlspecialchars($_GET['precio_min'] ?? '') ?>">
+        </label>
+        <label for="precio-max">Max:
+          <input type="number" id="precio-max" name="precio_max" placeholder="999999" value="<?php echo htmlspecialchars($_GET['precio_max'] ?? '') ?>">
         </label>
       </div>
-      <button onclick="filtrarProductos()">Filtrar</button>
+      <button type="submit">Filtrar</button>
+    </form>
+
 
 <!-- Preguntas Frecuentes (FAQ) debajo del carrusel -->
 <div class="faq-section" style="margin-top:22px; background:#f8f9fc; border-radius:16px; box-shadow:0 2px 10px rgba(60,60,80,0.07); padding:18px 10px 13px 18px;">
@@ -847,11 +893,22 @@ foreach ($productos as $producto) {
     $producto['Presentaciones'] = [];
     foreach ($presentaciones as $pres) {
         if ($pres['ID_Producto'] == $producto['ID_Producto']) {
-            $producto['Presentaciones'][] = $pres;
+            // Solo incluir presentaciones dentro del rango de precio
+            if ($pres['Precio'] >= $precio_min && $pres['Precio'] <= $precio_max) {
+                $producto['Presentaciones'][] = $pres;
+            }
         }
     }
-    $productosOrganizados[] = $producto;
+    // Ordenar las presentaciones de menor a mayor precio
+    usort($producto['Presentaciones'], function($a, $b) {
+        return $a['Precio'] <=> $b['Precio'];
+    });
+    // Solo incluir producto si tiene presentaciones válidas (previene mostrar productos sin presentaciones)
+    if (!empty($producto['Presentaciones'])) {
+        $productosOrganizados[] = $producto;
+    }
 }
+
     foreach ($productosOrganizados as $p): 
     $nombre      = htmlspecialchars($p['Nombre']);
     $imagen      = $p['Imagen_URL'] ?: 'img/default.jpg';
@@ -861,8 +918,8 @@ foreach ($productos as $producto) {
     $edad        = $p['edad'] ?: 'adulto';
     $precioF     = number_format($precio,0,',','.');
 ?>
-  <div class="producto-card" data-edad="<?php echo $edad; ?>" data-precio="<?php echo $precio; ?>">
-    <a href="producto_detalle.php?id=<?php echo intval($p['ID_Producto']); ?>">
+  <div class="producto-card" data-edad="<?php echo $edad; ?>" data-precio="<?php echo $p['Presentaciones'][0]['Precio']; ?>">
+  <a href="producto_detalle.php?id=<?php echo intval($p['ID_Producto']); ?>">
       <img src="<?php echo $imagen; ?>" alt="<?php echo $nombre; ?>">
     </a>
     <div class="producto-info">
@@ -893,12 +950,12 @@ foreach ($productos as $producto) {
           </div>
           <form method="POST" action="Productos.php" class="form-compra">
             <input type="hidden" name="nombre" value="<?php echo $nombre; ?>">
-            <input type="hidden" name="precio" value="<?php echo $p['Presentaciones'][0]['Precio'] ?? $precio; ?>" class="input-precio">
+            <input type="hidden" name="precio" value="<?php echo $p['Presentaciones'][0]['Precio']; ?>" class="input-precio">
             <input type="hidden" name="id_producto" value="<?php echo intval($p['ID_Producto']); ?>">
-            <input type="hidden" name="id_presentacion" value="<?php echo htmlspecialchars($p['Presentaciones'][0]['ID_Presentacion'] ?? ''); ?>" class="input-presentacion">
+            <input type="hidden" name="id_presentacion" value="<?php echo htmlspecialchars($p['Presentaciones'][0]['ID_Presentacion']); ?>" class="input-presentacion">
             <input type="hidden" name="cantidad" value="1" class="input-cantidad">
             <input type="hidden" name="imagen" value="<?php echo $imagen; ?>">
-            <input type="hidden" name="peso" value="<?php echo htmlspecialchars($p['Presentaciones'][0]['Peso'] ?? ''); ?>" class="input-peso">
+            <input type="hidden" name="peso" value="<?php echo htmlspecialchars($p['Presentaciones'][0]['Peso']); ?>" class="input-peso">
             <button type="submit" class="btn-comprar">Comprar</button>
           </form>
         <?php else: ?>
@@ -1090,15 +1147,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function filtrarProductos() {
-      const edades = Array.from(document.querySelectorAll('.filtro-edad:checked')).map(cb=>cb.value);
-      const min = parseInt(document.getElementById('precio-min').value,10) || 0;
-      const max = parseInt(document.getElementById('precio-max').value,10) || Infinity;
-      document.querySelectorAll('.producto-card').forEach(card=>{
+      const edades = Array.from(document.querySelectorAll('.filtro input[name="edad[]"]:checked')).map(cb => cb.value);
+      const texto = document.getElementById('buscador-producto').value.trim().toLowerCase();
+
+      let minRaw = document.getElementById('precio-min').value.trim().replace(/,/g,'');
+      let maxRaw = document.getElementById('precio-max').value.trim().replace(/,/g,'');
+      let min = minRaw === '' ? 0 : Number(minRaw);
+      let max = maxRaw === '' ? Infinity : Number(maxRaw);
+
+      if (isNaN(min)) min = 0;
+      if (isNaN(max)) max = Infinity;
+
+      document.querySelectorAll('.producto-card').forEach(card => {
         const ed = card.dataset.edad;
-        const pr = parseFloat(card.dataset.precio);
-        card.style.display = ((edades.length===0||edades.includes(ed)) && pr>=min&&pr<=max)?'flex':'none';
+        const pr = Number(card.dataset.precio);
+
+        const nombre = card.querySelector('h3').textContent.toLowerCase();
+        const descripcion = card.querySelector('p').textContent.toLowerCase();
+
+        const pasaEdad = edades.length === 0 || edades.includes(ed);
+        const pasaPrecio = !isNaN(pr) && pr >= min && pr <= max;
+        const pasaTexto = nombre.includes(texto) || descripcion.includes(texto);
+
+        card.style.display = (pasaEdad && pasaPrecio && pasaTexto) ? 'flex' : 'none';
       });
     }
+
+    document.querySelectorAll('.filtro input[name="edad[]"]').forEach(cb => cb.addEventListener('change', filtrarProductos));
+    document.getElementById('precio-min').addEventListener('input', filtrarProductos);
+    document.getElementById('precio-max').addEventListener('input', filtrarProductos);
+    document.getElementById('buscador-producto').addEventListener('input', filtrarProductos);
+
+    document.addEventListener('DOMContentLoaded', filtrarProductos);
 
     // Actualizar precio y presentación al hacer clic en botones
     document.querySelectorAll('.producto-card').forEach(card => {
