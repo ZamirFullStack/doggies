@@ -71,19 +71,61 @@ header {
       flex: 1;
       text-align: center;
     }
+
+    .menu li a {
+  display: inline-block;
+  text-align: center;
+  line-height: 1.2;
+  font-weight: bold;
+  color: #000; /* o el color que uses para el texto normal */
+  text-decoration: none;
+  padding: 8px 12px;         /* igual padding que en index.php */
+  border-radius: 6px;        /* para evitar salto al hacer hover */
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.menu li a:hover {
+  background-color: #28a745; /* verde */
+  color: white !important;
+  cursor: pointer;
+}
+
+.menu li a:hover i {
+  color: white !important;
+}
+
     .menu li.logo {
       flex: 0 0 auto;
     }
-    .menu li.logo a {
-      display: block;
-      width: 150px;
-      height: 60px;
-      background-image: url('img/fondo.jpg');
-      background-size: contain;
-      background-repeat: no-repeat;
-      background-position: center;
-      text-indent: -9999px;
-    }
+  .menu li.logo a {
+    display: block;
+    width: 150px;
+    height: 60px;
+    background-image: url('img/fondo.jpg');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    text-indent: -9999px;
+    cursor: default;             /* Cursor normal */
+    border: none;                /* Quitar borde */
+    padding: 0;                  /* Quitar padding */
+    outline: none;               /* Quitar outline */
+    user-select: text;           /* Permitir seleccionar si se quiere */
+    transition: none;            /* Quitar transición para evitar cambios */
+  }
+
+  /* No aplicar hover ni focus al logo */
+  .menu li.logo a:hover,
+  .menu li.logo a:focus,
+  .menu li.logo a:active {
+    background-color: transparent !important;
+    color: inherit !important;
+    padding: 0 !important;
+    cursor: default !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
     .menu a {
       text-decoration: none;
       color: #333;

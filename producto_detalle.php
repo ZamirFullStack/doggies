@@ -262,9 +262,16 @@ header a.nav-link {
 }
 
 header a.nav-link:hover {
-  background: #e6f0e6;
-  color: #1b5e20;
+  background-color: #28a745; /* verde */
+  color: white !important;
+  border-radius: 6px;
+  padding: 8px 12px; /* para que el fondo abarque bien */
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
+header a.nav-link:hover i {
+  color: white !important;
+}
+
 
 header .logo-box img {
   height: 40px;
@@ -409,6 +416,8 @@ main {
   font-weight: 600;
   margin-bottom: 10px;
 }
+
+
 
 /* Calificación por estrellas */
 .estrellas {
@@ -1136,7 +1145,9 @@ if (formCarrito) {
 
           if (!last) last = data.carrito[data.carrito.length - 1];
 
-            var nombreCompleto = last.nombre + ' - ' + last.presentacion;
+            var pesoTexto = last.peso ? last.peso + 'kg' : 'N/A';
+            var nombreCompleto = `${last.nombre} (${pesoTexto})`;
+
 document.getElementById('tabla-productos').innerHTML = `
   <tr>
     <td>
@@ -1144,7 +1155,7 @@ document.getElementById('tabla-productos').innerHTML = `
         <img src="${last.imagen}" alt="${last.nombre}" style="width:48px;height:48px;object-fit:contain;border-radius:6px;">
         <div style="text-align:left;">
           <div style="font-weight:700;color:#333;">
-            ${last.nombre} <span style="font-weight:700;font-size:0.98em;color:#222;">(<strong>${last.presentacion}</strong>)</span>
+            ${last.nombre} <span style="font-weight:700;font-size:0.98em;color:#222;">(<strong>${pesoTexto}</strong>)</span>
           </div>
         </div>
       </div>

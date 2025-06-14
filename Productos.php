@@ -180,14 +180,29 @@ body {
   flex-shrink: 0;
 }
 
+/* Estilos para los links del header con hover igual a index.php */
 .nav-link {
+  color: #000; /* Igual que .menu li a en index.php */
+  font-weight: bold;
+  padding: 8px 12px; /* Padding para que el fondo cubra bien */
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 9px;
-  font-size: 1.06em;
-  white-space: nowrap; /* <- nunca hagas salto de línea interno */
+  gap: 7px;
 }
+
+.nav-link:hover {
+  background-color: #28a745; /* verde como en index.php */
+  color: white !important;
+}
+
+.nav-link:hover i {
+  color: white !important;
+}
+
 
 .texto-desktop {
   display: inline;
@@ -322,6 +337,7 @@ a, a:visited, a:focus, a:active, a:hover {
     max-width: 100vw;
   }
 }
+
 
 
 /* Filtros */
