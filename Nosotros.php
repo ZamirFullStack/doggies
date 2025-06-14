@@ -106,7 +106,7 @@ header {
     background-repeat: no-repeat;
     background-position: center;
     text-indent: -9999px;
-    cursor: default;             /* Cursor normal */
+    cursor: pointer;             /* Cursor normal */
     border: none;                /* Quitar borde */
     padding: 0;                  /* Quitar padding */
     outline: none;               /* Quitar outline */
@@ -121,7 +121,7 @@ header {
     background-color: transparent !important;
     color: inherit !important;
     padding: 0 !important;
-    cursor: default !important;
+    cursor: pointer !important;
     outline: none !important;
     box-shadow: none !important;
   }
