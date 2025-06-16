@@ -210,7 +210,16 @@ $pedidos = $stmt_pedidos->fetchAll(PDO::FETCH_ASSOC);
         </div>
         <div class="input-group">
           <i class="fas fa-phone"></i>
-          <input type="text" name="telefono" value="<?= htmlspecialchars($datos['Telefono'] ?? '') ?>" placeholder="Teléfono">
+          <input
+            type="number"
+            name="telefono"
+            value="<?= htmlspecialchars($datos['Telefono'] ?? '') ?>"
+            placeholder="Teléfono"
+            min="1000000000"
+            max="9999999999"
+            step="1"
+            oninput="if(this.value.length > 10) this.value = this.value.slice(0,10);"
+          >
         </div>
         <div class="input-group">
           <i class="fas fa-map-marker-alt"></i>

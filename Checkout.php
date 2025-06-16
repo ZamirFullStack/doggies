@@ -716,7 +716,15 @@ document.querySelectorAll('#resumen-pedido .cantidad').forEach((input, idx) => {
     </div>
     <div class="input-group">
       <label>Teléfono</label>
-      <input type="text" name="telefono" required />
+      <input
+      type="number"
+      name="telefono"
+      required
+      min="1000000000"
+      max="9999999999"
+      step="1"
+      oninput="if(this.value.length > 10) this.value = this.value.slice(0,10);"
+    />
     </div>
   </div>
   

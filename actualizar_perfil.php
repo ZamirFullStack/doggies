@@ -10,9 +10,23 @@ if (!isset($_SESSION['usuario'])) {
 $id = $_SESSION['usuario']['ID_Usuario'];
 $nombre = trim($_POST['nombre']);
 $correo = trim($_POST['correo']);
-$telefono = trim($_POST['telefono']);
+$telefono_raw = trim($_POST['telefono']);
 $direccion = trim($_POST['direccion']);
 $nueva_contrasena = trim($_POST['nueva_contrasena']);
+
+// Validar teléfono: solo números, sin letras ni símbolos
+$telefono = preg_replace('/\D/', '', $telefono_raw);
+
+if (strlen($telefono) !== 10 || $telefono[0] === '0') {
+    echo "<script>
+        alert('❌ Error: El teléfono debe tener exactamente 10 dígitos y no puede comenzar con 0.');
+        window.location.href = 'mi_cuenta.php';
+    </script>";
+    exit;
+}
+
+// Opcional: convertir a entero
+$telefono = intval($telefono);
 
 // Actualización básica
 $sql = "UPDATE usuario SET Nombre = :nombre, Correo = :correo, Telefono = :telefono, Direccion = :direccion";
@@ -36,7 +50,6 @@ $stmt = $pdo->prepare($sql);
 $success = $stmt->execute($params);
 
 if ($success) {
-    // Mostramos alerta y redirigimos a mi_cuenta.php
     echo "<script>
         alert('✅ Perfil actualizado con éxito');
         window.location.href = 'mi_cuenta.php';
@@ -48,3 +61,4 @@ if ($success) {
     </script>";
 }
 ?>
+

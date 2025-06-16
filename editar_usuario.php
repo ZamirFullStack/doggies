@@ -18,29 +18,38 @@ if (!$usuario) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nombre = $_POST['nombre'] ?? '';
     $correo = $_POST['correo'] ?? '';
-    $telefono = $_POST['telefono'] ?? '';
+    $telefono_raw = $_POST['telefono'] ?? '';
     $direccion = $_POST['direccion'] ?? '';
     $rol = $_POST['rol'] ?? '';
     $nueva_contrasena = $_POST['nueva_contrasena'] ?? '';
 
-    if (!empty($nueva_contrasena)) {
-        if (strlen($nueva_contrasena) < 8) {
-            echo "<script>alert('La nueva contraseña debe tener al menos 8 caracteres.');</script>";
+    // Limpiar teléfono (solo dígitos)
+    $telefono = preg_replace('/\D/', '', $telefono_raw);
+
+    // Validar teléfono: 10 dígitos y no inicia con 0
+    if (strlen($telefono) !== 10 || $telefono[0] === '0') {
+        echo "<script>alert('Error: El teléfono debe tener exactamente 10 dígitos y no puede comenzar con 0.');</script>";
+    } else {
+        if (!empty($nueva_contrasena)) {
+            if (strlen($nueva_contrasena) < 8) {
+                echo "<script>alert('La nueva contraseña debe tener al menos 8 caracteres.');</script>";
+            } else {
+                $hash = password_hash($nueva_contrasena, PASSWORD_DEFAULT);
+                $stmt = $pdo->prepare("UPDATE usuario SET Nombre = ?, Correo = ?, Telefono = ?, Direccion = ?, ID_Rol = ?, Contrasena = ? WHERE ID_Usuario = ?");
+                $stmt->execute([$nombre, $correo, $telefono, $direccion, $rol, $hash, $id]);
+                echo "<script>alert('Usuario y contraseña actualizados.'); window.location.href='admin.php';</script>";
+                exit;
+            }
         } else {
-            $hash = password_hash($nueva_contrasena, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare("UPDATE usuario SET Nombre = ?, Correo = ?, Telefono = ?, Direccion = ?, ID_Rol = ?, Contrasena = ? WHERE ID_Usuario = ?");
-            $stmt->execute([$nombre, $correo, $telefono, $direccion, $rol, $hash, $id]);
-            echo "<script>alert('Usuario y contraseña actualizados.'); window.location.href='admin.php';</script>";
+            $stmt = $pdo->prepare("UPDATE usuario SET Nombre = ?, Correo = ?, Telefono = ?, Direccion = ?, ID_Rol = ? WHERE ID_Usuario = ?");
+            $stmt->execute([$nombre, $correo, $telefono, $direccion, $rol, $id]);
+            echo "<script>alert('Usuario actualizado.'); window.location.href='admin.php';</script>";
             exit;
         }
-    } else {
-        $stmt = $pdo->prepare("UPDATE usuario SET Nombre = ?, Correo = ?, Telefono = ?, Direccion = ?, ID_Rol = ? WHERE ID_Usuario = ?");
-        $stmt->execute([$nombre, $correo, $telefono, $direccion, $rol, $id]);
-        echo "<script>alert('Usuario actualizado.'); window.location.href='admin.php';</script>";
-        exit;
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -77,7 +86,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div class="input-group">
                     <i class="fas fa-phone"></i>
-                    <input type="text" name="telefono" value="<?= htmlspecialchars($usuario['Telefono'] ?? '') ?>" placeholder="Teléfono">
+                    <input
+                type="number"
+                name="telefono"
+                value="<?= htmlspecialchars($usuario['Telefono'] ?? '') ?>"
+                placeholder="Teléfono"
+                min="1000000000"
+                max="9999999999"
+                step="1"
+                oninput="if(this.value.length > 10) this.value = this.value.slice(0,10);"
+                />
                 </div>
                 <div class="input-group">
                     <i class="fas fa-map-marker-alt"></i>
