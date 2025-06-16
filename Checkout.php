@@ -712,7 +712,7 @@ document.querySelectorAll('#resumen-pedido .cantidad').forEach((input, idx) => {
     </div>
     <div class="input-group">
       <label>Número de documento</label>
-      <input type="text" name="numero_documento" required />
+      <input type="number" name="numero_documento" required min="1" step="1" />
     </div>
     <div class="input-group">
       <label>Teléfono</label>
