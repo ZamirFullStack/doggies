@@ -9,6 +9,13 @@ $nombre = $_POST['nombre'];
 $precio = floatval($_POST['precio']);
 $cantidad = max(1, intval($_POST['cantidad'])); // mínimo 1
 
+// Definir las variables que faltan
+$imagen = $_POST['imagen'] ?? 'img/Productos/default.jpg';  // Asignar valor por defecto
+$presentacion = $_POST['presentacion'] ?? '';  // Asignar valor por defecto
+$alto = $_POST['alto'] ?? '';  // Asignar valor por defecto
+$ancho = $_POST['ancho'] ?? '';  // Asignar valor por defecto
+$largo = $_POST['largo'] ?? '';  // Asignar valor por defecto
+
 $item = [
     'nombre' => $nombre,
     'precio' => $precio,
@@ -20,7 +27,6 @@ $item = [
     'ancho' => $ancho,
     'largo' => $largo,
 ];
-
 
 if (!isset($_SESSION['carrito'])) {
     $_SESSION['carrito'] = [];
