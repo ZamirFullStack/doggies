@@ -33,9 +33,6 @@ $stmt_pedidos = $pdo->prepare("
 $stmt_pedidos->execute(['id' => $usuario['ID_Usuario']]);
 $pedidos = $stmt_pedidos->fetchAll(PDO::FETCH_ASSOC);
 
-// DEBUG: puedes descomentar para ver los pedidos en bruto
-// echo '<pre>'; print_r($pedidos); echo '</pre>';
-
 $carrito = isset($_SESSION['carrito']) ? $_SESSION['carrito'] : [];
 
 function formatearFecha($fecha) {
@@ -45,7 +42,6 @@ function formatearFecha($fecha) {
         '09' => 'septiembre', '10' => 'octubre', '11' => 'noviembre', '12' => 'diciembre'
     ];
 
-    // Convertir de UTC a Bogotá
     $fechaObj = new DateTime($fecha, new DateTimeZone('UTC'));
     $fechaObj->setTimezone(new DateTimeZone('America/Bogota'));
 
@@ -56,34 +52,8 @@ function formatearFecha($fecha) {
 
     return "$dia de $mes de $anio, $hora";
 }
-
-
-require 'conexion.php';
-$usuario = $_SESSION['usuario'];
-
-// ... Tu consulta de datos de usuario aquí ...
-
-// Consulta de pedidos (usa el SQL corregido que te pasé):
-$stmt_pedidos = $pdo->prepare("
-    SELECT 
-        p.ID_Pedido, p.Fecha_Pedido, p.Total, p.Metodo_Pago, p.Email,
-        dp.Cantidad, dp.Precio_Unitario, dp.Nombre_Producto,
-        pr.Imagen_URL, pr.Stock
-    FROM pedido p
-    JOIN pedido_productos dp ON p.ID_Pedido = dp.ID_Pedido
-    LEFT JOIN producto pr ON pr.Nombre = dp.Nombre_Producto
-    WHERE (p.ID_Usuario = :id OR p.Email = :correo)
-    ORDER BY p.Fecha_Pedido DESC
-");
-$stmt_pedidos->execute([
-    'id' => $usuario['ID_Usuario'],
-    'correo' => $datos['Correo']
-]);
-$pedidos = $stmt_pedidos->fetchAll(PDO::FETCH_ASSOC);
-
-
-
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
